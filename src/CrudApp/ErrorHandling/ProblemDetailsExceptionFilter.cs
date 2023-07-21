@@ -1,8 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.WebUtilities;
 using static Microsoft.AspNetCore.Http.StatusCodes;
 
@@ -31,6 +29,8 @@ public class ProblemDetailsExceptionFilter : IExceptionFilter
             Exception ex => CreateInternalServerErrorProblemDetails(context.HttpContext, ex)
         };
 
+        // TODO: Add more information like controller, action and url. A timestamp may also be missing.
+
         context.Result = new ObjectResult(problemDetails) { StatusCode = problemDetails.Status };
         context.ExceptionHandled = true;
     }
@@ -46,7 +46,7 @@ public class ProblemDetailsExceptionFilter : IExceptionFilter
 
         if (_hostEnvironment.IsDevelopment() && ex.InnerException is not null)
         {
-            problemDetails.Extensions.Add("exception", ex.InnerException);
+            problemDetails.Extensions.Add("exception", ex.InnerException.ToString());
         }
         return problemDetails;
     }
@@ -68,7 +68,7 @@ public class ProblemDetailsExceptionFilter : IExceptionFilter
         
         if (_hostEnvironment.IsDevelopment())
         {
-            problemDetails.Extensions.Add("exception", ex);
+            problemDetails.Extensions.Add("exception", ex.ToString());
         }
 
         return problemDetails;

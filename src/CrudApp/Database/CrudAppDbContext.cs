@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace CrudApp.Database;
 
@@ -15,25 +16,28 @@ public class CrudAppDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         // Add entity types
-        foreach (var entityType in GetEntityTypes())
-            modelBuilder.Entity(entityType);
-
+        foreach (var entityType in GetEntityBaseTypes())
+        {
+            modelBuilder
+                .Entity(entityType)
+                .HasMany(nameof(EntityBase.EntityChangeEvents))
+                .WithOne()
+                .HasForeignKey(nameof(EntityChangeEvent.EntityId));
+        }
         // Add converters
-        foreach(var entityType in modelBuilder.Model.GetEntityTypes())
+        foreach (var entityType in modelBuilder.Model.GetEntityTypes())
         {
             var entityTypeBuilder = modelBuilder.Entity(entityType.Name);
-
             foreach (var propertyInfo in entityType.ClrType.GetProperties())
             {
-                var propertyBuilder = entityTypeBuilder.Property(propertyInfo.Name);
-
+                
                 
                 if (propertyInfo.HasAttribute<JsonValueConverterAttribute>())
-                    propertyBuilder.HasConversion(JsonValueConverterAttribute.GetConverter(propertyInfo.PropertyType));
+                    entityTypeBuilder.Property(propertyInfo.Name).HasConversion(JsonValueConverterAttribute.GetConverter(propertyInfo.PropertyType));
 
 
                 if (propertyInfo.HasAttribute<EnumValueConverterAttribute>())
-                    propertyBuilder.HasConversion(EnumValueConverterAttribute.GetConverter(propertyInfo.PropertyType));
+                    entityTypeBuilder.Property(propertyInfo.Name).HasConversion(EnumValueConverterAttribute.GetConverter(propertyInfo.PropertyType));
 
 
                 // SQLite can not compare/order by DateTimeOffset.
@@ -42,12 +46,12 @@ public class CrudAppDbContext : DbContext
                 // Note that we loose some precision and comparing times with different offsets may not work as expected.
                 if (Database.ProviderName == "Microsoft.EntityFrameworkCore.Sqlite" &&
                     (propertyInfo.PropertyType == typeof(DateTimeOffset) || propertyInfo.PropertyType == typeof(DateTimeOffset?)))
-                    propertyBuilder.HasConversion(new DateTimeOffsetToBinaryConverter());
+                    entityTypeBuilder.Property(propertyInfo.Name).HasConversion(new DateTimeOffsetToBinaryConverter());
             }
         }
     }
 
-    private static IEnumerable<Type> GetEntityTypes() => 
+    private static IEnumerable<Type> GetEntityBaseTypes() => 
         AppDomain.CurrentDomain.GetAssemblies().SelectMany(a =>
         a.GetTypes().Where(t => !t.IsAbstract && t.IsAssignableTo(typeof(EntityBase))));
 
@@ -63,6 +67,14 @@ public class CrudAppDbContext : DbContext
         // Add change tracking events that will also be saved to the database.
         ChangeEventTracker.AddChangeEvents(dbContext);
 
+    }
+
+    public IQueryable<T> All<T>(bool includeSoftDeleted = false) where T : EntityBase
+    {
+        IQueryable<T> query = Set<T>();
+        if(!includeSoftDeleted)
+            query = query.Where(t => !t.IsSoftDeleted);
+        return query;
     }
 
     public async Task EnsureCreatedAsync()

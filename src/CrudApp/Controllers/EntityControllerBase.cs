@@ -7,7 +7,7 @@ namespace CrudApp.Controllers;
 
 public abstract class EntityControllerBase<T> : QueryControllerBase<T> where T : EntityBase
 {
-    protected override IQueryable<T> GetQueryable() => DbContext.Authorized<T>();
+    protected override IQueryable<T> GetQueryable(bool includeSoftDeleted) => DbContext.Authorized<T>(includeSoftDeleted);
 
     [HttpGet("{id}")]
     [ProducesResponseType(Status200OK)]
@@ -18,7 +18,7 @@ public abstract class EntityControllerBase<T> : QueryControllerBase<T> where T :
         var entity = await DbContext.Authorized<T>().FirstAsync(e => e.Id == id);
         if (entity is null)
         {
-            var exists = await DbContext.Set<T>().AnyAsync(e => e.Id == id);
+            var exists = await DbContext.All<T>().AnyAsync(e => e.Id == id);
             if (exists)
                 return Forbid();
             return NotFound();
@@ -30,7 +30,7 @@ public abstract class EntityControllerBase<T> : QueryControllerBase<T> where T :
     [ProducesResponseType(Status201Created)]
     public async Task<ActionResult<T>> Post([FromBody] T entity)
     {
-        DbContext.Set<T>().Add(entity);
+        DbContext.Add(entity);
         await DbContext.SaveChangesAsync();
         // We do not return the created entity.
         // We return a response with a location header where the entity can be fetched.
@@ -51,12 +51,12 @@ public abstract class EntityControllerBase<T> : QueryControllerBase<T> where T :
         var existing = await DbContext.Authorized<T>().FirstOrDefaultAsync(e => e.Id == id);
         if (existing is null)
         {
-            var exists = await DbContext.Set<T>().AnyAsync(e => e.Id == id);
+            var exists = await DbContext.All<T>().AnyAsync(e => e.Id == id);
             if (exists)
                 return Forbid();
             return NotFound();
         }
-        DbContext.Set<T>().Update(entity);
+        DbContext.Update(entity);
         await DbContext.SaveChangesAsync();
         return NoContent();
     }
@@ -70,12 +70,12 @@ public abstract class EntityControllerBase<T> : QueryControllerBase<T> where T :
         var entity = await DbContext.Authorized<T>().FirstOrDefaultAsync(e => e.Id == id);
         if (entity is null)
         {
-            var exists = await DbContext.Set<T>().AnyAsync(e => e.Id == id);
+            var exists = await DbContext.All<T>().AnyAsync(e => e.Id == id);
             if (exists)
                 return Forbid();
             return NotFound();
         }
-        DbContext.Set<T>().Remove(entity);
+        DbContext.Remove(entity);
         await DbContext.SaveChangesAsync();
         return NoContent();
     }

@@ -21,13 +21,14 @@ public abstract class QueryControllerBase<T> : ControllerBase where T : class
         _lazyDbContext = new Lazy<CrudAppDbContext>(() => HttpContext.RequestServices.GetRequiredService<CrudAppDbContext>());
     }
 
-    protected abstract IQueryable<T> GetQueryable();
+    protected abstract IQueryable<T> GetQueryable(bool includeSoftDeleted);
 
     [HttpGet]
     [ProducesResponseType(Status200OK)]
-    public async Task<ActionResult<IEnumerable<T>>> Query(string? filter = null, string? orderBy = null, int? skip = null, int? take = null)
+    public async Task<ActionResult<IEnumerable<T>>> Query(string? filter = null, string? orderBy = null, int? skip = null, int? take = null, bool includeSoftDeleted = false)
     {
-        var query = GetQueryable();
+        // TODO: Move query functionality to DbContext so it can also be used directly in other places without calling the controller.
+        var query = GetQueryable(includeSoftDeleted);
         
         if (!Filter.TryApply(ref query, filter, out var error))
             return ValidationProblem(error);
@@ -47,9 +48,9 @@ public abstract class QueryControllerBase<T> : ControllerBase where T : class
 
     [HttpGet("count")]
     [ProducesResponseType(Status200OK)]
-    public async Task<ActionResult<long>> Count(string? filter = null)
+    public async Task<ActionResult<long>> Count(string? filter = null, bool includeSoftDeleted = false)
     {
-        var query = GetQueryable();
+        var query = GetQueryable(includeSoftDeleted);
 
         if (!Filter.TryApply(ref query, filter, out var error))
             return ValidationProblem(error);

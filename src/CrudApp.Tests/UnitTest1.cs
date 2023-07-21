@@ -17,7 +17,7 @@ public class UnitTest1
 
 
         Assert.Empty(db.Set<EntityChangeEvent>());
-        var batman = new SuperHero { DisplayName = "Batman" };
+        var batman = new SuperHero { SuperHeroName = "Batman" };
         db.Set<SuperHero>().Add(batman);
         await db.SaveChangesAsync();
 
@@ -29,7 +29,7 @@ public class UnitTest1
                 Assert.Equal(batman.Id, auditEvent.EntityId);
             });
 
-        batman.DisplayName = "Bruce Wayne";
+        batman.SuperHeroName = "Bruce Wayne";
         await db.SaveChangesAsync();
 
         //Assert.Collection(

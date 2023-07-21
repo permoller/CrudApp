@@ -39,7 +39,6 @@ public static class ChangeEventTracker
                 ChangeType = changeType.Value,
                 EntityType = entry.Entity.GetType().Name,
                 EntityId = entry.Entity.Id,
-                DisplayName = entry.Entity.DisplayName,
                 AuthPrincipalId = AuthorizationContext.Current?.User.Id
             };
             entityChangeEvents.Add(entityChangeEvent);
@@ -50,7 +49,6 @@ public static class ChangeEventTracker
                 var propertyChangeEvent = new PropertyChangeEvent
                 {
                     EntityChangeEventId = entityChangeEvent.Id,
-                    DisplayName = prop.Metadata.Name,
                     PropertyName = prop.Metadata.Name,
                     OldPropertyValue = changeType == ChangeType.EntityCreated ? null : prop.OriginalValue,
                     NewPropertyValue = changeType == ChangeType.EntityDeleted ? null : prop.CurrentValue
@@ -58,8 +56,7 @@ public static class ChangeEventTracker
                 entityChangeEvent.PropertyChangeEvents.Add(propertyChangeEvent);
             }
         }
-
-        db.Set<EntityChangeEvent>().AddRange(entityChangeEvents);
+        db.AddRange(entityChangeEvents);
     }
 
     private static bool IsChangeTrackingEnabled(PropertyEntry p) =>

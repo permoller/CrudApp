@@ -17,14 +17,14 @@ public class EntityChangeEventDto
 [ApiController]
 public class ChangeTrackingController : QueryControllerBase<EntityChangeEventDto>
 {
-    protected override IQueryable<EntityChangeEventDto> GetQueryable()
+    protected override IQueryable<EntityChangeEventDto> GetQueryable(bool includeSoftDeleted)
     {
         var query = from e in DbContext.Authorized<EntityChangeEvent>()
                     select new EntityChangeEventDto
                     {
                         EntityChangeEventId = e.Id,
                         EntityChangeEvent = e,
-                        PropertyChangeEvents = DbContext.Authorized<PropertyChangeEvent>().Where(p => p.EntityChangeEventId == e.Id).ToList()
+                        PropertyChangeEvents = DbContext.Authorized<PropertyChangeEvent>(includeSoftDeleted).Where(p => p.EntityChangeEventId == e.Id).ToList()
                     };
         return query.AsNoTracking();
     }

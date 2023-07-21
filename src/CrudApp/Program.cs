@@ -48,7 +48,7 @@ builder.Services.AddControllers(mvcOptions =>
 
 
 //
-// Swagger/OpenAPI
+// OpenAPI/Swagger UI
 //
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
