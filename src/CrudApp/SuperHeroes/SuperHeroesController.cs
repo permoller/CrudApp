@@ -1,6 +1,4 @@
-﻿using CrudApp.Authorization;
-using CrudApp.Controllers;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace CrudApp.SuperHeroes;

@@ -1,4 +1,6 @@
-using CrudApp.ErrorHandling;
+using CrudApp.Infrastructure.Database;
+using CrudApp.Infrastructure.Entity;
+using CrudApp.Infrastructure.ErrorHandling;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 

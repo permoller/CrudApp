@@ -1,4 +1,4 @@
-﻿using CrudApp.Database;
+﻿using CrudApp.Infrastructure.Database;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;

@@ -1,5 +1,5 @@
-using CrudApp.ChangeTracking;
-using CrudApp.Database;
+using CrudApp.Infrastructure.ChangeTracking;
+using CrudApp.Infrastructure.Database;
 using CrudApp.SuperHeroes;
 using Microsoft.Extensions.DependencyInjection;
 
