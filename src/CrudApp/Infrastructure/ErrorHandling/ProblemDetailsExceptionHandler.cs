@@ -1,5 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Http.Metadata;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.WebUtilities;
 
@@ -8,12 +11,12 @@ namespace CrudApp.Infrastructure.ErrorHandling;
 /// <summary>
 /// Return ProblemDetails response on exceptions.
 /// </summary>
-public class ProblemDetailsExceptionFilter : IExceptionFilter
+public class ProblemDetailsExceptionHandler : IExceptionFilter
 {
     private readonly ProblemDetailsFactory _problemDetailsFactory;
     private readonly IHostEnvironment _hostEnvironment;
 
-    public ProblemDetailsExceptionFilter(ProblemDetailsFactory problemDetailsFactory, IHostEnvironment hostEnvironment)
+    public ProblemDetailsExceptionHandler(ProblemDetailsFactory problemDetailsFactory, IHostEnvironment hostEnvironment)
     {
         _problemDetailsFactory = problemDetailsFactory;
         _hostEnvironment = hostEnvironment;
@@ -23,7 +26,7 @@ public class ProblemDetailsExceptionFilter : IExceptionFilter
         var problemDetails = context.Exception switch
         {
             ValidationException ex => CreateValidationProblemDetails(context.HttpContext, ex),
-            HttpStatusException ex => CreateProblemDetails(context.HttpContext, ex),
+            ProblemDetailsException ex => CreateProblemDetails(context.HttpContext, ex),
             Exception ex => CreateInternalServerErrorProblemDetails(context.HttpContext, ex)
         };
 
@@ -33,7 +36,7 @@ public class ProblemDetailsExceptionFilter : IExceptionFilter
         context.ExceptionHandled = true;
     }
 
-    private ProblemDetails CreateProblemDetails(HttpContext httpContext, HttpStatusException ex)
+    private ProblemDetails CreateProblemDetails(HttpContext httpContext, ProblemDetailsException ex)
     {
         var problemDetails = _problemDetailsFactory.CreateProblemDetails(
             httpContext,

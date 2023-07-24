@@ -4,9 +4,6 @@ namespace CrudApp.Infrastructure.Http;
 
 // Add ApiController-attribute to enable automatic model validation.
 [ApiController]
-// Add OpenAPI metadata for status 500 and 4xx
-[ProducesResponseType((int)HttpStatus.InternalServerError, Type = typeof(ProblemDetails))]
-[ProducesErrorResponseType(typeof(ProblemDetails))]
 [Route("/api/[controller]")]
 public class CrudAppControllerBase : ControllerBase
 {

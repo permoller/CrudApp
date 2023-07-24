@@ -1,6 +1,5 @@
-using CrudApp.Infrastructure.Database;
-using CrudApp.Infrastructure.Entity;
-using CrudApp.Infrastructure.ErrorHandling;
+using CrudApp.Infrastructure.OpenApi;
+using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 
@@ -38,8 +37,9 @@ builder.Services.AddProblemDetails(problemDetailsOptions =>
 //
 builder.Services.AddControllers(mvcOptions =>
 {
-    // On exception we return a problem details response https://tools.ietf.org/html/rfc7807.
-    mvcOptions.Filters.Add<ProblemDetailsExceptionFilter>();
+
+    // Convert exceptions to a problem details response https://tools.ietf.org/html/rfc7807
+    mvcOptions.Filters.Add<ProblemDetailsExceptionHandler>();
 });
 
 
@@ -52,8 +52,23 @@ builder.Services.AddControllers(mvcOptions =>
 //
 // OpenAPI/Swagger UI
 //
+
+// Add information about responses for actions.
+// Can be overwritten using ProducesResponseType-attribute on individual actions.
+builder.Services.AddTransient<IApplicationModelProvider>((_) => new ResponseMetadataProvider("application/json"));
+
+
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+
+builder.Services.AddSwaggerGen(swaggerGenOptions =>
+{
+    // Make sure non-nullable reference types are not marked as nullable.
+    swaggerGenOptions.SupportNonNullableReferenceTypes();
+
+    // Make sure all non-nullable properties are marked as required.
+    swaggerGenOptions.SchemaFilter<RequireNonNullablePropertiesSchemaFilter>();
+});
+
 
 //
 // Entity ID generation

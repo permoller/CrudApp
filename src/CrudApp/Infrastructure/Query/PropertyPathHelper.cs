@@ -7,7 +7,7 @@ public static class PropertyPathHelper
     public static List<PropertyInfo> ParsePropertyPath<T>(string path)
     {
         if(string.IsNullOrWhiteSpace(path))
-            throw new HttpStatusException(HttpStatus.BadRequest, "Missing property in filter.");
+            throw new ProblemDetailsException(HttpStatus.BadRequest, "Missing property in filter.");
         var propertyNames = path.Split('.');
         var propertyInfos = new List<PropertyInfo>(propertyNames.Length);
         PropertyInfo? propertyInfo = null;
@@ -17,7 +17,7 @@ public static class PropertyPathHelper
             propertyInfo = Array.Find(t.GetProperties(), p => p.Name.Equals(propertyName, StringComparison.OrdinalIgnoreCase));
             if (propertyInfo == default)
             {
-                throw new HttpStatusException(HttpStatus.BadRequest, $"Property {propertyName} not found on type {t.Name}.");
+                throw new ProblemDetailsException(HttpStatus.BadRequest, $"Property {propertyName} not found on type {t.Name}.");
             }
             propertyInfos.Add(propertyInfo);
         }
