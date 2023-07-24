@@ -1,5 +1,4 @@
 ﻿using CrudApp.Controllers;
-using Microsoft.AspNetCore.Mvc;
 
 namespace CrudApp.Authorization;
 

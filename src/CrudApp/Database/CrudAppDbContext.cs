@@ -2,7 +2,6 @@
 using Microsoft.EntityFrameworkCore;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace CrudApp.Database;
 

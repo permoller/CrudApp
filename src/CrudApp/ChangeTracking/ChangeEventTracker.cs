@@ -31,7 +31,7 @@ public static class ChangeEventTracker
 
             // create entity change event
             var time = DateTimeOffset.UtcNow;
-            var activityId = Activity.Current?.Id ?? "NO_ACTIVITY:" + Guid.NewGuid().ToString();
+            var activityId = Activity.Current?.Id;
             var entityChangeEvent = new EntityChangeEvent
             {
                 Time = time,

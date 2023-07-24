@@ -25,7 +25,7 @@ public class ProblemDetailsExceptionFilter : IExceptionFilter
         var problemDetails = context.Exception switch
         {
             ValidationException ex => CreateValidationProblemDetails(context.HttpContext, ex),
-            ProblemDetailsException ex => CreateProblemDetails(context.HttpContext, ex),
+            HttpStatusException ex => CreateProblemDetails(context.HttpContext, ex),
             Exception ex => CreateInternalServerErrorProblemDetails(context.HttpContext, ex)
         };
 
@@ -35,18 +35,18 @@ public class ProblemDetailsExceptionFilter : IExceptionFilter
         context.ExceptionHandled = true;
     }
 
-    private ProblemDetails CreateProblemDetails(HttpContext httpContext, ProblemDetailsException ex)
+    private ProblemDetails CreateProblemDetails(HttpContext httpContext, HttpStatusException ex)
     {
         var problemDetails = _problemDetailsFactory.CreateProblemDetails(
             httpContext,
-            statusCode: (int)ex.StatusCode,
-            title: ReasonPhrases.GetReasonPhrase((int)ex.StatusCode),
+            statusCode: (int)ex.HttpStatus,
+            title: ReasonPhrases.GetReasonPhrase((int)ex.HttpStatus),
             type: $"/errors/{GetType().Name}",
             detail: ex.Message);
 
-        if (_hostEnvironment.IsDevelopment() && ex.InnerException is not null)
+        if (_hostEnvironment.IsDevelopment())
         {
-            problemDetails.Extensions.Add("exception", ex.InnerException.ToString());
+            problemDetails.Extensions.Add("exception", ex.ToString());
         }
         return problemDetails;
     }

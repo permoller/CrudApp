@@ -1,5 +1,4 @@
-﻿
-namespace CrudApp.SuperHeroes;
+﻿namespace CrudApp.SuperHeroes;
 
 public sealed class SuperHero : EntityBase
 {

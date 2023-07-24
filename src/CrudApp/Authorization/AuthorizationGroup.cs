@@ -1,4 +1,6 @@
-﻿namespace CrudApp.Authorization;
+﻿using CrudApp.Entity;
+
+namespace CrudApp.Authorization;
 
 /// <summary>
 /// An <see cref="AuthorizationGroup"/> is a scope that identifies a collection of entities

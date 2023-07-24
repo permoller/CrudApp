@@ -1,4 +1,3 @@
-using CrudApp.API;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CrudApp.API.Controllers;

@@ -1,6 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
-
-namespace CrudApp.Authorization;
+﻿namespace CrudApp.Authorization;
 
 /// <summary>
 /// Defines that an entity is included in a group.

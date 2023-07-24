@@ -45,8 +45,7 @@ public abstract class EntityControllerBase<T> : QueryControllerBase<T> where T :
     {
         if (entity.Id != id)
         {
-            ModelState.AddModelError(nameof(entity.Id), "Id in body and in URL must be the same.");
-            return ValidationProblem(ModelState);
+            return BadRequest("Id in body and in URL must be the same.");
         }
         var existing = await DbContext.Authorized<T>().FirstOrDefaultAsync(e => e.Id == id);
         if (existing is null)
