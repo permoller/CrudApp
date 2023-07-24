@@ -1,4 +1,4 @@
-﻿namespace CrudApp.Infrastructure.Controllers;
+﻿namespace CrudApp.Infrastructure.Http;
 
 /// <summary>
 /// These are the HTTP status codes that are returned by the application.

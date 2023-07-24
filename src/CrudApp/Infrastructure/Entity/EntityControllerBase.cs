@@ -1,7 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using CrudApp.Infrastructure.Query;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace CrudApp.Infrastructure.Controllers;
+namespace CrudApp.Infrastructure.Entity;
+
 
 public abstract class EntityControllerBase<T> : QueryControllerBase<T> where T : EntityBase
 {

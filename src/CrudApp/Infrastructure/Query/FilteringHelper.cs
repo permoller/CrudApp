@@ -1,74 +1,73 @@
-﻿using Microsoft.EntityFrameworkCore.Metadata.Internal;
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text.RegularExpressions;
 
-namespace CrudApp.Infrastructure.Controllers;
+namespace CrudApp.Infrastructure.Query;
 
+public class FilteringParams
+{
+    public string? Filter { get; set; }
+}
 
-public static class Filter
+public static class FilteringHelper
 {
     [StringSyntax(StringSyntaxAttribute.Regex)]
     private const string _filterConditionRegex = "(?<expression>(?<property>[^ ]+) (?<comparison>[^ ]+) (?<value>(?:[^ ]| (?!AND ))+))";
     private static readonly Regex _filterRegex = new Regex($"^{_filterConditionRegex}(?: AND {_filterConditionRegex})*$", RegexOptions.Compiled);
 
-    public static bool TryApply<T>(ref IQueryable<T> query, string? filterString, [NotNullWhen(false)] out string? error)
+    public static IQueryable<T> ApplyFiltering<T>(this IQueryable<T> query, FilteringParams filteringParams)
     {
-        if (TryParse<T>(filterString, out var conditions, out error))
-        {
+        if (filteringParams == default)
+            return query;
+
+        var conditions = Parse<T>(filteringParams.Filter);
+
+        if(conditions.Count > 0)
             query = query.Where(ToPredicate<T>(conditions));
-            return true;
-        }
-        return false;
+
+        return query;
     }
 
-    private static bool TryParse<T>(
-        string? filterString,
-        [NotNullWhen(true)] out List<FilterCondition>? conditions,
-        [NotNullWhen(false)] out string? error)
+    private static List<FilterCondition> Parse<T>(string? filterString)
     {
-        conditions = new List<FilterCondition>();
-        error = null;
+        var conditions = new List<FilterCondition>();
 
         if (string.IsNullOrEmpty(filterString))
         {
-            return true;
+            return conditions;
         }
 
         var match = _filterRegex.Match(filterString);
         if (!match.Success)
         {
-            error = "Invalid filter syntax.";
-            return false;
+            throw new HttpStatusException(HttpStatus.BadRequest, "Invalid filter syntax.");
         }
 
         var expressionCount = match.Groups["expression"].Captures.Count;
         for (int i = 0; i < expressionCount; i++)
         {
             var propertyPath = match.Groups["property"].Captures[i].Value;
-            if (!PropertyPathParser.TryParsePropertyPath<T>(propertyPath, out var propertyInfos, out error))
-            {
-                return false;
-            }
+            var propertyInfos = PropertyPathHelper.ParsePropertyPath<T>(propertyPath);
 
             var valueAsString = match.Groups["value"].Captures[i].Value;
+            var lastProperty = propertyInfos[propertyInfos.Count - 1];
+            var valueType = lastProperty.PropertyType;
             object? value;
             try
             {
-                value = Convert.ChangeType(valueAsString, propertyInfos.Last().PropertyType);
+                value = Convert.ChangeType(valueAsString, valueType);
             }
             catch (Exception ex)
             {
-                error = $"Could not convert value {valueAsString} to {propertyInfos.Last().PropertyType.Name}. " + ex.Message;
-                return false;
+                throw new HttpStatusException(HttpStatus.BadRequest, $"Could not convert value {valueAsString} to {valueType.Name}.", ex);
             }
 
             var comparisonString = match.Groups["comparison"].Captures[i].Value;
             var comparison = Enum.Parse<QueryFilterComparison>(comparisonString);
             conditions.Add(new(propertyInfos, comparison, value));
         }
-        return true;
+        return conditions;
     }
 
     private static Expression<Func<T, bool>> ToPredicate<T>(List<FilterCondition> conditions)

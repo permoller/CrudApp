@@ -1,6 +1,4 @@
-﻿using CrudApp.Infrastructure.Controllers;
-
-namespace CrudApp.Infrastructure.Authorization;
+﻿namespace CrudApp.Infrastructure.Authorization;
 
 [Tags("Authorization")]
 public sealed class AuthorizationGroupController : EntityControllerBase<AuthorizationGroup> { }
