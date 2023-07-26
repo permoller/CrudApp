@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
-using Microsoft.AspNetCore.Mvc.Routing;
 
 namespace CrudApp.Infrastructure.OpenApi;
 
@@ -31,76 +30,62 @@ public class ResponseMetadataProvider : IApplicationModelProvider
         {
             foreach (var action in controller.Actions)
             {
-                if (!IsSuccessResponseDefined(action))
-                {
-                    var returnType = action.ActionMethod.ReturnType;
-
-                    if (returnType.IsGenericType && _genericTaskTypes.Contains(returnType.GetGenericTypeDefinition()))
-                        returnType = returnType.GetGenericArguments()[0];
-
-                    if (returnType.IsAssignableTo(typeof(IActionResult)) || returnType.IsAssignableTo(typeof(IConvertToActionResult)))
-                        throw new NotSupportedException($"Actions that return {nameof(IActionResult)} or {nameof(IConvertToActionResult)} should explicitly specify the appropate success response types using {nameof(ProducesResponseTypeAttribute)}. This action does not: {action.DisplayName}.");
-
-                    action.Filters.Add(new ProducesResponseTypeAttribute(returnType, (int)HttpStatus.Ok));
-                }
-
-                foreach (var statusCode in Enum.GetValues<HttpStatus>().Where(s => (int)s >= 400))
-                {
-                    switch (statusCode)
-                    {
-                        case HttpStatus.Ok:
-                        case HttpStatus.Created:
-                        case HttpStatus.NoContent:
-                            continue;
-                        case HttpStatus.BadRequest:
-                        case HttpStatus.Unauthorized:
-                        case HttpStatus.Forbidden:
-                            break;
-                        case HttpStatus.NotFound:
-                            if (!HasHttpMethod(action, "POST"))
-                                continue;
-                            break;
-                        case HttpStatus.Conflict:
-                            if (!HasHttpMethod(action, "PUT"))
-                                continue;
-                            break;
-                        case HttpStatus.InternalServerError:
-                            break;
-                        default:
-                            throw new NotSupportedException($"HTTP status {statusCode} needs to be implemented.");
-                    }
-                    if (!IsResponseDefined(action, (int)statusCode))
-                    {
-                        action.Filters.Add(new ProducesResponseTypeAttribute(typeof(ProblemDetails), (int)statusCode));
-                    }
-                }
-
-                if (!IsContentTypeDefined(action))
-                {
-                    action.Filters.Add(new ProducesAttribute(_contentType));
-                }
+                EnsureSuccessResponseDefined(action);
+                EnsureErrorResponsesDefined(action);
+                EnsureContentTypeDefined(action, _contentType);
             }
         }
     }
 
-    private static bool IsSuccessResponseDefined(ActionModel action)
+    private static void EnsureSuccessResponseDefined(ActionModel action)
     {
-        return action.ActionMethod.GetCustomAttributes(true).OfType<IApiResponseMetadataProvider>().Any(f => f.StatusCode >= 200 && f.StatusCode < 300);
+        var isSuccessResponseDefined = GetAttributes(action)
+            .OfType<IApiResponseMetadataProvider>()
+            .Any(x => x.StatusCode >= 200 && x.StatusCode < 300);
+
+        if (!isSuccessResponseDefined)
+        {
+            var returnType = action.ActionMethod.ReturnType;
+
+            if (returnType.IsGenericType && _genericTaskTypes.Contains(returnType.GetGenericTypeDefinition()))
+                returnType = returnType.GetGenericArguments()[0];
+
+            if (returnType.IsAssignableTo(typeof(IActionResult)) || returnType.IsAssignableTo(typeof(IConvertToActionResult)))
+                throw new NotSupportedException($"Actions that return {nameof(IActionResult)} or {nameof(IConvertToActionResult)} should explicitly specify the appropate success response types using {nameof(ProducesResponseTypeAttribute)}. This action does not: {action.DisplayName}.");
+
+            action.Filters.Add(new ProducesResponseTypeAttribute(returnType, (int)HttpStatus.Ok));
+        }
     }
 
-    private static bool IsResponseDefined(ActionModel action, int statusCode)
+    private static void EnsureErrorResponsesDefined(ActionModel action)
     {
-        return action.ActionMethod.GetCustomAttributes(true).OfType<IApiResponseMetadataProvider>().Any(f => f.StatusCode == statusCode);
+        var existingStatusCodes = GetAttributes(action)
+            .OfType<IApiResponseMetadataProvider>()
+            .Select(x => x.StatusCode)
+            .ToList();
+        foreach (var statusCode in Enum.GetValues<HttpStatus>().Where(s => (int)s >= 400))
+        {
+            if (!existingStatusCodes.Contains((int)statusCode))
+            {
+                action.Filters.Add(new ProducesResponseTypeAttribute(typeof(ProblemDetails), (int)statusCode));
+            }
+        }
     }
 
-    private static bool IsContentTypeDefined(ActionModel action)
+    private static void EnsureContentTypeDefined(ActionModel action, string contentType)
     {
-        return action.ActionMethod.GetCustomAttributes(true).OfType<ProducesAttribute>().Any(a => a.ContentTypes.Any());
+        var isContentTypeDefined = GetAttributes(action)
+            .OfType<ProducesAttribute>()
+            .Any();
+        if (!isContentTypeDefined)
+        {
+            action.Filters.Add(new ProducesAttribute(contentType));
+        }
     }
 
-    private static bool HasHttpMethod(ActionModel action, params string[] methods)
+    private static IEnumerable<object> GetAttributes(ActionModel action)
     {
-        return action.ActionMethod.GetCustomAttributes(true).OfType<IActionHttpMethodProvider>()
-            .Any(a => a.HttpMethods.Any(method => methods.Contains(method, StringComparer.OrdinalIgnoreCase)));
+        return action.ActionMethod.GetCustomAttributes(true)
+            .Concat(action.Controller.ControllerType.GetCustomAttributes(true));
     }
 }
