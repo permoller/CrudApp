@@ -41,7 +41,7 @@ public static class FilteringHelper
         var match = _filterRegex.Match(filterString);
         if (!match.Success)
         {
-            throw new ProblemDetailsException(HttpStatus.BadRequest, "Invalid filter syntax.");
+            throw new ApiResponseException(HttpStatus.BadRequest, "Invalid filter syntax.");
         }
 
         var expressionCount = match.Groups["expression"].Captures.Count;
@@ -60,7 +60,7 @@ public static class FilteringHelper
             }
             catch (Exception ex)
             {
-                throw new ProblemDetailsException(HttpStatus.BadRequest, $"Could not convert value {valueAsString} to {valueType.Name}.", ex);
+                throw new ApiResponseException(HttpStatus.BadRequest, $"Could not convert value {valueAsString} to {valueType.Name}.", ex);
             }
 
             var comparisonString = match.Groups["comparison"].Captures[i].Value;

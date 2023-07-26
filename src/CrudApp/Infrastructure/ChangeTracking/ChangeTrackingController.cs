@@ -7,20 +7,20 @@ public class EntityChangeEventDto
 {
     [Key]
     public EntityId EntityChangeEventId { get; set; }
-    public EntityChangeEvent EntityChangeEvent { get; set; }
-    public List<PropertyChangeEvent> PropertyChangeEvents { get; set; }
+    public EntityChange EntityChangeEvent { get; set; }
+    public List<PropertyChange> PropertyChangeEvents { get; set; }
 }
 
 public class ChangeTrackingController : QueryControllerBase<EntityChangeEventDto>
 {
     protected override IQueryable<EntityChangeEventDto> GetQueryable(bool includeSoftDeleted)
     {
-        var query = from e in DbContext.Authorized<EntityChangeEvent>()
+        var query = from e in DbContext.Authorized<EntityChange>()
                     select new EntityChangeEventDto
                     {
                         EntityChangeEventId = e.Id,
                         EntityChangeEvent = e,
-                        PropertyChangeEvents = DbContext.Authorized<PropertyChangeEvent>(includeSoftDeleted).Where(p => p.EntityChangeEventId == e.Id).ToList()
+                        PropertyChangeEvents = DbContext.Authorized<PropertyChange>(includeSoftDeleted).Where(p => p.EntityChangeId == e.Id).ToList()
                     };
         return query;
     }

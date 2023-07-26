@@ -2,7 +2,7 @@
 public enum ChangeType { EntityCreated, EntityUpdated, EntityDeleted }
 
 [SkipChangeTracking]
-public sealed class EntityChangeEvent : EntityBase
+public sealed class EntityChange : EntityBase
 {
     [EnumValueConverter]
     public ChangeType ChangeType { get; set; }
@@ -12,5 +12,5 @@ public sealed class EntityChangeEvent : EntityBase
     public DateTimeOffset Time { get; set; }
     public string? ActivityId { get; set; }
 
-    public ICollection<PropertyChangeEvent> PropertyChangeEvents { get; set; } = new List<PropertyChangeEvent>();
+    public ICollection<PropertyChange> PropertyChanges { get; set; } = new List<PropertyChange>();
 }

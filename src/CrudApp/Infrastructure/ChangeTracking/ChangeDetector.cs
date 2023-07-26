@@ -5,11 +5,11 @@ using System.Reflection;
 
 namespace CrudApp.Infrastructure.ChangeTracking;
 
-public static class ChangeEventTracker
+public static class ChangeDetector
 {
-    public static void AddChangeEvents(CrudAppDbContext db)
+    public static void AddChangeRecords(CrudAppDbContext db)
     {
-        var entityChangeEvents = new List<EntityChangeEvent>();
+        var entityChangeEvents = new List<EntityChange>();
 
         foreach (var entry in db.ChangeTracker.Entries<EntityBase>().Where(IsChangeTrackingEnabled))
         {
@@ -31,7 +31,7 @@ public static class ChangeEventTracker
             // create entity change event
             var time = DateTimeOffset.UtcNow;
             var activityId = Activity.Current?.Id;
-            var entityChangeEvent = new EntityChangeEvent
+            var entityChangeEvent = new EntityChange
             {
                 Time = time,
                 ActivityId = activityId,
@@ -45,14 +45,14 @@ public static class ChangeEventTracker
             // create property change event for each changed property
             foreach (var prop in entry.Properties.Where(p => IsChangeTrackingEnabled(p) && (p.IsModified || changeType != ChangeType.EntityUpdated)))
             {
-                var propertyChangeEvent = new PropertyChangeEvent
+                var propertyChangeEvent = new PropertyChange
                 {
-                    EntityChangeEventId = entityChangeEvent.Id,
+                    EntityChangeId = entityChangeEvent.Id,
                     PropertyName = prop.Metadata.Name,
                     OldPropertyValue = changeType == ChangeType.EntityCreated ? null : prop.OriginalValue,
                     NewPropertyValue = changeType == ChangeType.EntityDeleted ? null : prop.CurrentValue
                 };
-                entityChangeEvent.PropertyChangeEvents.Add(propertyChangeEvent);
+                entityChangeEvent.PropertyChanges.Add(propertyChangeEvent);
             }
         }
         db.AddRange(entityChangeEvents);

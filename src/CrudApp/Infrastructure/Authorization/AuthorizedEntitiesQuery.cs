@@ -7,7 +7,7 @@ public static class AuthorizedEntitiesQuery
 {
     public static IQueryable<T> Authorized<T>(this CrudAppDbContext dbContext, bool includeSoftDeleted = false) where T : EntityBase
     {
-        var authUserId = AuthorizationContext.Current?.User.Id ?? throw new ProblemDetailsException(HttpStatus.Unauthorized);
+        var authUserId = AuthorizationContext.Current?.User.Id ?? throw new ApiResponseException(HttpStatus.Unauthorized);
         var authorizedEntityIds = dbContext.All<User>(includeSoftDeleted)
             .Where(u => u.Id == authUserId)
             .SelectMany(u => u.AuthorizationGroupMemberships
@@ -27,8 +27,8 @@ public static class AuthorizedEntitiesQuery
         {
             var exists = await dbContext.All<T>().AnyAsync(e => e.Id == id);
             if (exists)
-                throw new ProblemDetailsException(HttpStatus.Forbidden);
-            throw new ProblemDetailsException(HttpStatus.NotFound);
+                throw new ApiResponseException(HttpStatus.Forbidden);
+            throw new ApiResponseException(HttpStatus.NotFound);
         }
         return entity;
     }

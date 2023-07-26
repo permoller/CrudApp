@@ -16,13 +16,13 @@ public class UnitTest1
         var db = scope.ServiceProvider.GetRequiredService<CrudAppDbContext>();
 
 
-        Assert.Empty(db.Set<EntityChangeEvent>());
+        Assert.Empty(db.Set<EntityChange>());
         var batman = new SuperHero { SuperHeroName = "Batman" };
         db.Set<SuperHero>().Add(batman);
         await db.SaveChangesAsync();
 
         Assert.Collection(
-            db.Set<EntityChangeEvent>(),
+            db.Set<EntityChange>(),
             auditEvent =>
             {
                 Assert.Equal(ChangeType.EntityCreated, auditEvent.ChangeType);

@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CrudApp.Infrastructure.Query;
 
-public abstract class QueryControllerBase<T> : CrudAppControllerBase where T : class
+public abstract class QueryControllerBase<T> : CrudAppApiControllerBase where T : class
 {
     protected abstract IQueryable<T> GetQueryable(bool includeSoftDeleted);
 

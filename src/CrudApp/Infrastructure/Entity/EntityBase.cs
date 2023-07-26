@@ -72,7 +72,7 @@ public abstract class EntityBase
     [NotMapped]
     public virtual string DisplayName => Id.ToString();
 
-    public ICollection<EntityChangeEvent> EntityChangeEvents { get; set; } = new List<EntityChangeEvent>();
+    public ICollection<EntityChange> EntityChangeEvents { get; set; } = new List<EntityChange>();
 
     public override string ToString()
     {

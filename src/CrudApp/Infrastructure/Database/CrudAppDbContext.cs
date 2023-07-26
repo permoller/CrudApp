@@ -21,7 +21,7 @@ public class CrudAppDbContext : DbContext
                 .Entity(entityType)
                 .HasMany(nameof(EntityBase.EntityChangeEvents))
                 .WithOne()
-                .HasForeignKey(nameof(EntityChangeEvent.EntityId));
+                .HasForeignKey(nameof(EntityChange.EntityId));
         }
         // Add converters
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())
@@ -64,7 +64,7 @@ public class CrudAppDbContext : DbContext
             entry.Entity.Version += 1;
 
         // Add change tracking events that will also be saved to the database.
-        ChangeEventTracker.AddChangeEvents(dbContext);
+        ChangeDetector.AddChangeRecords(dbContext);
 
     }
 

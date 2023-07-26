@@ -7,24 +7,24 @@ namespace CrudApp.Infrastructure.ErrorHandling;
 /// Contains that HTTP status code and optionally a message with details to be returned to the client.
 /// </summary>
 [Serializable]
-public sealed class ProblemDetailsException : Exception
+public sealed class ApiResponseException : Exception
 {
-    public ProblemDetailsException(HttpStatus clientError) : base()
+    public ApiResponseException(HttpStatus clientError) : base()
     {
         HttpStatus = clientError;
     }
 
-    public ProblemDetailsException(HttpStatus clientError, string? message) : base(message)
+    public ApiResponseException(HttpStatus clientError, string? message) : base(message)
     {
         HttpStatus = clientError;
     }
 
-    public ProblemDetailsException(HttpStatus error, string? message, Exception? innerException) : base(message, innerException)
+    public ApiResponseException(HttpStatus error, string? message, Exception? innerException) : base(message, innerException)
     {
         HttpStatus = error;
     }
 
-    private ProblemDetailsException(SerializationInfo info, StreamingContext context) : base(info, context)
+    private ApiResponseException(SerializationInfo info, StreamingContext context) : base(info, context)
     {
         HttpStatus = (HttpStatus)info.GetValue(nameof(HttpStatus), typeof(HttpStatus))!;
     }

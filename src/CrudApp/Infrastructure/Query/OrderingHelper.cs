@@ -31,7 +31,7 @@ public static class OrderingHelper
 
         if ((orderingParams.Skip.HasValue || orderingParams.Take.HasValue) && string.IsNullOrEmpty(orderingParams.OrderBy))
         {
-            throw new ProblemDetailsException(HttpStatus.BadRequest,
+            throw new ApiResponseException(HttpStatus.BadRequest,
                 $"{nameof(OrderingParams.Skip)} and {nameof(OrderingParams.Take)} only makes sense in combination with {nameof(OrderingParams.OrderBy)}.");
         }
 
@@ -40,7 +40,7 @@ public static class OrderingHelper
 
         var match = _orderByRegex.Match(orderingParams.OrderBy);
         if (!match.Success)
-            throw new ProblemDetailsException(HttpStatus.BadRequest, "Invalid orderBy syntax.");
+            throw new ApiResponseException(HttpStatus.BadRequest, "Invalid orderBy syntax.");
 
         var count = match.Groups["expression"].Captures.Count;
         for (var i = 0; i < count; i++)
