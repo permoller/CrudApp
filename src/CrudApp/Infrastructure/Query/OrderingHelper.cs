@@ -16,7 +16,7 @@ public static class OrderingHelper
 {
 
     [StringSyntax(StringSyntaxAttribute.Regex)]
-    private const string _singleOrderByRegex = "(?<expression>(?<property>[^ ]+)(?<descending>| desc))";
+    private const string _singleOrderByRegex = "(?<expression>(?<property>[^ ,]+)(?<descending>| desc))";
     private static readonly Regex _orderByRegex = new Regex($"^{_singleOrderByRegex}(?:,{_singleOrderByRegex})*$", RegexOptions.Compiled);
 
 #pragma warning disable S3011 // Reflection should not be used to increase accessibility of classes, methods, or fields
