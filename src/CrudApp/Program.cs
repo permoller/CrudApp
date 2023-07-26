@@ -27,7 +27,19 @@ builder.Services.AddProblemDetails(problemDetailsOptions =>
 {
     problemDetailsOptions.CustomizeProblemDetails = problemDetailsContext =>
     {
-        problemDetailsContext.ProblemDetails.Extensions.Add("hello", "world");
+        problemDetailsContext.ProblemDetails.Extensions.Add("serverTimeUtc", DateTimeOffset.UtcNow);
+
+        var request = problemDetailsContext.HttpContext?.Request;
+        if (request is not null)
+        {
+            var path = request.Path.Value;
+            var controller = request.RouteValues["controller"]?.ToString();
+            var action = request.RouteValues["action"]?.ToString();
+
+            problemDetailsContext.ProblemDetails.Extensions.Add("path", path);
+            problemDetailsContext.ProblemDetails.Extensions.Add("controller", controller);
+            problemDetailsContext.ProblemDetails.Extensions.Add("action", action);
+        }
     };
 });
 

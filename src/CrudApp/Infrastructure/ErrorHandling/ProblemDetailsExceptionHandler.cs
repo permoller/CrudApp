@@ -30,8 +30,6 @@ public class ProblemDetailsExceptionHandler : IExceptionFilter
             Exception ex => CreateInternalServerErrorProblemDetails(context.HttpContext, ex)
         };
 
-        // TODO: Add more information like controller, action and url. A timestamp may also be missing.
-
         context.Result = new ObjectResult(problemDetails) { StatusCode = problemDetails.Status };
         context.ExceptionHandled = true;
     }
