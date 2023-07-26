@@ -7,7 +7,7 @@ public abstract class QueryControllerBase<T> : CrudAppControllerBase where T : c
 {
     protected abstract IQueryable<T> GetQueryable(bool includeSoftDeleted);
 
-    [HttpGet]
+    [HttpGet("query")]
     public async Task<IEnumerable<T>> Query([FromQuery] FilteringParams filteringParams, [FromQuery] OrderingParams orderingParams, bool includeSoftDeleted = false)
     {
         var queryable =
