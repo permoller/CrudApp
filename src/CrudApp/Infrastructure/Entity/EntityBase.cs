@@ -27,7 +27,6 @@ public abstract class EntityBase
     /// </summary>
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.None)]
-    [JsonInclude]
     public EntityId Id
     {
         get
@@ -45,7 +44,7 @@ public abstract class EntityBase
             return _id!.Value;
         }
 
-        private set
+        set
         {
             lock (_idLock)
             {
