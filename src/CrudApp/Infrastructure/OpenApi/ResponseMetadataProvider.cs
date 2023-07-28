@@ -2,6 +2,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
+using Microsoft.AspNetCore.Mvc.Controllers;
+using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace CrudApp.Infrastructure.OpenApi;
 
@@ -11,6 +13,7 @@ namespace CrudApp.Infrastructure.OpenApi;
 public class ResponseMetadataProvider : IApplicationModelProvider
 {
     private static readonly Type[] _genericTaskTypes = new[] { typeof(Task<>), typeof(ValueTask<>) };
+    private static readonly Type[] _voidReturnTypes = new[] { typeof(void), typeof(Task), typeof(ValueTask) };
     private readonly string _contentType;
 
     public int Order => 0;
@@ -53,7 +56,17 @@ public class ResponseMetadataProvider : IApplicationModelProvider
             if (returnType.IsAssignableTo(typeof(IActionResult)) || returnType.IsAssignableTo(typeof(IConvertToActionResult)))
                 throw new NotSupportedException($"Actions that return {nameof(IActionResult)} or {nameof(IConvertToActionResult)} should explicitly specify the appropate success response types using {nameof(ProducesResponseTypeAttribute)}. This action does not: {action.DisplayName}.");
 
-            action.Filters.Add(new ProducesResponseTypeAttribute(returnType, (int)HttpStatus.Ok));
+            if (_voidReturnTypes.Contains(returnType))
+            {
+                // By default ASP.NET MVC returns status 200 OK for void-actions.
+                // We change that to 204 No Content
+                action.Filters.Add(new ReturnNoContentStatusCode());
+                action.Filters.Add(new ProducesResponseTypeAttribute((int)HttpStatus.NoContent));
+            }
+            else
+            {
+                action.Filters.Add(new ProducesResponseTypeAttribute(returnType, (int)HttpStatus.Ok));
+            }
         }
     }
 
@@ -87,5 +100,19 @@ public class ResponseMetadataProvider : IApplicationModelProvider
     {
         return action.ActionMethod.GetCustomAttributes(true)
             .Concat(action.Controller.ControllerType.GetCustomAttributes(true));
+    }
+
+    private sealed class ReturnNoContentStatusCode : IResultFilter
+    {
+        /// <inheritdoc/>
+        public void OnResultExecuting(ResultExecutingContext context)
+        {
+            context.HttpContext.Response.StatusCode = (int)HttpStatus.NoContent;
+        }
+
+        /// <inheritdoc/>
+        public void OnResultExecuted(ResultExecutedContext context)
+        {
+        }
     }
 }
