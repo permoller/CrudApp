@@ -49,8 +49,7 @@ public class ProblemDetailsExceptionHandler : IExceptionFilter
     private ProblemDetails CreateValidationProblemDetails(HttpContext httpContext, ValidationException ex) =>
         _problemDetailsFactory.CreateValidationProblemDetails(
             httpContext,
-            ex.ModelState,
-            detail: ex.Message);
+            ex.ModelState);
 
     private ProblemDetails CreateInternalServerErrorProblemDetails(HttpContext httpContext, Exception ex)
     {
