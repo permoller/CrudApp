@@ -1,4 +1,5 @@
 using CrudApp.Infrastructure.OpenApi;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
@@ -21,39 +22,14 @@ builder.Services.AddDbContext<CrudAppDbContext>(dbContextOptionsBuilder =>
 
 
 //
-// ProblemDetails
-//
-builder.Services.AddProblemDetails(problemDetailsOptions =>
-{
-    problemDetailsOptions.CustomizeProblemDetails = problemDetailsContext =>
-    {
-        problemDetailsContext.ProblemDetails.Extensions.Add("serverTimeUtc", DateTimeOffset.UtcNow);
-
-        var request = problemDetailsContext.HttpContext?.Request;
-        if (request is not null)
-        {
-            var path = request.Path.Value;
-            var controller = request.RouteValues["controller"]?.ToString();
-            var action = request.RouteValues["action"]?.ToString();
-
-            problemDetailsContext.ProblemDetails.Extensions.Add("path", path);
-            problemDetailsContext.ProblemDetails.Extensions.Add("controller", controller);
-            problemDetailsContext.ProblemDetails.Extensions.Add("action", action);
-        }
-    };
-});
-
-
-//
 // Controllers
 //
-builder.Services.AddControllers(mvcOptions =>
-{
+builder.Services.AddControllers();
 
-    // Convert exceptions to a problem details response https://tools.ietf.org/html/rfc7807
-    mvcOptions.Filters.Add<ProblemDetailsExceptionHandler>();
-});
-
+//
+// Error handling / ProblemDetails
+//
+builder.Services.AddProblemDetailsExceptionHandler();
 
 // 
 // Lozalization

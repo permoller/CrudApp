@@ -3,6 +3,10 @@ using System.Runtime.Serialization;
 
 namespace CrudApp.Infrastructure.ErrorHandling;
 
+/// <summary>
+/// Indicates the request did not succeed due to an invalid model (bad request).
+/// Contains errors per property.
+/// </summary>
 [Serializable]
 public sealed class ValidationException : Exception
 {

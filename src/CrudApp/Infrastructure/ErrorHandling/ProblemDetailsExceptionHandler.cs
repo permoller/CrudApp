@@ -18,12 +18,13 @@ public class ProblemDetailsExceptionHandler : IExceptionFilter
         _problemDetailsFactory = problemDetailsFactory;
         _hostEnvironment = hostEnvironment;
     }
+
     public void OnException(ExceptionContext context)
     {
         var problemDetails = context.Exception switch
         {
-            ValidationException ex => CreateValidationProblemDetails(context.HttpContext, ex),
             ApiResponseException ex => CreateProblemDetails(context.HttpContext, ex),
+            ValidationException ex => CreateValidationProblemDetails(context.HttpContext, ex),
             Exception ex => CreateInternalServerErrorProblemDetails(context.HttpContext, ex)
         };
 
