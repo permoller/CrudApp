@@ -2,9 +2,9 @@
 
 namespace CrudApp.Infrastructure.ErrorHandling;
 
-public static class ProblemDetailsServiceCollectionExtensions
+public static class ErrorHandlingCollectionExtensions
 {
-    public static IServiceCollection AddProblemDetailsExceptionHandler(this IServiceCollection services)
+    public static IServiceCollection AddCrudAppExceptionHandling(this IServiceCollection services)
     {
         // Convert exceptions to a problem details response https://tools.ietf.org/html/rfc7807
         services.Configure<MvcOptions>(options =>
