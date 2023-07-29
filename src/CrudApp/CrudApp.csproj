@@ -18,9 +18,5 @@
   <ItemGroup>
     <InternalsVisibleTo Include="CrudApp.Tests" />
   </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Infrastructure\Authentication\" />
-  </ItemGroup>
   
 </Project>

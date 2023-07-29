@@ -1,3 +1,4 @@
+using CrudApp.Infrastructure.Authentication;
 using CrudApp.Infrastructure.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -7,6 +8,7 @@ builder
     .Services
     .AddLogging(loggingBuilder => loggingBuilder.ClearProviders().AddJsonConsole())
     .AddCrudAppExceptionHandling()
+    .AddCrudAppAuthentication()
     .AddCrudAppOpenApi()
     //.AddLocalization()
     .AddCrudAppDbContext()
@@ -27,6 +29,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 app.UseHttpsRedirection();
+app.UseRouting();
+app.UseAuthentication();
+app.UseCrudAppAuthorizationContext();
 app.UseAuthorization();
 app.MapControllers();
 app.Run();

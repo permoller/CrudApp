@@ -46,6 +46,9 @@ public class ProblemDetailsExceptionHandler : IAsyncExceptionFilter
             return;
         
 
+        if (problemDetails.Status == 401)
+            await context.HttpContext.ChallengeAsync();
+        else
             context.Result = new ObjectResult(problemDetails) { StatusCode = problemDetails.Status };
         context.ExceptionHandled = true;
     }
