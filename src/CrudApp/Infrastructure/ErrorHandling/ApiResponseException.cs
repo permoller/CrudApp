@@ -9,28 +9,31 @@ namespace CrudApp.Infrastructure.ErrorHandling;
 [Serializable]
 public sealed class ApiResponseException : Exception
 {
-    public ApiResponseException(HttpStatus clientError) : base()
+    public bool HasMessage { get; private set; }
+
+    public ApiResponseException(HttpStatus status) : this(status, null)
     {
-        HttpStatus = clientError;
     }
 
-    public ApiResponseException(HttpStatus clientError, string? message) : base(message)
+    public ApiResponseException(HttpStatus status, string? message) : this(status, message, null)
     {
-        HttpStatus = clientError;
     }
 
-    public ApiResponseException(HttpStatus error, string? message, Exception? innerException) : base(message, innerException)
+    public ApiResponseException(HttpStatus status, string? message, Exception? innerException) : base(message, innerException)
     {
-        HttpStatus = error;
+        HasMessage = !string.IsNullOrEmpty(message);
+        HttpStatus = status;
     }
 
     private ApiResponseException(SerializationInfo info, StreamingContext context) : base(info, context)
     {
         HttpStatus = (HttpStatus)info.GetValue(nameof(HttpStatus), typeof(HttpStatus))!;
+        HasMessage = (bool)info.GetValue(nameof(HasMessage), typeof(bool))!;
     }
 
     public override void GetObjectData(SerializationInfo info, StreamingContext context)
     {
+        info.AddValue(nameof(HasMessage), HasMessage);
         info.AddValue(nameof(HttpStatus), HttpStatus);
         base.GetObjectData(info, context);
     }

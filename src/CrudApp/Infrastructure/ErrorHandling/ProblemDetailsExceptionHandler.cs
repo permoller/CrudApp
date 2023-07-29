@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.WebUtilities;
@@ -8,19 +9,25 @@ namespace CrudApp.Infrastructure.ErrorHandling;
 /// <summary>
 /// Return ProblemDetails response on exceptions.
 /// </summary>
-public class ProblemDetailsExceptionHandler : IExceptionFilter
+public class ProblemDetailsExceptionHandler : IAsyncExceptionFilter
 {
     private readonly ProblemDetailsFactory _problemDetailsFactory;
     private readonly IHostEnvironment _hostEnvironment;
+    private readonly ILogger<ProblemDetailsExceptionHandler> _logger;
 
-    public ProblemDetailsExceptionHandler(ProblemDetailsFactory problemDetailsFactory, IHostEnvironment hostEnvironment)
+    public ProblemDetailsExceptionHandler(
+        ProblemDetailsFactory problemDetailsFactory,
+        IHostEnvironment hostEnvironment,
+        ILogger<ProblemDetailsExceptionHandler> logger)
     {
         _problemDetailsFactory = problemDetailsFactory;
         _hostEnvironment = hostEnvironment;
+        _logger = logger;
     }
 
-    public void OnException(ExceptionContext context)
+    public async Task OnExceptionAsync(ExceptionContext context)
     {
+        
         var problemDetails = context.Exception switch
         {
             ApiResponseException ex => CreateProblemDetails(context.HttpContext, ex),
@@ -28,7 +35,18 @@ public class ProblemDetailsExceptionHandler : IExceptionFilter
             Exception ex => CreateInternalServerErrorProblemDetails(context.HttpContext, ex)
         };
 
-        context.Result = new ObjectResult(problemDetails) { StatusCode = problemDetails.Status };
+        if(problemDetails.Status < 500)
+            _logger.LogInformation(context.Exception, "Exception");
+        else
+            _logger.LogError(context.Exception, "Exception");
+        
+        var hasResponseStarted = context.HttpContext.Response.HasStarted;
+        _logger.LogDebug("hasResponseStarted:{hasResponseStarted}", hasResponseStarted);
+        if (hasResponseStarted)
+            return;
+        
+
+            context.Result = new ObjectResult(problemDetails) { StatusCode = problemDetails.Status };
         context.ExceptionHandled = true;
     }
 
@@ -38,8 +56,8 @@ public class ProblemDetailsExceptionHandler : IExceptionFilter
             httpContext,
             statusCode: (int)ex.HttpStatus,
             title: ReasonPhrases.GetReasonPhrase((int)ex.HttpStatus),
-            detail: ex.Message);
-
+            detail: ex.HasMessage ? ex.Message : null);
+        
         if (_hostEnvironment.IsDevelopment())
         {
             problemDetails.Extensions.Add("exception", ex.ToString());
