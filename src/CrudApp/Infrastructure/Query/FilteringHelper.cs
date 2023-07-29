@@ -64,8 +64,16 @@ public static class FilteringHelper
             }
 
             var comparisonString = match.Groups["comparison"].Captures[i].Value;
-            var comparison = Enum.Parse<QueryFilterComparison>(comparisonString);
-            conditions.Add(new(propertyInfos, comparison, value));
+            QueryFilterComparison? comparison;
+            try
+            {
+                comparison = Enum.Parse<QueryFilterComparison>(comparisonString);
+            }
+            catch (Exception ex)
+            {
+                throw new ApiResponseException(HttpStatus.BadRequest, $"Comparison '{comparisonString}' not supported.", ex);
+            }
+            conditions.Add(new(propertyInfos, comparison.Value, value));
         }
         return conditions;
     }

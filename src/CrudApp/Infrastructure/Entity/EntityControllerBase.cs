@@ -50,7 +50,4 @@ public abstract class EntityControllerBase<T> : QueryControllerBase<T> where T :
         await DbContext.SaveChangesAsync();
         return NoContent();
     }
-
-    
-    
 }
