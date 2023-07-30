@@ -6,7 +6,15 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder
     .Services
-    .AddLogging(loggingBuilder => loggingBuilder.ClearProviders().AddJsonConsole())
+    .AddLogging(loggingBuilder => {
+        loggingBuilder.ClearProviders();
+#if DEBUG
+        // Do not use structured logging in local development environment. It is hard to read.
+        loggingBuilder.AddConsole();
+#else
+        loggingBuilder.AddJsonConsole();
+#endif
+    })
     .AddCrudAppExceptionHandling()
     .AddCrudAppAuthentication()
     .AddCrudAppOpenApi()
