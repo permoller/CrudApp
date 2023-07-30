@@ -1,7 +1,6 @@
 ﻿using CrudApp.Infrastructure.ChangeTracking;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Text.Json.Serialization;
 
 namespace CrudApp.Infrastructure.Entity;
 
@@ -66,11 +65,11 @@ public abstract class EntityBase
     public bool IsSoftDeleted { get; set; }
 
     /// <summary>
-    /// String that within "some context" allows a human user to easaly recognize/identify
+    /// String that within "some context" allows a human user to easily recognize/identify
     /// an instance of an entity among other entities of the same type.
     /// </summary>
     [NotMapped]
-    public virtual string DisplayName => Id.ToString();
+    public virtual string DisplayName => GetType().Name + Id.ToString();
 
     public ICollection<EntityChange> EntityChangeEvents { get; set; } = new List<EntityChange>();
 
