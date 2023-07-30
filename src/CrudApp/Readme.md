@@ -42,6 +42,12 @@ This means that when an entity is loaded, modified and saved back to the databas
 
 **??? Does it work if an entity is received in a PUT request, which loads the entity, updates it and then saves the entity ???**
 
+# Authentication
+A custom authentication handler <code>UserIdAuthenticationHandler</code> have been made as a demonstration.
+**It is not supposed to be used in a real application.**
+It gives a simple way to make authenticated requests by adding a value like <code>UserId 123</code> to the Authrization header.
+
+
 # Authorization
 
 
@@ -83,9 +89,8 @@ Each property-name can optionally be followed by <code>desc</code> to order desc
 When ordering is used one can also use skip and take parameters to implement pagination.
 
 
-
 # API exception handling
-An exception filter (<code>ProblemDetailsExceptionHandler</code>) handles the exceptions by converting them to [ProblemDetails](https://datatracker.ietf.org/doc/html/rfc7807) that are returned with an appropiate HTTP status code.
+An exception filter (<code>ApiExceptionHandler</code>) handles the exceptions by converting them to [ProblemDetails](https://datatracker.ietf.org/doc/html/rfc7807) that are returned with an appropiate HTTP status code.
 
 When there is an error message that should be returned from the API call one can throw the <code>ApiResponseException</code>.
 It contains the HTTP status code and a message that will be returned to the client by the exception handler.
@@ -93,6 +98,9 @@ It contains the HTTP status code and a message that will be returned to the clie
 Other more specific exception types can also be made and handled to return more details.
 An example is <code>ValidationException</code> which contains errors per property on an entity.
 This is converted into a <code>ValidationProblemDetails</code> response with the errors.
+
+It is also posible to throw a <code>NotAuthenticatedException</code> or <code>NotAuthorizedException</code>,
+to trigger a challange or forbidden response.
 
 Validation attributes can be added to the types received by the API.
 If the controllers has the <code>ApiController</code> attribute (added to <code>CrudAppApiControllerBase</code>) and a request-model is not valid,

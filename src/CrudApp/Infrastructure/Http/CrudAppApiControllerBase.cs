@@ -6,7 +6,6 @@ namespace CrudApp.Infrastructure.Http;
 // Add ApiController-attribute to enable automatic model validation.
 [ApiController]
 [Route("/api/[controller]")]
-[Authorize]
 public class CrudAppApiControllerBase : ControllerBase
 {
     private readonly Lazy<CrudAppDbContext> _lazyDbContext;

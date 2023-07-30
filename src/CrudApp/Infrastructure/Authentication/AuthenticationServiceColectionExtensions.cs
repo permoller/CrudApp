@@ -29,7 +29,7 @@ public static class AuthenticationServiceColectionExtensions
             var scheme = new OpenApiSecurityScheme()
             {
                 Description = $"Use a value like: {UserIdAuthenticationHandler.HttpAuthenticationScheme} 123",
-                Type = SecuritySchemeType.ApiKey,
+                Type = SecuritySchemeType.ApiKey, // using the type ApiKey allows us to say that we use the Authorization HTTP header without using one of the normal schemes
                 In = ParameterLocation.Header,
                 Name = HeaderNames.Authorization,
             };
