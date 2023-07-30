@@ -2,6 +2,7 @@
 using Swashbuckle.AspNetCore.SwaggerGen;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using CrudApp.Infrastructure.ChangeTracking;
+using CrudApp.Infrastructure.Users;
 
 namespace CrudApp.Infrastructure.Database;
 
@@ -76,9 +77,17 @@ public class CrudAppDbContext : DbContext
         return query;
     }
 
-    public async Task EnsureCreatedAsync()
+    public async Task<EntityId?> EnsureCreatedAsync()
     {
         await Database.OpenConnectionAsync();
-        await Database.EnsureCreatedAsync();
+        var dbCreated = await Database.EnsureCreatedAsync();
+        if (dbCreated)
+        {
+            var user = new User();
+            Add(user);
+            await SaveChangesAsync();
+            return user.Id;
+        }
+        return default;
     }
 }

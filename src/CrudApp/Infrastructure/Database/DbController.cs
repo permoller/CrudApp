@@ -13,8 +13,8 @@ public class DbController : ControllerBase
     }
 
     [HttpGet("/db/ensure")]
-    public async Task EnsureCreatedAsync()
+    public async Task<EntityId?> EnsureCreatedAsync()
     {
-        await _dbContext.EnsureCreatedAsync();
+        return await _dbContext.EnsureCreatedAsync();
     }
 }
