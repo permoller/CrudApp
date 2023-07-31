@@ -15,7 +15,9 @@ public abstract class EntityBase
     // But that would also mean we get an extra object for each entity-instance, which requires more memory and garbage collection.
     private static readonly object _idLock = new();
 
-    private EntityId? _id;
+    // This backing field is not named like the property it is backing.
+    // This is done to prevent EF Core from using it directly and force the use of the Id-property which generates a new id if needed.
+    private EntityId? _entityId;
 
     protected EntityBase() { }
 
@@ -30,24 +32,24 @@ public abstract class EntityBase
     {
         get
         {
-            if (_id == default)
+            if (_entityId == default)
             {
                 lock (_idLock)
                 {
-                    if (_id == default)
+                    if (_entityId == default)
                     {
-                        _id = NewEntityId();
+                        _entityId = NewEntityId();
                     }
                 }
             }
-            return _id!.Value;
+            return _entityId!.Value;
         }
 
         set
         {
             lock (_idLock)
             {
-                _id = value;
+                _entityId = value;
             }
         }
     }
