@@ -10,7 +10,7 @@ public static class AuthorizedEntitiesQuery
         var authorizedEntityIds = dbContext.All<AuthorizationGroupMembership>().Where(m => m.UserId == userId)
             .SelectMany(m => m.AuthorizationGroup.AuthorizationGroupEntities.Select(e => e.Id));
 
-        return dbContext.All<T>(includeSoftDeleted).Where(t => authorizedEntityIds.Contains(t.Id) && !t.IsSoftDeleted);
+        return dbContext.All<T>(includeSoftDeleted).Where(t => authorizedEntityIds.Contains(t.Id));
     }
 
     public static async Task<T> GetAuthorized<T>(this CrudAppDbContext dbContext, EntityId id, bool asNoTracking) where T : EntityBase

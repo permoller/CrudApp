@@ -41,7 +41,7 @@ public abstract class EntityControllerBase<T> : QueryControllerBase<T> where T :
     [HttpDelete("{id}")]
     public async Task Delete([FromRoute] EntityId id)
     {
-        var entity = await DbContext.GetAuthorized<T>(id,asNoTracking: false);
+        var entity = await DbContext.GetAuthorized<T>(id, asNoTracking: false);
         DbContext.Remove(entity);
         await DbContext.SaveChangesAsync();
     }
