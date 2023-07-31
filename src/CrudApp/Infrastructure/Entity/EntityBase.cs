@@ -74,8 +74,6 @@ public abstract class EntityBase
     [NotMapped]
     public virtual string DisplayName => GetType().Name + Id.ToString();
 
-    public ICollection<EntityChange> EntityChanges { get; set; } = new List<EntityChange>();
-
     public override string ToString()
     {
         return DisplayName;

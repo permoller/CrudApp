@@ -21,7 +21,6 @@ public class CrudAppDbContext : DbContext
             var entityTypeBuilder = modelBuilder.Entity(entityType);
 
             EntityBase.ConfigureEntityModel(entityTypeBuilder);
-            EntityChange.ConfigureEntityChangesRelation(entityTypeBuilder);
         }
 
         // Add converters

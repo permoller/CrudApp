@@ -38,7 +38,6 @@ public static class ChangeTrackingHelper
                 EntityId = entry.Entity.Id,
                 UserId = AuthenticationContext.Current?.User.Id
             };
-            entry.Entity.EntityChanges.Add(entityChange);
             db.Add(entityChange);
 
             // create property change event for each changed property

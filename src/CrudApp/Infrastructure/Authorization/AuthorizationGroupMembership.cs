@@ -15,6 +15,5 @@ public class AuthorizationGroupMembership : EntityBase
     public EntityId AuthorizationRoleId { get; set; }
 
     public AuthorizationGroup AuthorizationGroup { get; set; } = null!;
-    public User User { get; set; } = null!;
     public AuthorizationRole AuthorizationRole { get; set; } = null!;
 }
