@@ -10,6 +10,9 @@ public static class DatabaseServiceCollectionExtensions
         services.AddDbContext<CrudAppDbContext>(dbContextOptionsBuilder =>
         {
             dbContextOptionsBuilder.UseSqlite(new SqliteConnection("DataSource=CrudApp.db"));
+#if DEBUG
+            dbContextOptionsBuilder.EnableSensitiveDataLogging(true);
+#endif
         });
         return services;
     }
