@@ -72,7 +72,7 @@ public abstract class EntityBase
     /// an instance of an entity among other entities of the same type.
     /// </summary>
     [NotMapped]
-    public virtual string DisplayName => GetType().Name + Id.ToString();
+    public virtual string DisplayName => GetType().Name + " " + Id.ToString();
 
     public override string ToString()
     {

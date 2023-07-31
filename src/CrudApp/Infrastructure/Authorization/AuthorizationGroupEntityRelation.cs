@@ -3,7 +3,7 @@
 /// <summary>
 /// Defines that an entity is included in a group.
 /// </summary>
-public class AuthorizationGroupEntity : EntityBase
+public class AuthorizationGroupEntityRelation : EntityBase
 {
     public EntityId AuthorizationGroupId { get; set; }
     public EntityId EntityId { get; set; }

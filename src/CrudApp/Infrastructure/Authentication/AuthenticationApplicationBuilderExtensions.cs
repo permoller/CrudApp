@@ -1,5 +1,4 @@
-﻿using CrudApp.Infrastructure.Authentication;
-using CrudApp.Infrastructure.Users;
+﻿using CrudApp.Infrastructure.Users;
 
 namespace CrudApp.Infrastructure.Authorization;
 

@@ -1,8 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using CrudApp.Infrastructure.ChangeTracking;
 using CrudApp.Infrastructure.Users;
+using CrudApp.Infrastructure.ChangeTracking;
 
 namespace CrudApp.Infrastructure.Database;
 
@@ -11,6 +11,14 @@ public class CrudAppDbContext : DbContext
     public CrudAppDbContext(DbContextOptions<CrudAppDbContext> options) : base(options)
     {
         SavingChanges += OnSavingChanges;
+    }
+
+    private void OnSavingChanges(object? sender, SavingChangesEventArgs e)
+    {
+        EntityVersionUpdater.UpdateVersionOfModifiedEntities(this);
+        ChangeTracking.ChangeTracker.AddChangeEntities(this);
+        AuthorizationCleanup.DeleteRelationsToDeletedEntities(this);
+        ChangeTrackingCleanup.DeleteChangeEntitiesForDeletedEntities(this);
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -54,19 +62,6 @@ public class CrudAppDbContext : DbContext
         AppDomain.CurrentDomain.GetAssemblies().SelectMany(a =>
         a.GetTypes().Where(t => !t.IsAbstract && t.IsAssignableTo(typeof(EntityBase))));
 
-    private static void OnSavingChanges(object? sender, SavingChangesEventArgs _)
-    {
-        ArgumentNullException.ThrowIfNull(sender);
-        var dbContext = (CrudAppDbContext)sender;
-
-        // update the version number of all modified entities
-        foreach (var entry in dbContext.ChangeTracker.Entries<EntityBase>().Where(e => e.State == EntityState.Modified))
-            entry.Entity.Version += 1;
-
-        // Add change tracking entities that will also be saved to the database.
-        ChangeTrackingHelper.AddChangeEntities(dbContext);
-
-    }
 
     public IQueryable<T> All<T>(bool includeSoftDeleted = false) where T : EntityBase
     {

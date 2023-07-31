@@ -1,5 +1,4 @@
-﻿using CrudApp.Infrastructure.Users;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 
 namespace CrudApp.Infrastructure.Authorization;
 
@@ -8,7 +7,7 @@ namespace CrudApp.Infrastructure.Authorization;
 /// </summary>
 // A user can not have the same role multiple times in the same group.
 [Index(nameof(UserId), nameof(AuthorizationGroupId), nameof(AuthorizationRoleId), IsUnique = true)]
-public class AuthorizationGroupMembership : EntityBase
+public class AuthorizationGroupUserRelation : EntityBase
 {
     public EntityId AuthorizationGroupId { get; set; }
     public EntityId UserId { get; set; }

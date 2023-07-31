@@ -24,5 +24,4 @@ public class ChangeTrackingController : QueryControllerBase<EntityChangeEventDto
                     };
         return query;
     }
-
 }
