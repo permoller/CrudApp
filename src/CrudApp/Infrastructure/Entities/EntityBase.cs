@@ -1,10 +1,9 @@
-﻿using CrudApp.Infrastructure.ChangeTracking;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace CrudApp.Infrastructure.Entity;
+namespace CrudApp.Infrastructure.Entities;
 
 public abstract class EntityBase
 {

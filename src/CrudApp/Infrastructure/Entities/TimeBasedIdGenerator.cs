@@ -1,4 +1,4 @@
-﻿namespace CrudApp.Infrastructure.Entity;
+﻿namespace CrudApp.Infrastructure.Entities;
 
 /// <summary>
 /// Generates 63 bit positive integers containing a timestamp as the most significant bits, followed

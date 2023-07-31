@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 
-namespace CrudApp.Infrastructure.Entity;
+namespace CrudApp.Infrastructure.Entities;
 
 public static class EntityVersionUpdater
 {

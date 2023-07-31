@@ -7,6 +7,6 @@ global using EntityId = System.Int64;
 global using CrudApp.Infrastructure.Authentication;
 global using CrudApp.Infrastructure.Authorization;
 global using CrudApp.Infrastructure.Database;
-global using CrudApp.Infrastructure.Entity;
+global using CrudApp.Infrastructure.Entities;
 global using CrudApp.Infrastructure.ErrorHandling;
 global using CrudApp.Infrastructure.Http;
