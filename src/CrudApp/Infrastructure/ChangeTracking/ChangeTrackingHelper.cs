@@ -5,13 +5,11 @@ using System.Reflection;
 
 namespace CrudApp.Infrastructure.ChangeTracking;
 
-public static class ChangeDetector
+public static class ChangeTrackingHelper
 {
-    public static void AddChangeRecords(CrudAppDbContext db)
+    public static void AddChangeEntities(CrudAppDbContext db)
     {
-        var entityChangeEvents = new List<EntityChange>();
-
-        foreach (var entry in db.ChangeTracker.Entries<EntityBase>().Where(IsChangeTrackingEnabled))
+        foreach (var entry in db.ChangeTracker.Entries<EntityBase>().Where(IsChangeTrackingEnabled).ToList())
         {
             // get the change type
             ChangeType? changeType = entry.State switch
@@ -31,35 +29,42 @@ public static class ChangeDetector
             // create entity change event
             var time = DateTimeOffset.UtcNow;
             var activityId = Activity.Current?.Id;
-            var entityChangeEvent = new EntityChange
+            var entityChange = new EntityChange
             {
                 Time = time,
                 ActivityId = activityId,
                 ChangeType = changeType.Value,
                 EntityType = entry.Entity.GetType().Name,
                 EntityId = entry.Entity.Id,
-                AuthPrincipalId = AuthorizationContext.Current?.User.Id
+                // TODO: Set UserId to AuthenticationContext.Current?.User.Id
+                UserId = AuthorizationContext.Current?.User.Id
             };
-            entityChangeEvents.Add(entityChangeEvent);
+            entry.Entity.EntityChanges.Add(entityChange);
+            db.Add(entityChange);
 
             // create property change event for each changed property
             foreach (var prop in entry.Properties.Where(p => IsChangeTrackingEnabled(p) && (p.IsModified || changeType != ChangeType.EntityUpdated)))
             {
-                var propertyChangeEvent = new PropertyChange
+                var propertyChange = new PropertyChange
                 {
-                    EntityChangeId = entityChangeEvent.Id,
+                    EntityChangeId = entityChange.Id,
+                    EntityChange = entityChange,
                     PropertyName = prop.Metadata.Name,
                     OldPropertyValue = changeType == ChangeType.EntityCreated ? null : prop.OriginalValue,
                     NewPropertyValue = changeType == ChangeType.EntityDeleted ? null : prop.CurrentValue
                 };
-                entityChangeEvent.PropertyChanges.Add(propertyChangeEvent);
+                entityChange.PropertyChanges.Add(propertyChange);
+                db.Add(propertyChange);
             }
         }
-        db.AddRange(entityChangeEvents);
     }
 
     private static bool IsChangeTrackingEnabled(PropertyEntry p) =>
         p.Metadata.PropertyInfo != null && p.Metadata.PropertyInfo.GetCustomAttribute<SkipChangeTrackingAttribute>() is null;
+
     private static bool IsChangeTrackingEnabled(EntityEntry e) =>
-        e.Metadata.ClrType is not null && e.Metadata.ClrType.GetCustomAttribute<SkipChangeTrackingAttribute>() is null;
+        IsChangeTrackingEnabled(e.Metadata.ClrType);
+
+    public static bool IsChangeTrackingEnabled(Type clrType) =>
+        clrType is not null && clrType.IsAssignableTo(typeof(EntityBase)) && clrType.GetCustomAttribute<SkipChangeTrackingAttribute>() is null;
 }

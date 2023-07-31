@@ -18,12 +18,11 @@ public class CrudAppDbContext : DbContext
         // Add entity types
         foreach (var entityType in GetEntityBaseTypes())
         {
-            modelBuilder
-                .Entity(entityType)
-                .HasMany(nameof(EntityBase.EntityChangeEvents))
-                .WithOne()
-                .HasForeignKey(nameof(EntityChange.EntityId));
+            var entityTypeBuilder = modelBuilder.Entity(entityType);
+
+            EntityChange.ConfigureEntityChangesRelation(entityTypeBuilder);
         }
+
         // Add converters
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())
         {
@@ -64,8 +63,8 @@ public class CrudAppDbContext : DbContext
         foreach (var entry in dbContext.ChangeTracker.Entries<EntityBase>().Where(e => e.State == EntityState.Modified))
             entry.Entity.Version += 1;
 
-        // Add change tracking events that will also be saved to the database.
-        ChangeDetector.AddChangeRecords(dbContext);
+        // Add change tracking entities that will also be saved to the database.
+        ChangeTrackingHelper.AddChangeEntities(dbContext);
 
     }
 
