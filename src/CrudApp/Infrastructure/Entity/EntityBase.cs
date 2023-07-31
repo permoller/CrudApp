@@ -1,4 +1,6 @@
 ﻿using CrudApp.Infrastructure.ChangeTracking;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -15,9 +17,8 @@ public abstract class EntityBase
     // But that would also mean we get an extra object for each entity-instance, which requires more memory and garbage collection.
     private static readonly object _idLock = new();
 
-    // This backing field is not named like the property it is backing.
-    // This is done to prevent EF Core from using it directly and force the use of the Id-property which generates a new id if needed.
-    private EntityId? _entityId;
+    
+    private EntityId? _id;
 
     protected EntityBase() { }
 
@@ -32,24 +33,24 @@ public abstract class EntityBase
     {
         get
         {
-            if (_entityId == default)
+            if (_id == default)
             {
                 lock (_idLock)
                 {
-                    if (_entityId == default)
+                    if (_id == default)
                     {
-                        _entityId = NewEntityId();
+                        _id = NewEntityId();
                     }
                 }
             }
-            return _entityId!.Value;
+            return _id!.Value;
         }
 
         set
         {
             lock (_idLock)
             {
-                _entityId = value;
+                _id = value;
             }
         }
     }
@@ -78,5 +79,14 @@ public abstract class EntityBase
     public override string ToString()
     {
         return DisplayName;
+    }
+
+    public static void ConfigureEntityModel(EntityTypeBuilder entityTypeBuilder)
+    {
+        if (!entityTypeBuilder.Metadata.ClrType.IsSubclassOf(typeof(EntityBase)))
+            throw new ArgumentException($"{entityTypeBuilder.Metadata.ClrType.Name} is not a subtype of {nameof(EntityBase)}.");
+
+        // Force EF Core to use the Id property and not the backing field to ensure ID is generated on new entities.
+        entityTypeBuilder.Property(nameof(Id)).UsePropertyAccessMode(PropertyAccessMode.Property);
     }
 }
