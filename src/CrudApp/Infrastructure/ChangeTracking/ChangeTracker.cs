@@ -39,7 +39,7 @@ public static class ChangeTracker
                 ChangeType = changeType.Value,
                 EntityType = entry.Entity.GetType().Name,
                 EntityId = entry.Entity.Id,
-                UserId = AuthenticationContext.Current?.User.Id
+                UserId = AuthenticationContext.Current?.UserId
             };
             entityChange.PropertyChanges = new List<PropertyChange>();
             dbContext.Add(entityChange);

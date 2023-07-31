@@ -20,10 +20,9 @@ public record AuthenticationContext
     }
 
 
-    public User User { get; }
+    public EntityId UserId { get; }
 
-    public AuthenticationContext(User user)
+    public AuthenticationContext(EntityId userId)
     {
-        User = user;
     }
 }

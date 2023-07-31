@@ -6,7 +6,7 @@ public static class AuthorizedEntitiesQuery
 {
     public static IQueryable<T> Authorized<T>(this CrudAppDbContext dbContext, bool includeSoftDeleted = false) where T : EntityBase
     {
-        var userId = AuthorizationContext.Current?.User.Id ?? AuthenticationContext.Current?.User.Id ?? throw new NotAuthenticatedException();
+        var userId = AuthorizationContext.Current?.UserId ?? AuthenticationContext.Current?.UserId ?? throw new NotAuthenticatedException();
 
         var authorizedEntityIds = dbContext.All<AuthorizationGroupUserRelation>().Where(m => m.UserId == userId)
             .SelectMany(m => m.AuthorizationGroup!.AuthorizationGroupEntityRelations!.Select(e => e.Id));

@@ -1,6 +1,4 @@
-﻿using CrudApp.Infrastructure.Authentication;
-
-namespace CrudApp.Infrastructure.Authorization;
+﻿namespace CrudApp.Infrastructure.Authorization;
 
 public static class AuthenticationApplicationBuilderExtensions
 {
@@ -9,7 +7,7 @@ public static class AuthenticationApplicationBuilderExtensions
         app.Use(async (ctx, next) => {
 
             if (AuthenticationContext.Current is not null)
-                AuthorizationContext.Current = new(AuthenticationContext.Current.User);
+                AuthorizationContext.Current = new(AuthenticationContext.Current.UserId);
             try
             {
                 await next();

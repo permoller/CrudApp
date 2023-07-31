@@ -1,6 +1,4 @@
-﻿using CrudApp.Infrastructure.Users;
-
-namespace CrudApp.Infrastructure.Authorization;
+﻿namespace CrudApp.Infrastructure.Authorization;
 
 public static class AuthorizationApplicationBuilderExtensions
 {
@@ -9,7 +7,7 @@ public static class AuthorizationApplicationBuilderExtensions
         app.Use(async (ctx, next) => {
 
             if (long.TryParse(ctx.User.Claims.FirstOrDefault(c => c.Type == UserIdAuthenticationHandler.UserIdClaimType)?.Value, out var userId))
-                AuthenticationContext.Current = new(new User { Id = userId });
+                AuthenticationContext.Current = new(userId);
             try
             {
                 await next();

@@ -21,10 +21,10 @@ public record AuthorizationContext
     }
 
 
-    public User User { get; }
+    public EntityId UserId { get; }
 
-    public AuthorizationContext(User user)
+    public AuthorizationContext(EntityId userId)
     {
-        User = user;
+        UserId = userId;
     }
 }
