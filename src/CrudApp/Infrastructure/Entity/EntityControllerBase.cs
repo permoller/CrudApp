@@ -1,6 +1,5 @@
 ﻿using CrudApp.Infrastructure.Query;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace CrudApp.Infrastructure.Entity;
 
@@ -28,8 +27,7 @@ public abstract class EntityControllerBase<T> : QueryControllerBase<T> where T :
     }
 
     [HttpPut("{id}")]
-    [ProducesResponseType((int)HttpStatus.NoContent)]
-    public async Task<ActionResult> Put([FromRoute] EntityId id, [FromBody] T entity)
+    public async Task Put([FromRoute] EntityId id, [FromBody] T entity)
     {
         if (entity.Id != id)
         {
@@ -38,16 +36,13 @@ public abstract class EntityControllerBase<T> : QueryControllerBase<T> where T :
         var existingEntity = await DbContext.GetAuthorized<T>(id, asNoTracking: false);
         DbContext.Entry(existingEntity).CurrentValues.SetValues(entity);
         await DbContext.SaveChangesAsync();
-        return NoContent();
     }
 
     [HttpDelete("{id}")]
-    [ProducesResponseType((int)HttpStatus.NoContent)]
-    public async Task<ActionResult> Delete([FromRoute] EntityId id)
+    public async Task Delete([FromRoute] EntityId id)
     {
         var entity = await DbContext.GetAuthorized<T>(id,asNoTracking: false);
         DbContext.Remove(entity);
         await DbContext.SaveChangesAsync();
-        return NoContent();
     }
 }
