@@ -41,8 +41,9 @@ public static class ChangeTracker
                 EntityId = entry.Entity.Id,
                 UserId = AuthenticationContext.Current?.User.Id
             };
+            entityChange.PropertyChanges = new List<PropertyChange>();
             dbContext.Add(entityChange);
-
+            
             // create property change event for each changed property
             foreach (var prop in entry.Properties.Where(p => IsChangeTrackingEnabled(p) && (p.IsModified || changeType != ChangeType.EntityUpdated)))
             {

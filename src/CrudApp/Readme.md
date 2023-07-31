@@ -32,7 +32,7 @@ Requires [dotnet-ef tools](https://learn.microsoft.com/en-us/ef/core/cli/dotnet)
 <code>dotnet tool install --global dotnet-ef</code>
 
 When the entities have changed a new migration step can be generated using this command from the src-folder:
-<code>dotnet ef migrations add *NAME_OF_MIGRATION_STEP* --project .\CrudApp\ --output-dir Database\Migrations</code>
+<code>dotnet ef migrations add *NAME_OF_MIGRATION_STEP* --project .\CrudApp\ --output-dir Infrastructure\Database\Migrations</code>
 
 # Optimistic Concurrency Control
 The base type for all the entities (<code>EntityBase</code>) has a <code>Version</code> property.

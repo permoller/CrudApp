@@ -10,5 +10,5 @@ public sealed class PropertyChange : EntityBase
     [JsonValueConverter]
     public object? NewPropertyValue { get; set; }
 
-    public EntityChange EntityChange { get; set; } = null!;
+    public EntityChange? EntityChange { get; set; }
 }

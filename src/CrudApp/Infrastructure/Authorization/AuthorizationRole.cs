@@ -5,5 +5,5 @@
 /// </summary>
 public class AuthorizationRole : EntityBase
 {
-    public ICollection<AuthorizationGroupUserRelation> AuthorizationGroupUserRelations { get; set; } = new List<AuthorizationGroupUserRelation>();
+    public ICollection<AuthorizationGroupUserRelation>? AuthorizationGroupUserRelations { get; set; }
 }

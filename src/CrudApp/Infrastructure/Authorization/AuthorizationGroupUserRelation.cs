@@ -13,6 +13,6 @@ public class AuthorizationGroupUserRelation : EntityBase
     public EntityId UserId { get; set; }
     public EntityId AuthorizationRoleId { get; set; }
 
-    public AuthorizationGroup AuthorizationGroup { get; set; } = null!;
-    public AuthorizationRole AuthorizationRole { get; set; } = null!;
+    public AuthorizationGroup? AuthorizationGroup { get; set; }
+    public AuthorizationRole? AuthorizationRole { get; set; }
 }

@@ -9,7 +9,7 @@ public static class AuthorizedEntitiesQuery
         var userId = AuthorizationContext.Current?.User.Id ?? AuthenticationContext.Current?.User.Id ?? throw new NotAuthenticatedException();
 
         var authorizedEntityIds = dbContext.All<AuthorizationGroupUserRelation>().Where(m => m.UserId == userId)
-            .SelectMany(m => m.AuthorizationGroup.AuthorizationGroupEntityRelations.Select(e => e.Id));
+            .SelectMany(m => m.AuthorizationGroup!.AuthorizationGroupEntityRelations!.Select(e => e.Id));
 
         return dbContext.All<T>(includeSoftDeleted).Where(t => authorizedEntityIds.Contains(t.Id));
     }

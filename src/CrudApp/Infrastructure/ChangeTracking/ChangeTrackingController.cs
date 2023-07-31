@@ -7,8 +7,8 @@ public class EntityChangeEventDto
 {
     [Key]
     public EntityId EntityChangeEventId { get; set; }
-    public EntityChange EntityChangeEvent { get; set; }
-    public List<PropertyChange> PropertyChangeEvents { get; set; }
+    public EntityChange? EntityChangeEvent { get; set; }
+    public List<PropertyChange>? PropertyChangeEvents { get; set; }
 }
 
 public class ChangeTrackingController : QueryControllerBase<EntityChangeEventDto>

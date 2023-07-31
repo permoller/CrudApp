@@ -9,6 +9,6 @@ public class AuthorizationGroupEntityRelation : EntityBase
     public EntityId EntityId { get; set; }
     public string EntityType { get; set; } = null!;
 
-    public AuthorizationGroup AuthorizationGroup { get; set; } = null!;
+    public AuthorizationGroup? AuthorizationGroup { get; set; }
 }
 
