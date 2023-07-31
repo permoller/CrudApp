@@ -39,6 +39,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseRouting();
 app.UseAuthentication();
+app.UseCrudAppAuthenticationContext();
 app.UseCrudAppAuthorizationContext();
 app.UseAuthorization();
 app.MapControllers();

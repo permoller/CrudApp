@@ -2,6 +2,10 @@
 
 namespace CrudApp.Infrastructure.Authorization;
 
+/// <summary>
+/// Provides information about the user that should be used for authorization.
+/// This is normally the same as the authenticated user.
+/// </summary>
 public record AuthorizationContext
 {
     private static readonly AsyncLocal<AuthorizationContext?> _current = new();

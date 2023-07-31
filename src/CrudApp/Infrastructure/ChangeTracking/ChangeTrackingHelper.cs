@@ -36,8 +36,7 @@ public static class ChangeTrackingHelper
                 ChangeType = changeType.Value,
                 EntityType = entry.Entity.GetType().Name,
                 EntityId = entry.Entity.Id,
-                // TODO: Set UserId to AuthenticationContext.Current?.User.Id
-                UserId = AuthorizationContext.Current?.User.Id
+                UserId = AuthenticationContext.Current?.User.Id
             };
             entry.Entity.EntityChanges.Add(entityChange);
             db.Add(entityChange);

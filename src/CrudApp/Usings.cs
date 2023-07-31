@@ -4,6 +4,7 @@ global using System.Linq;
 global using System.Text;
 global using System.Threading.Tasks;
 global using EntityId = System.Int64;
+global using CrudApp.Infrastructure.Authentication;
 global using CrudApp.Infrastructure.Authorization;
 global using CrudApp.Infrastructure.Database;
 global using CrudApp.Infrastructure.Entity;
