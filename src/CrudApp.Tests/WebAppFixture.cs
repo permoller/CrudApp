@@ -6,12 +6,16 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace CrudApp.Tests;
 
-internal class WebAppFixture : IDisposable
+internal sealed class WebAppFixture : IDisposable
 {
     public WebApplicationFactory<Program> WebAppFactory { get; }
-    public WebAppFixture(WebApplicationFactory<Program> webAppFactory)
+
+    public EntityId InitialUserId { get; }
+
+    private WebAppFixture(WebApplicationFactory<Program> webAppFactory, EntityId initialUserId)
     {
         WebAppFactory = webAppFactory;
+        InitialUserId = initialUserId;
     }
 
     public static async Task<WebAppFixture> CreateAsync()
@@ -33,9 +37,9 @@ internal class WebAppFixture : IDisposable
 
         var scope = webAppFactory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<CrudAppDbContext>();
-        await db.EnsureCreatedAsync();
+        var initialUserId = await db.EnsureCreatedAsync();
         
-        return new(webAppFactory);
+        return new(webAppFactory, initialUserId!.Value);
     }
 
     public void Dispose()
