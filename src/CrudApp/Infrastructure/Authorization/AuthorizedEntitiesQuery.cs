@@ -14,7 +14,7 @@ public static class AuthorizedEntitiesQuery
         return dbContext.All<T>(includeSoftDeleted).Where(t => authorizedEntityIds.Contains(t.Id));
     }
 
-    public static async Task<T> GetAuthorized<T>(this CrudAppDbContext dbContext, EntityId id, bool asNoTracking) where T : EntityBase
+    public static async Task<T> GetByIdAuthorized<T>(this CrudAppDbContext dbContext, EntityId id, bool asNoTracking) where T : EntityBase
     {
         var queryable = dbContext.Authorized<T>();
         if (asNoTracking)

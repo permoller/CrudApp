@@ -2,7 +2,7 @@
 
 public sealed class SuperHero : EntityBase
 {
-    public string SuperHeroName { get; set; }
-    public string CivilName { get; set; }
-    public override string DisplayName => string.Concat(SuperHeroName, "/", CivilName);
+    public string? HeroName { get; set; }
+    public string? CivilianName { get; set; }
+    public override string DisplayName => string.Concat(HeroName, "/", CivilianName);
 }

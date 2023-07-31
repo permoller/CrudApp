@@ -11,7 +11,7 @@ public abstract class EntityControllerBase<T> : QueryControllerBase<T> where T :
     [HttpGet("{id}")]
     public async Task<T> Get([FromRoute] EntityId id)
     {
-        var entity = await DbContext.GetAuthorized<T>(id, asNoTracking: true);
+        var entity = await DbContext.GetByIdAuthorized<T>(id, asNoTracking: true);
         return entity;
     }
 
@@ -33,7 +33,7 @@ public abstract class EntityControllerBase<T> : QueryControllerBase<T> where T :
         {
             throw new ApiResponseException(HttpStatus.BadRequest, "Id in body and in URL must be the same.");
         }
-        var existingEntity = await DbContext.GetAuthorized<T>(id, asNoTracking: false);
+        var existingEntity = await DbContext.GetByIdAuthorized<T>(id, asNoTracking: false);
         DbContext.Entry(existingEntity).CurrentValues.SetValues(entity);
         await DbContext.SaveChangesAsync();
     }
@@ -41,7 +41,7 @@ public abstract class EntityControllerBase<T> : QueryControllerBase<T> where T :
     [HttpDelete("{id}")]
     public async Task Delete([FromRoute] EntityId id)
     {
-        var entity = await DbContext.GetAuthorized<T>(id, asNoTracking: false);
+        var entity = await DbContext.GetByIdAuthorized<T>(id, asNoTracking: false);
         DbContext.Remove(entity);
         await DbContext.SaveChangesAsync();
     }
