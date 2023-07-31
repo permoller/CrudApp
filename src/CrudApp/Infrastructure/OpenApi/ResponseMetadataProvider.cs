@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Filters;
+using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace CrudApp.Infrastructure.OpenApi;
 
@@ -58,14 +59,14 @@ public class ResponseMetadataProvider : IApplicationModelProvider
 
             if (_voidReturnTypes.Contains(returnType))
             {
-                // By default ASP.NET MVC returns status 200 OK for void-actions.
-                // We change that to 204 No Content
                 action.Filters.Add(new ReturnNoContentStatusCode());
                 action.Filters.Add(new ProducesResponseTypeAttribute((int)HttpStatus.NoContent));
             }
             else
             {
                 action.Filters.Add(new ProducesResponseTypeAttribute(returnType, (int)HttpStatus.Ok));
+                if(returnType.IsReferenceOrNullableType())
+                    action.Filters.Add(new ProducesResponseTypeAttribute(typeof(void), (int)HttpStatus.NoContent));
             }
         }
     }
