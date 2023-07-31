@@ -1,6 +1,4 @@
-﻿using CrudApp.Infrastructure.Users;
-
-namespace CrudApp.Infrastructure.Authentication;
+﻿namespace CrudApp.Infrastructure.Authentication;
 
 /// <summary>
 /// Provides information about the currently authenticated user.
@@ -19,10 +17,10 @@ public record AuthenticationContext
         set => _current.Value = value;
     }
 
-
     public EntityId UserId { get; }
 
     public AuthenticationContext(EntityId userId)
     {
+        UserId = userId;
     }
 }
