@@ -112,8 +112,16 @@ Automated integration tests have been made that starts an instance of the servic
 
 [WebApplicationFactory](https://learn.microsoft.com/en-us/aspnet/core/test/integration-tests?view=aspnetcore-7.0) is used to start the service and modify the service registrations in the IoC container for external dependencies like the database.
 
+# Snapshot tests
+The test project uses snapshot-testing in some tests.
+As an example there is an integration test, that fetches the OpenApi document from the server.
+It compares the document to a snapshot (an older verison of the document) and fails if anything has changed.
+This test will allow you to detect unintentional changes to the API. If the change is intentional the new version can be accepted and the test will pass the next time it is run.
+
+
 # Package dependencies
 - Microsoft.EntityFrameworkCore.Sqlite: Sqlite is used as an in-memory database when executing automated tests.
 - Microsoft.EntityFrameworkCore.Design: Required when using EF Core Migrations to update the database schema.
 - Swashbuckle.AspNetCore: Used for exposing OpenAPI documentation and Swagger UI.
+- Verify: Used for snapshot testing.
 
