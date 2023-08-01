@@ -114,6 +114,7 @@ Automated integration tests have been made that starts an instance of the servic
 
 # Snapshot tests
 The test project uses snapshot-testing in some tests.
+
 As an example there is an integration test, that fetches the OpenApi document from the server.
 It compares the document to a snapshot (an older verison of the document) and fails if anything has changed.
 This test will allow you to detect unintentional changes to the API. If the change is intentional the new version can be accepted and the test will pass the next time it is run.
