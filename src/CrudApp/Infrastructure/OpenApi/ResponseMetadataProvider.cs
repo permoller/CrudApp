@@ -2,9 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
-using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Filters;
-using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace CrudApp.Infrastructure.OpenApi;
 
@@ -65,7 +63,7 @@ public class ResponseMetadataProvider : IApplicationModelProvider
             else
             {
                 action.Filters.Add(new ProducesResponseTypeAttribute(returnType, (int)HttpStatus.Ok));
-                if(returnType.IsReferenceOrNullableType())
+                if((!returnType.IsValueType || Nullable.GetUnderlyingType(returnType) != null))
                     action.Filters.Add(new ProducesResponseTypeAttribute(typeof(void), (int)HttpStatus.NoContent));
             }
         }

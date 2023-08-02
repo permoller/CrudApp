@@ -1,8 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Swashbuckle.AspNetCore.SwaggerGen;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using CrudApp.Infrastructure.Users;
 using CrudApp.Infrastructure.ChangeTracking;
+using System.Reflection;
 
 namespace CrudApp.Infrastructure.Database;
 
@@ -38,12 +38,11 @@ public class CrudAppDbContext : DbContext
             foreach (var propertyInfo in entityType.ClrType.GetProperties())
             {
 
-
-                if (propertyInfo.HasAttribute<JsonValueConverterAttribute>())
+                if (propertyInfo.GetCustomAttribute<JsonValueConverterAttribute>(true) is not null)
                     entityTypeBuilder.Property(propertyInfo.Name).HasConversion(JsonValueConverterAttribute.GetConverter(propertyInfo.PropertyType));
 
 
-                if (propertyInfo.HasAttribute<EnumValueConverterAttribute>())
+                if (propertyInfo.GetCustomAttribute<JsonValueConverterAttribute>(true) is not null)
                     entityTypeBuilder.Property(propertyInfo.Name).HasConversion(EnumValueConverterAttribute.GetConverter(propertyInfo.PropertyType));
 
 
