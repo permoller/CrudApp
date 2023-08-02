@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using CrudApp.Infrastructure.UtilityCode;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text.RegularExpressions;
@@ -48,7 +49,7 @@ public static class FilteringHelper
         for (int i = 0; i < expressionCount; i++)
         {
             var propertyPath = match.Groups["property"].Captures[i].Value;
-            var propertyInfos = PropertyPathHelper.ParsePropertyPath<T>(propertyPath);
+            var propertyInfos = typeof(T).ParsePropertyPath(propertyPath);
 
             var valueAsString = match.Groups["value"].Captures[i].Value;
             var lastProperty = propertyInfos[propertyInfos.Count - 1];

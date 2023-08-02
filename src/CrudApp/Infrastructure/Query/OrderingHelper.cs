@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using CrudApp.Infrastructure.UtilityCode;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text.RegularExpressions;
@@ -46,7 +47,7 @@ public static class OrderingHelper
         for (var i = 0; i < count; i++)
         {
             var propertyPath = match.Groups["property"].Captures[i].Value;
-            var propertyInfos = PropertyPathHelper.ParsePropertyPath<T>(propertyPath);
+            var propertyInfos = typeof(T).ParsePropertyPath(propertyPath);
             var isDescending = match.Groups["descending"].Captures[i].Value == " desc";
             var keyType = propertyInfos[propertyInfos.Count - 1].PropertyType;
             var isFirst = i == 0;

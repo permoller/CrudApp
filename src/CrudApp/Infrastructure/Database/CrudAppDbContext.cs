@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using CrudApp.Infrastructure.Users;
 using CrudApp.Infrastructure.ChangeTracking;
-using System.Reflection;
+using CrudApp.Infrastructure.UtilityCode;
 
 namespace CrudApp.Infrastructure.Database;
 
@@ -24,7 +24,7 @@ public class CrudAppDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         // Add entity types
-        foreach (var entityType in GetEntityBaseTypes())
+        foreach (var entityType in typeof(EntityBase).GetSubclasses())
         {
             var entityTypeBuilder = modelBuilder.Entity(entityType);
 
@@ -37,10 +37,10 @@ public class CrudAppDbContext : DbContext
             var entityTypeBuilder = modelBuilder.Entity(entityType.Name);
             foreach (var propertyInfo in entityType.ClrType.GetProperties())
             {
-                if (propertyInfo.GetCustomAttribute<JsonValueConverterAttribute>(true) is not null)
+                if (propertyInfo.HasAttribute<JsonValueConverterAttribute>())
                     entityTypeBuilder.Property(propertyInfo.Name).HasConversion(JsonValueConverterAttribute.GetConverter(propertyInfo.PropertyType));
 
-                if (propertyInfo.GetCustomAttribute<JsonValueConverterAttribute>(true) is not null)
+                if (propertyInfo.HasAttribute<JsonValueConverterAttribute>())
                     entityTypeBuilder.Property(propertyInfo.Name).HasConversion(EnumValueConverterAttribute.GetConverter(propertyInfo.PropertyType));
 
                 // SQLite can not compare/order by DateTimeOffset.
@@ -53,23 +53,18 @@ public class CrudAppDbContext : DbContext
             }
 
             // Auto-include non-nullable navigation properties
-            var nullabilityInfoContext = new NullabilityInfoContext();
             foreach (var nav in entityType.GetNavigations())
             {
                 if (nav.PropertyInfo is null)
                     continue;
 
-                var nullabilityInfo = nullabilityInfoContext.Create(nav.PropertyInfo);
-                if (nullabilityInfo.ReadState == NullabilityState.NotNull)
+                if (nav.PropertyInfo.MayNotBeNull())
                     nav.SetIsEagerLoaded(true);
             }
 
         }
     }
 
-    private static IEnumerable<Type> GetEntityBaseTypes() =>
-        AppDomain.CurrentDomain.GetAssemblies().SelectMany(a =>
-        a.GetTypes().Where(t => !t.IsAbstract && t.IsAssignableTo(typeof(EntityBase))));
 
 
     public IQueryable<T> All<T>(bool includeSoftDeleted = false) where T : EntityBase

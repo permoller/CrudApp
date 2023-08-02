@@ -1,7 +1,7 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using CrudApp.Infrastructure.UtilityCode;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using System.Diagnostics;
-using System.Reflection;
 
 namespace CrudApp.Infrastructure.ChangeTracking;
 
@@ -62,9 +62,9 @@ public static class ChangeTracker
     }
 
 
-    private static bool IsChangeTrackingEnabled(PropertyEntry p) =>
-        p.Metadata.PropertyInfo != null && p.Metadata.PropertyInfo.GetCustomAttribute<SkipChangeTrackingAttribute>() is null;
+    private static bool IsChangeTrackingEnabled(PropertyEntry p)
+        => !p.Metadata.PropertyInfo.HasAttribute<SkipChangeTrackingAttribute>();
 
-    private static bool IsChangeTrackingEnabled(EntityEntry e) =>
-    e.Metadata.ClrType is not null && e.Metadata.ClrType.GetCustomAttribute<SkipChangeTrackingAttribute>() is null;
+    private static bool IsChangeTrackingEnabled(EntityEntry e)
+        => !e.Metadata.ClrType.HasAttribute<SkipChangeTrackingAttribute>();
 }
