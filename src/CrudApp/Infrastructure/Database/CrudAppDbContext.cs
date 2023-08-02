@@ -31,20 +31,17 @@ public class CrudAppDbContext : DbContext
             EntityBase.ConfigureEntityModel(entityTypeBuilder);
         }
 
-        // Add converters
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())
         {
+            // Add converters
             var entityTypeBuilder = modelBuilder.Entity(entityType.Name);
             foreach (var propertyInfo in entityType.ClrType.GetProperties())
             {
-
                 if (propertyInfo.GetCustomAttribute<JsonValueConverterAttribute>(true) is not null)
                     entityTypeBuilder.Property(propertyInfo.Name).HasConversion(JsonValueConverterAttribute.GetConverter(propertyInfo.PropertyType));
 
-
                 if (propertyInfo.GetCustomAttribute<JsonValueConverterAttribute>(true) is not null)
                     entityTypeBuilder.Property(propertyInfo.Name).HasConversion(EnumValueConverterAttribute.GetConverter(propertyInfo.PropertyType));
-
 
                 // SQLite can not compare/order by DateTimeOffset.
                 // https://docs.microsoft.com/en-us/ef/core/providers/sqlite/limitations#query-limitations
@@ -52,8 +49,21 @@ public class CrudAppDbContext : DbContext
                 // Note that we loose some precision and comparing times with different offsets may not work as expected.
                 if (Database.ProviderName == "Microsoft.EntityFrameworkCore.Sqlite" &&
                     (propertyInfo.PropertyType == typeof(DateTimeOffset) || propertyInfo.PropertyType == typeof(DateTimeOffset?)))
-                    entityTypeBuilder.Property(propertyInfo.Name).HasConversion(new DateTimeOffsetToBinaryConverter());
+                    entityTypeBuilder.Property(propertyInfo.Name).HasConversion(new DateTimeOffsetToBinaryConverter());    
             }
+
+            // Auto-include non-nullable navigation properties
+            var nullabilityInfoContext = new NullabilityInfoContext();
+            foreach (var nav in entityType.GetNavigations())
+            {
+                if (nav.PropertyInfo is null)
+                    continue;
+
+                var nullabilityInfo = nullabilityInfoContext.Create(nav.PropertyInfo);
+                if (nullabilityInfo.ReadState == NullabilityState.NotNull)
+                    nav.SetIsEagerLoaded(true);
+            }
+
         }
     }
 
