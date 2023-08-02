@@ -16,13 +16,14 @@ public static class AuthorizedEntitiesQuery
 
     public static async Task<T> GetByIdAuthorized<T>(this CrudAppDbContext dbContext, EntityId id, bool asNoTracking) where T : EntityBase
     {
-        var queryable = dbContext.Authorized<T>();
+        var includeSoftDeleted = true;
+        var queryable = dbContext.Authorized<T>(includeSoftDeleted);
         if (asNoTracking)
             queryable = queryable.AsNoTracking();
         var entity = queryable.FirstOrDefault(e => e.Id == id);
         if (entity is null)
         {
-            var exists = await dbContext.All<T>().AnyAsync(e => e.Id == id);
+            var exists = await dbContext.All<T>(includeSoftDeleted).AnyAsync(e => e.Id == id);
             if (exists)
                 throw new NotAuthorizedException();
             throw new ApiResponseException(HttpStatus.NotFound);
