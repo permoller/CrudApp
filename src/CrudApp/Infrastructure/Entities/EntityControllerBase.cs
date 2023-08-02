@@ -16,7 +16,7 @@ public abstract class EntityControllerBase<T> : QueryControllerBase<T> where T :
     }
 
     [HttpPost]
-    [ProducesResponseType((int)HttpStatus.Created)]
+    [ProducesResponseType(HttpStatus.Created)]
     public async Task<ActionResult<EntityId>> Post([FromBody] T entity)
     {
         DbContext.Add(entity);

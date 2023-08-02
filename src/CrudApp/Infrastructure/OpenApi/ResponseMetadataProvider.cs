@@ -58,13 +58,13 @@ public class ResponseMetadataProvider : IApplicationModelProvider
             if (_voidReturnTypes.Contains(returnType))
             {
                 action.Filters.Add(new ReturnNoContentStatusCode());
-                action.Filters.Add(new ProducesResponseTypeAttribute((int)HttpStatus.NoContent));
+                action.Filters.Add(new ProducesResponseTypeAttribute(HttpStatus.NoContent));
             }
             else
             {
-                action.Filters.Add(new ProducesResponseTypeAttribute(returnType, (int)HttpStatus.Ok));
+                action.Filters.Add(new ProducesResponseTypeAttribute(returnType, HttpStatus.Ok));
                 if((!returnType.IsValueType || Nullable.GetUnderlyingType(returnType) != null))
-                    action.Filters.Add(new ProducesResponseTypeAttribute(typeof(void), (int)HttpStatus.NoContent));
+                    action.Filters.Add(new ProducesResponseTypeAttribute(typeof(void), HttpStatus.NoContent));
             }
         }
     }
@@ -75,11 +75,11 @@ public class ResponseMetadataProvider : IApplicationModelProvider
             .OfType<IApiResponseMetadataProvider>()
             .Select(x => x.StatusCode)
             .ToList();
-        foreach (var statusCode in Enum.GetValues<HttpStatus>().Where(s => (int)s >= 400))
+        foreach (var statusCode in HttpStatus.KnownStatusCodes.Where(s => s >= 400))
         {
-            if (!existingStatusCodes.Contains((int)statusCode))
+            if (!existingStatusCodes.Contains(statusCode))
             {
-                action.Filters.Add(new ProducesResponseTypeAttribute(typeof(ProblemDetails), (int)statusCode));
+                action.Filters.Add(new ProducesResponseTypeAttribute(typeof(ProblemDetails), statusCode));
             }
         }
     }
@@ -106,7 +106,7 @@ public class ResponseMetadataProvider : IApplicationModelProvider
         /// <inheritdoc/>
         public void OnResultExecuting(ResultExecutingContext context)
         {
-            context.HttpContext.Response.StatusCode = (int)HttpStatus.NoContent;
+            context.HttpContext.Response.StatusCode = HttpStatus.NoContent;
         }
 
         /// <inheritdoc/>

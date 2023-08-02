@@ -12,7 +12,7 @@ public class UsersControllerTests
         var fixture = await WebAppFixture.CreateAsync();
         var client = fixture.CreateHttpClient();
         var response = await client.GetAsync("/api/users/current");
-        Assert.Equal((int)HttpStatus.NoContent, (int)response.StatusCode);
+        Assert.Equal(HttpStatus.NoContent, (int)response.StatusCode);
     }
 
     [Fact]
@@ -21,7 +21,7 @@ public class UsersControllerTests
         var fixture = await WebAppFixture.CreateAsync();
         var client = fixture.CreateHttpClient(fixture.InitialUserId);
         var response = await client.GetAsync("/api/users/current");
-        Assert.Equal((int)HttpStatus.Ok, (int)response.StatusCode);
+        Assert.Equal(HttpStatus.Ok, (int)response.StatusCode);
         var currentUser = await response.Content.ReadFromJsonAsync<User>();
         Assert.NotNull(currentUser);
         Assert.Equal(fixture.InitialUserId, currentUser.Id);

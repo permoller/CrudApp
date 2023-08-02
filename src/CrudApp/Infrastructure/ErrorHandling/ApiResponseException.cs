@@ -11,17 +11,18 @@ namespace CrudApp.Infrastructure.ErrorHandling;
 [Serializable]
 public sealed class ApiResponseException : Exception
 {
+    public int HttpStatus { get; }
     public bool HasMessage { get; private set; }
 
-    public ApiResponseException(HttpStatus status) : this(status, null)
+    public ApiResponseException(int status) : this(status, null)
     {
     }
 
-    public ApiResponseException(HttpStatus status, string? message) : this(status, message, null)
+    public ApiResponseException(int status, string? message) : this(status, message, null)
     {
     }
 
-    public ApiResponseException(HttpStatus status, string? message, Exception? innerException) : base(message, innerException)
+    public ApiResponseException(int status, string? message, Exception? innerException) : base(message, innerException)
     {
         HasMessage = !string.IsNullOrEmpty(message);
         HttpStatus = status;
@@ -29,8 +30,8 @@ public sealed class ApiResponseException : Exception
 
     private ApiResponseException(SerializationInfo info, StreamingContext context) : base(info, context)
     {
-        HttpStatus = (HttpStatus)info.GetValue(nameof(HttpStatus), typeof(HttpStatus))!;
-        HasMessage = (bool)info.GetValue(nameof(HasMessage), typeof(bool))!;
+        HttpStatus = info.GetInt32(nameof(HttpStatus));
+        HasMessage = info.GetBoolean(nameof(HasMessage));
     }
 
     public override void GetObjectData(SerializationInfo info, StreamingContext context)
@@ -40,5 +41,4 @@ public sealed class ApiResponseException : Exception
         base.GetObjectData(info, context);
     }
 
-    public HttpStatus HttpStatus { get; }
 }

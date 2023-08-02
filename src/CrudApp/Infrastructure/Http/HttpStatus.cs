@@ -1,45 +1,49 @@
-﻿namespace CrudApp.Infrastructure.Http;
+﻿using System.Net;
+
+namespace CrudApp.Infrastructure.Http;
 
 /// <summary>
 /// These are the HTTP status codes that are returned by the application.
 /// Note that the ASP.NET pipeline itself and external gateways/proxies may return other status codes.
 /// </summary>
-public enum HttpStatus
+public readonly struct HttpStatus
 {
-    Ok = 200,
+    public static readonly int[] KnownStatusCodes = { Ok, Created, NoContent, BadRequest, Unauthorized, Forbidden, NotFound, Conflict, InternalServerError };
+   
+    public const int Ok = (int)HttpStatusCode.OK;
 
-    Created = 201,
+    public const int Created = (int)HttpStatusCode.Created;
 
-    NoContent = 204,
+    public const int NoContent = (int)HttpStatusCode.NoContent;
 
     /// <summary>
     /// Indicates there is a problem with the request, like incorretly formatted json.
     /// </summary>
-    BadRequest = 400,
+    public const int BadRequest = (int)HttpStatusCode.BadRequest;
 
     /// <summary>
     /// Indicates that the client is not authenticated, but it is required by the operation.
     /// </summary>
-    Unauthorized = 401,
+    public const int Unauthorized = (int)HttpStatusCode.Unauthorized;
 
     /// <summary>
     /// Indicates that the client is authenticated, but not autorized to perform the operation.
     /// </summary>
-    Forbidden = 403,
+    public const int Forbidden = (int)HttpStatusCode.Forbidden;
 
     /// <summary>
     /// Indicates the client is trying to access a resource that does not exists (or has been soft-deleted).
     /// </summary>
-    NotFound = 404,
+    public const int NotFound = (int)HttpStatusCode.NotFound;
 
     /// <summary>
     /// Indicates that an entity being updated has been changed since it was read.
     /// Like if an entity has been changed since the client read it and is trying to update it.
     /// </summary>
-    Conflict = 409,
+    public const int Conflict = (int)HttpStatusCode.Conflict;
 
     /// <summary>
     /// Indicates an unexpected error happend at the server.
     /// </summary>
-    InternalServerError = 500
+    public const int InternalServerError = (int)HttpStatusCode.InternalServerError;
 }

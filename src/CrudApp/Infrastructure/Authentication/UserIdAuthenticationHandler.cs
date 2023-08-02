@@ -66,10 +66,10 @@ public class UserIdAuthenticationHandler : IAuthenticationHandler
         await WriteProblemDetailsResponseAsync(HttpStatus.Forbidden);
     }
 
-    private async Task WriteProblemDetailsResponseAsync(HttpStatus status)
+    private async Task WriteProblemDetailsResponseAsync(int statusCode)
     {
-        var problemDetails = _problemDetailsFactory.CreateProblemDetails(Context, statusCode: (int)status);
-        Context.Response.StatusCode = (int)status;
+        var problemDetails = _problemDetailsFactory.CreateProblemDetails(Context, statusCode: statusCode);
+        Context.Response.StatusCode = statusCode;
         await Context.Response.WriteAsJsonAsync(problemDetails);
     }
 

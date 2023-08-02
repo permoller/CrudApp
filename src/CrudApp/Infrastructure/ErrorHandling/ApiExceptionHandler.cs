@@ -92,8 +92,8 @@ public class ApiExceptionHandler : IAsyncExceptionFilter
     {
         var problemDetails = _problemDetailsFactory.CreateProblemDetails(
             httpContext,
-            statusCode: (int)HttpStatus.InternalServerError,
-            title: ReasonPhrases.GetReasonPhrase((int)HttpStatus.InternalServerError));
+            statusCode: HttpStatus.InternalServerError,
+            title: ReasonPhrases.GetReasonPhrase(HttpStatus.InternalServerError));
 
         if (_hostEnvironment.IsDevelopment())
         {

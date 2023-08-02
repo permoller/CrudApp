@@ -15,7 +15,7 @@ public class EntityControllerBaseTest
         // Create
         var entity = new InfrastructureTestEntity(new InfrastructureTestRefEntity());
         var response = await client.PostAsJsonAsync("/api/infrastructuretest", entity);
-        Assert.Equal((int)HttpStatus.Created, (int)response.StatusCode);
+        Assert.Equal(HttpStatus.Created, (int)response.StatusCode);
         var location = response.Headers.Location;
         Assert.NotNull(location);
         var id = await response.Content.ReadFromJsonAsync<EntityId>();
@@ -23,7 +23,7 @@ public class EntityControllerBaseTest
 
         // Read created
         response = await client.GetAsync(location);
-        Assert.Equal((int)HttpStatus.Ok, (int)response.StatusCode);
+        Assert.Equal(HttpStatus.Ok, (int)response.StatusCode);
         entity = await response.Content.ReadFromJsonAsync<InfrastructureTestEntity>();
         Assert.NotNull(entity);
         Assert.Equal(id, entity.Id);
@@ -36,11 +36,11 @@ public class EntityControllerBaseTest
         entity.TestProp = "updated entity";
         entity.NonNullableRef.TestProp = "updated child entity";
         response = await client.PutAsJsonAsync(location, entity);
-        Assert.Equal((int)HttpStatus.NoContent, (int)response.StatusCode);
+        Assert.Equal(HttpStatus.NoContent, (int)response.StatusCode);
 
         // Read updated
         response = await client.GetAsync(location);
-        Assert.Equal((int)HttpStatus.Ok, (int)response.StatusCode);
+        Assert.Equal(HttpStatus.Ok, (int)response.StatusCode);
         entity = await response.Content.ReadFromJsonAsync<InfrastructureTestEntity>();
         Assert.NotNull(entity);
         Assert.Equal(id, entity.Id);
@@ -53,11 +53,11 @@ public class EntityControllerBaseTest
         // Soft delete
         entity.IsSoftDeleted = true;
         response = await client.PutAsJsonAsync(location, entity);
-        Assert.Equal((int)HttpStatus.NoContent, (int)response.StatusCode);
+        Assert.Equal(HttpStatus.NoContent, (int)response.StatusCode);
 
         // Read soft deleted
         response = await client.GetAsync(location);
-        Assert.Equal((int)HttpStatus.Ok, (int)response.StatusCode);
+        Assert.Equal(HttpStatus.Ok, (int)response.StatusCode);
         entity = await response.Content.ReadFromJsonAsync<InfrastructureTestEntity>();
         Assert.NotNull(entity);
         Assert.Equal(id, entity.Id);
@@ -67,10 +67,10 @@ public class EntityControllerBaseTest
 
         // Delete
         response = await client.DeleteAsync(location);
-        Assert.Equal((int)HttpStatus.NoContent, (int)response.StatusCode);
+        Assert.Equal(HttpStatus.NoContent, (int)response.StatusCode);
 
         // Read deleted
         response = await client.GetAsync(location);
-        Assert.Equal((int)HttpStatus.NotFound, (int)response.StatusCode);
+        Assert.Equal(HttpStatus.NotFound, (int)response.StatusCode);
     }
 }
