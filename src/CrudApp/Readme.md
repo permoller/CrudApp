@@ -115,9 +115,18 @@ Automated integration tests have been made that starts an instance of the servic
 # Snapshot tests
 The test project uses snapshot-testing in some tests.
 
+The package [Verify](https://github.com/VerifyTests/Verify) is used for snapshot testing.
+
 As an example there is an integration test, that fetches the OpenApi document from the server.
-It compares the document to a snapshot (an older verison of the document) and fails if anything has changed.
+It compares the document to a snapshot (an older verison of the document that gets checked into the source repository) and fails if anything has changed.
 This test will allow you to detect unintentional changes to the API. If the change is intentional the new version can be accepted and the test will pass the next time it is run.
+
+If a test fails when running locally a diff tool will be opened where the newly received snapshot is compared to the old verified snapshot.
+Different diff tools are supported. Which diff tool will be used, is described at https://github.com/VerifyTests/DiffEngine/blob/main/docs/diff-tool.order.md.
+
+How you actually accept the changes depends. See https://github.com/VerifyTests/Verify#snapshot-management.
+With Rider and VisualStudio with ReSharper there is integration directly in the test-runner panel in the IDE to accept changes on failed tests.
+With [WinMerge](https://winmerge.org/) you click a button in the diff-window to copy the new snapshot to the verified snapshot.
 
 
 # Package dependencies
