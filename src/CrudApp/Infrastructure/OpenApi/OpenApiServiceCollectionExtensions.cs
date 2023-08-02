@@ -15,10 +15,12 @@ public static class OpenApiServiceCollectionExtensions
 
         services.AddSwaggerGen(swaggerGenOptions =>
         {
-            // Make sure non-nullable reference types are not marked as nullable.
+            // We have nullable-reference-types enabled in the project.
+            // So properties where the type is a reference type that is not marked as nullable,
+            // should also not be marked as nullable in the OpenAPI document.
             swaggerGenOptions.SupportNonNullableReferenceTypes();
 
-            // Make sure all non-nullable properties are marked as required.
+            // Make sure non-nullable properties are marked as required (meaning they must appear in the JSON).
             swaggerGenOptions.SchemaFilter<RequireNonNullablePropertiesSchemaFilter>();
         });
 
