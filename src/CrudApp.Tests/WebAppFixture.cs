@@ -1,4 +1,5 @@
 ﻿using CrudApp.Infrastructure.Database;
+using CrudApp.Infrastructure.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
@@ -6,23 +7,17 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace CrudApp.Tests;
 
-internal sealed class WebAppFixture : IDisposable
+public sealed class WebAppFixture : IDisposable, IAsyncLifetime
 {
-    public WebApplicationFactory<Program> WebAppFactory { get; }
+    public WebApplicationFactory<CrudAppApiControllerBase> WebAppFactory { get; }
 
-    public EntityId InitialUserId { get; }
+    public EntityId InitialUserId { get; private set; }
 
-    private WebAppFixture(WebApplicationFactory<Program> webAppFactory, EntityId initialUserId)
-    {
-        WebAppFactory = webAppFactory;
-        InitialUserId = initialUserId;
-    }
-
-    public static async Task<WebAppFixture> CreateAsync()
+    public WebAppFixture()
     {
         var dbName = Guid.NewGuid().ToString();
 
-        var webAppFactory = new WebApplicationFactory<Program>()
+        WebAppFactory = new WebApplicationFactory<CrudAppApiControllerBase>()
             .WithWebHostBuilder(builder =>
             {
                 builder.ConfigureServices(services =>
@@ -34,16 +29,29 @@ internal sealed class WebAppFixture : IDisposable
                     });
                 });
             });
+    }
 
-        var scope = webAppFactory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<CrudAppDbContext>();
-        var initialUserId = await db.EnsureCreatedAsync();
-        
-        return new(webAppFactory, initialUserId!.Value);
+    public static async Task<WebAppFixture> CreateAsync()
+    {
+        var webAppFixture = new WebAppFixture();
+        await webAppFixture.InitializeAsync();
+        return webAppFixture;
     }
 
     public void Dispose()
     {
         WebAppFactory.Dispose();
+    }
+
+    public async Task InitializeAsync()
+    {
+        var scope = WebAppFactory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<CrudAppDbContext>();
+        InitialUserId = (await db.EnsureCreatedAsync()).Value;
+    }
+
+    public Task DisposeAsync()
+    {
+        return Task.CompletedTask;
     }
 }

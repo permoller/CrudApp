@@ -1,4 +1,3 @@
-using CrudApp.Infrastructure.Authentication;
 using CrudApp.Infrastructure.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);
