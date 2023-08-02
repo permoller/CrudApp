@@ -34,7 +34,7 @@ public abstract class EntityControllerBase<T> : QueryControllerBase<T> where T :
             throw new ApiResponseException(HttpStatus.BadRequest, "Id in body and in URL must be the same.");
         }
         var existingEntity = await DbContext.GetByIdAuthorized<T>(id, asNoTracking: false);
-        DbContext.Entry(existingEntity).CurrentValues.SetValues(entity);
+        DbContext.Entry(existingEntity).CurrentValues.SetValues(entity); // TODO: This does not update referenced entities
         await DbContext.SaveChangesAsync();
     }
 

@@ -24,7 +24,7 @@ public class InfrastructureTestController : EntityControllerBase<InfrastructureT
     public InfrastructureTestEntity NotNullInt()
     {
         // Used for testing the status code returned from an action when an object is returned.
-        return new InfrastructureTestEntity();
+        return new(new());
     }
 
     [Route("null-ref"), HttpGet, HttpPut, HttpPost, HttpDelete]
@@ -38,6 +38,6 @@ public class InfrastructureTestController : EntityControllerBase<InfrastructureT
     public InfrastructureTestEntity NotNullRef()
     {
         // Used for testing the status code returned from an action when an object is returned.
-        return new InfrastructureTestEntity();
+        return new(new());
     }
 }
