@@ -35,7 +35,7 @@ public class StatusCodeTests : IClassFixture<WebAppFixture>
     [InlineData("DELETE", "/api/infrastructuretest/not-null-int", HttpStatus.Ok)]
     public async Task TestStatusCode(string httpMethod, string url, HttpStatus expectedHttpStatus)
     {
-        var client = _fixture.WebAppFactory.CreateClient();
+        var client = _fixture.CreateHttpClient();
         var request = new HttpRequestMessage(new HttpMethod(httpMethod), url);
         var response = await client.SendAsync(request);
         Assert.Equal((int)expectedHttpStatus, (int)response.StatusCode);

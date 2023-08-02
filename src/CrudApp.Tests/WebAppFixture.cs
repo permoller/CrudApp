@@ -1,9 +1,11 @@
-﻿using CrudApp.Infrastructure.Database;
+﻿using CrudApp.Infrastructure.Authentication;
+using CrudApp.Infrastructure.Database;
 using CrudApp.Infrastructure.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using System.Net.Http.Headers;
 
 namespace CrudApp.Tests;
 
@@ -53,5 +55,13 @@ public sealed class WebAppFixture : IDisposable, IAsyncLifetime
     public Task DisposeAsync()
     {
         return Task.CompletedTask;
+    }
+
+    public HttpClient CreateHttpClient(EntityId? userId = null)
+    {
+        var client = WebAppFactory.CreateClient();
+        if(userId != default)
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(UserIdAuthenticationHandler.HttpAuthenticationScheme, userId.ToString());
+        return client;
     }
 }
