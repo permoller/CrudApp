@@ -6745,6 +6745,10 @@
           }
         ],
         "properties": {
+          "testProp": {
+            "type": "string",
+            "nullable": true
+          },
           "infrastructureTestEntityId": {
             "type": "integer",
             "format": "int64"
@@ -6773,6 +6777,10 @@
           }
         ],
         "properties": {
+          "testProp": {
+            "type": "string",
+            "nullable": true
+          },
           "nullableInt": {
             "type": "integer",
             "format": "int32",
@@ -6823,6 +6831,12 @@
             "$ref": "#/components/schemas/EntityBase"
           }
         ],
+        "properties": {
+          "testProp": {
+            "type": "string",
+            "nullable": true
+          }
+        },
         "additionalProperties": false
       },
       "ProblemDetails": {
