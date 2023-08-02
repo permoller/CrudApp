@@ -1,5 +1,7 @@
 ﻿using CrudApp.Infrastructure.Http;
 using CrudApp.Infrastructure.Testing;
+using CrudApp.Tests.Infrastructure.Http;
+using Microsoft.AspNetCore.Mvc;
 using System.Net.Http.Json;
 
 namespace CrudApp.Tests.Infrastructure.Entities;
@@ -72,5 +74,60 @@ public class EntityControllerBaseTest
         // Read deleted
         response = await client.GetAsync(location);
         Assert.Equal(HttpStatus.NotFound, (int)response.StatusCode);
+    }
+
+    [Fact]
+    public async Task TestCrudActions2()
+    {
+        var fixture = await WebAppFixture.CreateAsync();
+        var client = fixture.CreateHttpClient(fixture.InitialUserId);
+
+        // Create
+        var entity = new InfrastructureTestEntity(new InfrastructureTestRefEntity());
+        var id = await client.PostEntityAsync(entity);
+        Assert.NotEqual(default, id);
+
+        // Read created
+        entity = await client.GetEntityAsync<InfrastructureTestEntity>(id);
+        Assert.NotNull(entity);
+        Assert.Equal(id, entity.Id);
+        Assert.Equal(1, entity.Version);
+        Assert.False(entity.IsSoftDeleted);
+        var childEntityId = entity.NonNullableRefId;
+        Assert.Equal(childEntityId, entity.NonNullableRef.Id);
+
+        // Update
+        entity.TestProp = "updated entity";
+        entity.NonNullableRef.TestProp = "updated child entity";
+        await client.PutEntityAsync(entity);
+
+        // Read updated
+        entity = await client.GetEntityAsync<InfrastructureTestEntity>(id);
+        Assert.NotNull(entity);
+        Assert.Equal(id, entity.Id);
+        Assert.Equal(2, entity.Version);
+        Assert.False(entity.IsSoftDeleted);
+        Assert.Equal("updated entity", entity.TestProp);
+        //Assert.Equal(2, entity.NonNullableRef.Version);
+        //Assert.Equal("updated child entity", entity.NonNullableRef.TestProp);
+
+        // Soft delete
+        entity.IsSoftDeleted = true;
+        await client.PutEntityAsync(entity);
+
+        // Read soft deleted
+        entity = await client.GetEntityAsync<InfrastructureTestEntity>(id);
+        Assert.NotNull(entity);
+        Assert.Equal(id, entity.Id);
+        Assert.Equal(3, entity.Version);
+        Assert.True(entity.IsSoftDeleted);
+        //Assert.Equal(2, entity.NonNullableRef.Version);
+
+        // Delete
+        await client.DeleteEntityAsync<InfrastructureTestEntity>(id);
+
+        // Read deleted
+        var ex = await Assert.ThrowsAsync<ApiException<ProblemDetails>>(() => client.GetEntityAsync<InfrastructureTestEntity>(id));
+        Assert.Equal(HttpStatus.NotFound, (int)ex.StatusCode);
     }
 }

@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using Microsoft.AspNetCore.Server.IIS.Core;
+using System.Reflection;
 
 namespace CrudApp.Infrastructure.UtilityCode;
 
@@ -7,8 +8,49 @@ public static class ReflectionUtils
     public static IEnumerable<Type> GetAllTypes()
         => AppDomain.CurrentDomain.GetAssemblies().SelectMany(a => a.GetTypes());
 
-    public static IEnumerable<Type> GetSubclasses(this Type baseClass, bool includeAbstractClasses = false)
-        => GetAllTypes().Where(t => t.IsSubclassOf(baseClass) && (includeAbstractClasses || !t.IsAbstract));
+    public static IEnumerable<Type> GetSubclasses(this Type? baseClass, bool includeAbstractClasses = false)
+    {
+        if (baseClass is null)
+            return Enumerable.Empty<Type>();
+
+        var allTypes = GetAllTypes();
+        if (!includeAbstractClasses)
+            allTypes = allTypes.Where(t => !t.IsAbstract);
+
+        if (baseClass.IsGenericTypeDefinition)
+            return allTypes.Where(t => t.IsSubclassOfGeneric(baseClass));
+        return allTypes.Where(t => t.IsSubclassOf(baseClass));
+    }
+
+    public static bool IsSubclassOfGeneric(this Type? type, Type genericTypeDefinition)
+    {
+        if (!genericTypeDefinition.IsGenericTypeDefinition)
+            throw new ArgumentException($"{nameof(genericTypeDefinition)} must be a generic type definition.");
+
+        var baseType = type;
+        while (baseType != null && baseType != typeof(object))
+        {
+            if (baseType.IsGenericType && baseType.GetGenericTypeDefinition() == genericTypeDefinition)
+                return true;
+            baseType = baseType.BaseType;
+        }
+        return false;
+    }
+
+    public static Type[] GetGenericTypeArgumentsFor(this Type? type, Type genericTypeDefinition)
+    {
+        if (!genericTypeDefinition.IsGenericTypeDefinition)
+            throw new ArgumentException($"{genericTypeDefinition.Name} is not a generic type definition.");
+
+        var baseType = type;
+        while (baseType != null && baseType != typeof(object))
+        {
+            if (baseType.IsGenericType && baseType.GetGenericTypeDefinition() == genericTypeDefinition)
+                return baseType.GetGenericArguments();
+            baseType = baseType.BaseType;
+        }
+        throw new ArgumentException($"{type.Name} does not inherit from {genericTypeDefinition.Name}.");
+    }
 
     public static bool HasAttribute<T>(this PropertyInfo? propertyInfo) where T : Attribute
         => propertyInfo?.GetCustomAttribute<T>(true) is not null;
