@@ -6481,14 +6481,14 @@
           }
         ],
         "properties": {
-          "authorizationGroupEntityRelations": {
+          "AuthorizationGroupEntityRelations": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/AuthorizationGroupEntityRelation"
             },
             "nullable": true
           },
-          "authorizationGroupUserRelations": {
+          "AuthorizationGroupUserRelations": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/AuthorizationGroupUserRelation"
@@ -6500,9 +6500,9 @@
       },
       "AuthorizationGroupEntityRelation": {
         "required": [
-          "authorizationGroupId",
-          "entityId",
-          "entityType"
+          "AuthorizationGroupId",
+          "EntityId",
+          "EntityType"
         ],
         "type": "object",
         "allOf": [
@@ -6511,18 +6511,18 @@
           }
         ],
         "properties": {
-          "authorizationGroupId": {
+          "AuthorizationGroupId": {
             "type": "integer",
             "format": "int64"
           },
-          "entityId": {
+          "EntityId": {
             "type": "integer",
             "format": "int64"
           },
-          "entityType": {
+          "EntityType": {
             "type": "string"
           },
-          "authorizationGroup": {
+          "AuthorizationGroup": {
             "allOf": [
               {
                 "$ref": "#/components/schemas/AuthorizationGroup"
@@ -6535,9 +6535,9 @@
       },
       "AuthorizationGroupUserRelation": {
         "required": [
-          "authorizationGroupId",
-          "authorizationRoleId",
-          "userId"
+          "AuthorizationGroupId",
+          "AuthorizationRoleId",
+          "UserId"
         ],
         "type": "object",
         "allOf": [
@@ -6546,19 +6546,19 @@
           }
         ],
         "properties": {
-          "authorizationGroupId": {
+          "AuthorizationGroupId": {
             "type": "integer",
             "format": "int64"
           },
-          "userId": {
+          "UserId": {
             "type": "integer",
             "format": "int64"
           },
-          "authorizationRoleId": {
+          "AuthorizationRoleId": {
             "type": "integer",
             "format": "int64"
           },
-          "authorizationGroup": {
+          "AuthorizationGroup": {
             "allOf": [
               {
                 "$ref": "#/components/schemas/AuthorizationGroup"
@@ -6566,7 +6566,7 @@
             ],
             "nullable": true
           },
-          "authorizationRole": {
+          "AuthorizationRole": {
             "allOf": [
               {
                 "$ref": "#/components/schemas/AuthorizationRole"
@@ -6585,7 +6585,7 @@
           }
         ],
         "properties": {
-          "authorizationGroupUserRelations": {
+          "AuthorizationGroupUserRelations": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/AuthorizationGroupUserRelation"
@@ -6606,25 +6606,25 @@
       },
       "EntityBase": {
         "required": [
-          "displayName",
-          "id",
-          "isSoftDeleted",
-          "version"
+          "DisplayName",
+          "Id",
+          "IsSoftDeleted",
+          "Version"
         ],
         "type": "object",
         "properties": {
-          "id": {
+          "Id": {
             "type": "integer",
             "format": "int64"
           },
-          "version": {
+          "Version": {
             "type": "integer",
             "format": "int64"
           },
-          "isSoftDeleted": {
+          "IsSoftDeleted": {
             "type": "boolean"
           },
-          "displayName": {
+          "DisplayName": {
             "type": "string",
             "readOnly": true
           }
@@ -6633,8 +6633,8 @@
       },
       "EntityChange": {
         "required": [
-          "changeType",
-          "time"
+          "ChangeType",
+          "Time"
         ],
         "type": "object",
         "allOf": [
@@ -6643,36 +6643,36 @@
           }
         ],
         "properties": {
-          "changeType": {
+          "ChangeType": {
             "allOf": [
               {
                 "$ref": "#/components/schemas/ChangeType"
               }
             ]
           },
-          "entityType": {
+          "EntityType": {
             "type": "string",
             "nullable": true
           },
-          "entityId": {
+          "EntityId": {
             "type": "integer",
             "format": "int64",
             "nullable": true
           },
-          "userId": {
+          "UserId": {
             "type": "integer",
             "format": "int64",
             "nullable": true
           },
-          "time": {
+          "Time": {
             "type": "string",
             "format": "date-time"
           },
-          "activityId": {
+          "ActivityId": {
             "type": "string",
             "nullable": true
           },
-          "propertyChanges": {
+          "PropertyChanges": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/PropertyChange"
@@ -6684,15 +6684,15 @@
       },
       "EntityChangeEventDto": {
         "required": [
-          "entityChangeEventId"
+          "EntityChangeEventId"
         ],
         "type": "object",
         "properties": {
-          "entityChangeEventId": {
+          "EntityChangeEventId": {
             "type": "integer",
             "format": "int64"
           },
-          "entityChangeEvent": {
+          "EntityChangeEvent": {
             "allOf": [
               {
                 "$ref": "#/components/schemas/EntityChange"
@@ -6700,7 +6700,7 @@
             ],
             "nullable": true
           },
-          "propertyChangeEvents": {
+          "PropertyChangeEvents": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/PropertyChange"
@@ -6712,7 +6712,7 @@
       },
       "HttpValidationProblemDetails": {
         "required": [
-          "errors"
+          "Errors"
         ],
         "type": "object",
         "allOf": [
@@ -6721,7 +6721,7 @@
           }
         ],
         "properties": {
-          "errors": {
+          "Errors": {
             "type": "object",
             "additionalProperties": {
               "type": "array",
@@ -6736,7 +6736,7 @@
       },
       "InfrastructureTestChildEntity": {
         "required": [
-          "infrastructureTestEntityId"
+          "InfrastructureTestEntityId"
         ],
         "type": "object",
         "allOf": [
@@ -6745,15 +6745,15 @@
           }
         ],
         "properties": {
-          "testProp": {
+          "TestProp": {
             "type": "string",
             "nullable": true
           },
-          "infrastructureTestEntityId": {
+          "InfrastructureTestEntityId": {
             "type": "integer",
             "format": "int64"
           },
-          "infrastructureTestEntity": {
+          "InfrastructureTestEntity": {
             "allOf": [
               {
                 "$ref": "#/components/schemas/InfrastructureTestEntity"
@@ -6766,9 +6766,9 @@
       },
       "InfrastructureTestEntity": {
         "required": [
-          "nonNullableInt",
-          "nonNullableRef",
-          "nonNullableRefId"
+          "NonNullableInt",
+          "NonNullableRef",
+          "NonNullableRefId"
         ],
         "type": "object",
         "allOf": [
@@ -6777,25 +6777,25 @@
           }
         ],
         "properties": {
-          "testProp": {
+          "TestProp": {
             "type": "string",
             "nullable": true
           },
-          "nullableInt": {
+          "NullableInt": {
             "type": "integer",
             "format": "int32",
             "nullable": true
           },
-          "nonNullableInt": {
+          "NonNullableInt": {
             "type": "integer",
             "format": "int32"
           },
-          "nullableRefId": {
+          "NullableRefId": {
             "type": "integer",
             "format": "int64",
             "nullable": true
           },
-          "nullableRef": {
+          "NullableRef": {
             "allOf": [
               {
                 "$ref": "#/components/schemas/InfrastructureTestRefEntity"
@@ -6803,18 +6803,18 @@
             ],
             "nullable": true
           },
-          "nonNullableRefId": {
+          "NonNullableRefId": {
             "type": "integer",
             "format": "int64"
           },
-          "nonNullableRef": {
+          "NonNullableRef": {
             "allOf": [
               {
                 "$ref": "#/components/schemas/InfrastructureTestRefEntity"
               }
             ]
           },
-          "children": {
+          "Children": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/InfrastructureTestChildEntity"
@@ -6832,7 +6832,7 @@
           }
         ],
         "properties": {
-          "testProp": {
+          "TestProp": {
             "type": "string",
             "nullable": true
           }
@@ -6868,8 +6868,8 @@
       },
       "PropertyChange": {
         "required": [
-          "entityChangeId",
-          "propertyName"
+          "EntityChangeId",
+          "PropertyName"
         ],
         "type": "object",
         "allOf": [
@@ -6878,20 +6878,20 @@
           }
         ],
         "properties": {
-          "entityChangeId": {
+          "EntityChangeId": {
             "type": "integer",
             "format": "int64"
           },
-          "propertyName": {
+          "PropertyName": {
             "type": "string"
           },
-          "oldPropertyValue": {
+          "OldPropertyValue": {
             "nullable": true
           },
-          "newPropertyValue": {
+          "NewPropertyValue": {
             "nullable": true
           },
-          "entityChange": {
+          "EntityChange": {
             "allOf": [
               {
                 "$ref": "#/components/schemas/EntityChange"
@@ -6904,7 +6904,7 @@
       },
       "SuperHero": {
         "required": [
-          "displayName"
+          "DisplayName"
         ],
         "type": "object",
         "allOf": [
@@ -6913,15 +6913,15 @@
           }
         ],
         "properties": {
-          "heroName": {
+          "HeroName": {
             "type": "string",
             "nullable": true
           },
-          "civilianName": {
+          "CivilianName": {
             "type": "string",
             "nullable": true
           },
-          "displayName": {
+          "DisplayName": {
             "type": "string",
             "readOnly": true
           }
@@ -6939,26 +6939,26 @@
       },
       "WeatherForecast": {
         "required": [
-          "date",
-          "temperatureC",
-          "temperatureF"
+          "Date",
+          "TemperatureC",
+          "TemperatureF"
         ],
         "type": "object",
         "properties": {
-          "date": {
+          "Date": {
             "type": "string",
             "format": "date"
           },
-          "temperatureC": {
+          "TemperatureC": {
             "type": "integer",
             "format": "int32"
           },
-          "temperatureF": {
+          "TemperatureF": {
             "type": "integer",
             "format": "int32",
             "readOnly": true
           },
-          "summary": {
+          "Summary": {
             "type": "string",
             "nullable": true
           }

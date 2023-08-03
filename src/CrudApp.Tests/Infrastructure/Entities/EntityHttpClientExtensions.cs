@@ -14,7 +14,7 @@ internal static class EntityHttpClientBase
         var entityControllerTypes = typeof(EntityControllerBase<>).GetSubclasses();
         foreach(var entityControllerType in entityControllerTypes)
         {
-            var type = entityControllerType.GetGenericTypeArgumentsFor(typeof(EntityControllerBase<>))[0];
+            var type = entityControllerType.GetGenericArgumentsForGenericTypeDefinition(typeof(EntityControllerBase<>))[0];
             var controllerName = entityControllerType.Name.Replace("Controller", "");
             _entityTypeToControllerName.Add(type, controllerName);
         }
@@ -52,7 +52,7 @@ internal static class EntityHttpClientBase
         HttpResponseMessage response;
         try
         {
-            response = await httpClient.PostAsJsonAsync(GetPath<T>(), entity);
+            response = await httpClient.PostAsJsonAsync(GetPath<T>(), entity, JsonUtils.ApiJsonSerializerOptions);
         }
         catch (HttpRequestException ex)
         {
@@ -67,7 +67,7 @@ internal static class EntityHttpClientBase
         HttpResponseMessage response;
         try
         {
-            response = await httpClient.PutAsJsonAsync(GetPath<T>(entity.Id), entity);            
+            response = await httpClient.PutAsJsonAsync(GetPath<T>(entity.Id), entity, JsonUtils.ApiJsonSerializerOptions);            
         }
         catch (HttpRequestException ex)
         {

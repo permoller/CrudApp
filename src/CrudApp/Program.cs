@@ -1,4 +1,5 @@
 using CrudApp.Infrastructure.OpenApi;
+using CrudApp.Infrastructure.UtilityCode;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,6 +20,7 @@ builder
     .AddCrudAppOpenApi()
     //.AddLocalization()
     .AddCrudAppDbContext()
+    .AddCrudAppJsonOptions()
     .AddControllers();
 
 

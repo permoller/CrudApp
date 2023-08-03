@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Server.IIS.Core;
-using System.Reflection;
+﻿using System.Reflection;
 
 namespace CrudApp.Infrastructure.UtilityCode;
 
@@ -18,38 +17,49 @@ public static class ReflectionUtils
             allTypes = allTypes.Where(t => !t.IsAbstract);
 
         if (baseClass.IsGenericTypeDefinition)
-            return allTypes.Where(t => t.IsSubclassOfGeneric(baseClass));
+            return allTypes.Where(t => t.IsClass && t.IsSubtypeOfGenericTypeDefinition(baseClass));
         return allTypes.Where(t => t.IsSubclassOf(baseClass));
     }
 
-    public static bool IsSubclassOfGeneric(this Type? type, Type genericTypeDefinition)
+    public static bool IsSubtypeOfGenericTypeDefinition(this Type? type, Type genericTypeDefinition)
+        => type.FindGenericArgumentsForGenericTypeDefinition(genericTypeDefinition) is not null;
+
+    /// <summary>
+    /// Searches through the type heirachy looking for a generic type that uses <paramref name="genericTypeDefinition"/> as the generic type definition.
+    /// Returns the arguments of the first match or null if no match is found.
+    /// </summary>
+    public static Type[]? FindGenericArgumentsForGenericTypeDefinition(this Type? type, Type genericTypeDefinition)
     {
         if (!genericTypeDefinition.IsGenericTypeDefinition)
             throw new ArgumentException($"{nameof(genericTypeDefinition)} must be a generic type definition.");
 
-        var baseType = type;
-        while (baseType != null && baseType != typeof(object))
+        var typesToCheck = new Queue<Type?>();
+        typesToCheck.Enqueue(type);
+        Type? typeToCheck;
+        while (typesToCheck.Count > 0)
         {
-            if (baseType.IsGenericType && baseType.GetGenericTypeDefinition() == genericTypeDefinition)
-                return true;
-            baseType = baseType.BaseType;
+            typeToCheck = typesToCheck.Dequeue();
+
+            if (typeToCheck is null || typeToCheck == typeof(object))
+                continue;
+
+            if (typeToCheck.IsGenericType && typeToCheck.GetGenericTypeDefinition() == genericTypeDefinition)
+                return typeToCheck.GetGenericArguments();
+
+            typesToCheck.Enqueue(typeToCheck.BaseType);
+            foreach (var i in typeToCheck.GetInterfaces())
+                typesToCheck.Enqueue(i);
         }
-        return false;
+        return null;
     }
 
-    public static Type[] GetGenericTypeArgumentsFor(this Type? type, Type genericTypeDefinition)
+    /// <summary>
+    /// Like <see cref="FindGenericArgumentsForGenericTypeDefinition(Type?, Type)"/> but throws an <see cref="ArgumentException"/> if no type arguments are found.
+    /// </summary>
+    public static Type[] GetGenericArgumentsForGenericTypeDefinition(this Type? type, Type genericTypeDefinition)
     {
-        if (!genericTypeDefinition.IsGenericTypeDefinition)
-            throw new ArgumentException($"{genericTypeDefinition.Name} is not a generic type definition.");
-
-        var baseType = type;
-        while (baseType != null && baseType != typeof(object))
-        {
-            if (baseType.IsGenericType && baseType.GetGenericTypeDefinition() == genericTypeDefinition)
-                return baseType.GetGenericArguments();
-            baseType = baseType.BaseType;
-        }
-        throw new ArgumentException($"{type.Name} does not inherit from {genericTypeDefinition.Name}.");
+        return type.FindGenericArgumentsForGenericTypeDefinition(genericTypeDefinition) 
+            ?? throw new ArgumentException($"{type.Name} does not inherit from {genericTypeDefinition.Name}.");
     }
 
     public static bool HasAttribute<T>(this PropertyInfo? propertyInfo) where T : Attribute

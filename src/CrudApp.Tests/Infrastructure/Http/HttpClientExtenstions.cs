@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using CrudApp.Infrastructure.UtilityCode;
+using Microsoft.AspNetCore.Mvc;
 using System.Net;
 using System.Text.Json;
 
@@ -7,32 +8,43 @@ internal static class HttpClientExtenstions
 {
     public static async Task EnsureSuccessAsync(this HttpResponseMessage response)
     {
-        if (response.IsSuccessStatusCode)
-            return;
-
-        string responseString;
         try
         {
-            responseString = await response.Content.ReadAsStringAsync();
+            response.EnsureSuccessStatusCode();
         }
-        catch (Exception ex)
+        catch (HttpRequestException statusException)
         {
-            throw new ApiException("Error reading error response content.", ex, response.StatusCode);
-        }
-        if (string.IsNullOrEmpty(responseString))
-            throw new ApiException($"Status code {response.StatusCode} indicates an error.", null, response.StatusCode);
-        try
-        {
-            var problem = JsonSerializer.Deserialize<ProblemDetails>(responseString);
-            throw new ApiException<ProblemDetails>("Status code {response.StatusCode} indicates an error.", null, response.StatusCode, problem);
-        }
-        catch (Exception ex)
-        {
-            throw new ApiException<string>($"Status code {response.StatusCode} indicates an error.", ex, response.StatusCode, responseString);
-        }
+            // Expect a response body from the server
+            string responseString;
+            try
+            {
+                responseString = await response.Content.ReadAsStringAsync();
+            }
+            catch (Exception ex)
+            {
+                // We could not read the response body. Return the status-error message in an exception.
+                throw new ApiException(statusException.Message, ex, response.StatusCode);
+            }
 
+            // If no response body received. Return the status-error message in an exception.
+            if (string.IsNullOrEmpty(responseString))
+                throw new ApiException(statusException.Message, null, response.StatusCode);
 
+            // Expect the response-body to be a ProblemDetails object
+            ProblemDetails? problem;
+            try
+            {
+                problem = JsonSerializer.Deserialize<ProblemDetails>(responseString, JsonUtils.ApiJsonSerializerOptions);
+            }
+            catch (Exception ex)
+            {
+                // We could not parse the respnse. Return the status-error message and the string content in an exception.
+                throw new StringApiException(statusException.Message, ex, response.StatusCode, responseString);
+            }
 
+            // Return the status-error message and the ProblemDetails in an exception.
+            throw new ProblemDetailsApiException(statusException.Message, null, response.StatusCode, problem);
+        }
     }
 
     public static async Task<T?> ReadContentAsync<T>(this HttpResponseMessage response)
@@ -49,13 +61,18 @@ internal static class HttpClientExtenstions
         {
             throw new ApiException("Error reading response content.", ex, response.StatusCode);
         }
+
+        if (string.IsNullOrEmpty(contentString))
+            return default;
+
         try
         {
-            return JsonSerializer.Deserialize<T>(contentString);
+            var result = JsonSerializer.Deserialize<T>(contentString, JsonUtils.ApiJsonSerializerOptions);
+            return result;
         }
         catch (Exception ex)
         {
-            throw new ApiException<string>("Error deserializing response content.", ex, response.StatusCode, contentString);
+            throw new StringApiException("Error deserializing response content.", ex, response.StatusCode, contentString);
         }
     }
 }
@@ -66,12 +83,22 @@ public class ApiException : HttpRequestException
     {
     }
 }
-public class ApiException<T> : ApiException
+public class StringApiException : ApiException
 {
-    public ApiException(string message, Exception? innerException, HttpStatusCode? statusCode, T? content) : base(message, innerException, statusCode)
-    {
-        Content = content;
-    }
+    public string? Response { get; }
 
-    public T? Content { get; }
+    public StringApiException(string message, Exception? innerException, HttpStatusCode? statusCode, string? response) : base(message, innerException, statusCode)
+    {
+        Response = response;
+    }
+}
+
+public class ProblemDetailsApiException : ApiException
+{
+    public ProblemDetails? Response { get; }
+
+    public ProblemDetailsApiException(string message, Exception? innerException, HttpStatusCode? statusCode, ProblemDetails? response) : base(message, innerException, statusCode)
+    {
+        Response = response;
+    }
 }

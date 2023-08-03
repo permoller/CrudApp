@@ -75,6 +75,24 @@ public class CrudAppDbContext : DbContext
         return query;
     }
 
+    public IQueryable<EntityBase> All(Type entityType, bool includeSoftDeleted = false)
+    {
+        if (!entityType.IsSubclassOf(typeof(EntityBase)))
+            throw new ArgumentException($"Entity type must be a subclass of {typeof(EntityBase)}.");
+
+        var methodInfo = Array.Find(GetType().GetMethods(), m => m.Name == nameof(All) && m.IsGenericMethodDefinition);
+
+        if (methodInfo is null)
+            throw new InvalidOperationException($"Generic method {nameof(All)} not found on {GetType()}");
+
+        var query = methodInfo.MakeGenericMethod(entityType).Invoke(this, new object[] { includeSoftDeleted });
+
+        if (query is null)
+            throw new InvalidOperationException($"Invoking method {methodInfo} returned null.");
+
+        return (IQueryable<EntityBase>)query;
+    }
+
     public async Task<EntityId?> EnsureCreatedAsync()
     {
         await Database.OpenConnectionAsync();

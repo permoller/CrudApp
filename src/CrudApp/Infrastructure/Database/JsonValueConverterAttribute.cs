@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+﻿using CrudApp.Infrastructure.UtilityCode;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using System.Collections.Concurrent;
 using System.Text.Json;
 
@@ -17,8 +18,8 @@ public class JsonValueConverterAttribute : Attribute
     private sealed class JsonValueConverter<T> : ValueConverter<T, string>
     {
         public JsonValueConverter() : base(
-            v => JsonSerializer.Serialize(v!, JsonSerializerOptions.Default)!,
-            v => JsonSerializer.Deserialize<T>(v!, JsonSerializerOptions.Default)!,
+            v => JsonSerializer.Serialize(v!, JsonUtils.DbJsonSerializerOptions)!,
+            v => JsonSerializer.Deserialize<T>(v!, JsonUtils.DbJsonSerializerOptions)!,
             convertsNulls: false)
         {
         }
