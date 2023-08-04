@@ -3,16 +3,19 @@ using CrudApp.Infrastructure.Testing;
 using CrudApp.Infrastructure.UtilityCode;
 using CrudApp.Tests.Infrastructure.Http;
 using System.Net.Http.Json;
+using Xunit.Abstractions;
 
 namespace CrudApp.Tests.Infrastructure.Entities;
 
-public class EntityControllerBaseTests
+public class EntityControllerBaseTests : IntegrationTestsBase
 {
+    public EntityControllerBaseTests(ITestOutputHelper testOutputHelper) : base(testOutputHelper, new WebAppFixture()) { }
+
     [Fact]
     public async Task TestCrudActions()
     {
-        var fixture = await WebAppFixture.CreateAsync();
-        var client = fixture.CreateHttpClient(fixture.InitialUserId);
+        
+        var client = Fixture.CreateHttpClient(Fixture.InitialUserId);
 
         // Create
         var entity = new InfrastructureTestEntity(new InfrastructureTestRefEntity() { TestProp = "original ref entity" }) { TestProp = "original entity" };
@@ -69,8 +72,7 @@ public class EntityControllerBaseTests
     [Fact]
     public async Task CreateShouldReturnLocationHeader()
     {
-        var fixture = await WebAppFixture.CreateAsync();
-        var client = fixture.CreateHttpClient(fixture.InitialUserId);
+        var client = Fixture.CreateHttpClient(Fixture.InitialUserId);
 
         var entity = new InfrastructureTestEntity(new InfrastructureTestRefEntity()) { TestProp = "test location header" };
         var response = await client.PostAsJsonAsync("/api/infrastructuretest", entity, JsonUtils.ApiJsonSerializerOptions);
@@ -84,4 +86,6 @@ public class EntityControllerBaseTests
         Assert.Equal(id, entity.Id);
         Assert.Equal("test location header", entity.TestProp);
     }
+
+    
 }

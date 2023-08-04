@@ -2,19 +2,20 @@
 using CrudApp.Infrastructure.Testing;
 using CrudApp.Tests.Infrastructure.Entities;
 using CrudApp.Tests.Infrastructure.Http;
+using Xunit.Abstractions;
 
 namespace CrudApp.Tests.Infrastructure.Query;
-public class QueryControllerTests : IClassFixture<QueryControllerTests.Fixture>
+public class QueryControllerTests : IntegrationTestsBase<QueryControllerTests.TestFixture>, IClassFixture<QueryControllerTests.TestFixture>
 {
-    public class Fixture : WebAppFixture
+    public class TestFixture : WebAppFixture
     {
-        public HttpClient Client = null!; // initialized in InitializeAsync
+        public HttpClient Client = null!;
         public List<EntityId> DataIds = new();
         
-        public override async Task InitializeAsync()
+        protected override async Task InitializeFixtureAsync()
         {
-            await base.InitializeAsync();
-
+            await base.InitializeFixtureAsync();
+        
             Client = CreateHttpClient(InitialUserId);
 
             async Task AddData(EntityId id, int nonNullableInt, int? nullableInt, string? testProp)
@@ -32,23 +33,17 @@ public class QueryControllerTests : IClassFixture<QueryControllerTests.Fixture>
             Assert.Equal(new EntityId[] { 1, 2, 3, 4, 5, 6 }, DataIds);
         }
     }
-
-    private readonly Fixture _fixture;
     
-
-    public QueryControllerTests(Fixture fixture)
-    {
-            _fixture = fixture;
-    }
+    public QueryControllerTests(ITestOutputHelper testOutputHelper, TestFixture fixture) : base(testOutputHelper, fixture) { }
 
     [Fact]
     public async Task TestNoFilters()
     {
-        var count = await _fixture.Client.Count<InfrastructureTestEntity>();
-        Assert.Equal(_fixture.DataIds.Count, count);
+        var count = await Fixture.Client.Count<InfrastructureTestEntity>();
+        Assert.Equal(Fixture.DataIds.Count, count);
 
-        var items = await _fixture.Client.Query<InfrastructureTestEntity>();
-        Assert.Equal(items.Select(i => i.Id), _fixture.DataIds);
+        var items = await Fixture.Client.Query<InfrastructureTestEntity>();
+        Assert.Equal(items.Select(i => i.Id), Fixture.DataIds);
     }
 
     [Theory]
@@ -75,10 +70,10 @@ public class QueryControllerTests : IClassFixture<QueryControllerTests.Fixture>
         var filteringParams = new FilteringParams { Filter = filter };
         var expectedIds = expectedIdsCvs.Split(",").ToList();
 
-        var count = await _fixture.Client.Count<InfrastructureTestEntity>(filteringParams);
+        var count = await Fixture.Client.Count<InfrastructureTestEntity>(filteringParams);
         Assert.Equal(expectedIds.Count, count);
 
-        var items = await _fixture.Client.Query<InfrastructureTestEntity>(filteringParams);
+        var items = await Fixture.Client.Query<InfrastructureTestEntity>(filteringParams);
         Assert.Equal(expectedIds, items.OrderBy(i => i.Id).Select(i => i.Id.ToString()));
     }
 
@@ -98,11 +93,11 @@ public class QueryControllerTests : IClassFixture<QueryControllerTests.Fixture>
     {
         var filteringParams = new FilteringParams { Filter = filter };
 
-        var countException = await Assert.ThrowsAsync<HttpRequestException>(() => _fixture.Client.Count<InfrastructureTestEntity>(filteringParams));
+        var countException = await Assert.ThrowsAsync<HttpRequestException>(() => Fixture.Client.Count<InfrastructureTestEntity>(filteringParams));
         var countProblem = ((ProblemDetailsApiException)countException.InnerException!).Response!;
         Assert.Equal(expectedMessage, countProblem.Detail);
 
-        var queryException = await Assert.ThrowsAsync<HttpRequestException>(() => _fixture.Client.Query<InfrastructureTestEntity>(filteringParams));
+        var queryException = await Assert.ThrowsAsync<HttpRequestException>(() => Fixture.Client.Query<InfrastructureTestEntity>(filteringParams));
         var queryProblem = ((ProblemDetailsApiException)queryException.InnerException!).Response!;
         Assert.Equal(expectedMessage, queryProblem.Detail);
     }

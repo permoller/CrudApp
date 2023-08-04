@@ -1,16 +1,12 @@
 ﻿using CrudApp.Infrastructure.Http;
+using Xunit.Abstractions;
 
 namespace CrudApp.Tests.Infrastructure.Http;
 
 
-public class StatusCodeTests : IClassFixture<WebAppFixture>
+public class StatusCodeTests : IntegrationTestsBase, IClassFixture<WebAppFixture>
 {
-    private readonly WebAppFixture _fixture;
-
-    public StatusCodeTests(WebAppFixture fixture)
-    {
-        _fixture =  fixture;
-    }
+    public StatusCodeTests(ITestOutputHelper testOutputHelper, WebAppFixture fixture) : base(testOutputHelper, fixture) { }
 
     [Theory]
     [InlineData("GET", "/api/infrastructuretest/void", HttpStatus.NoContent)]
@@ -35,7 +31,7 @@ public class StatusCodeTests : IClassFixture<WebAppFixture>
     [InlineData("DELETE", "/api/infrastructuretest/not-null-int", HttpStatus.Ok)]
     public async Task TestStatusCode(string httpMethod, string url, int expectedHttpStatus)
     {
-        var client = _fixture.CreateHttpClient();
+        var client = Fixture.CreateHttpClient();
         var request = new HttpRequestMessage(new HttpMethod(httpMethod), url);
         var response = await client.SendAsync(request);
         Assert.Equal(expectedHttpStatus, (int)response.StatusCode);

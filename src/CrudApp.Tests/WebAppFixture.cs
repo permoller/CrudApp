@@ -2,73 +2,43 @@
 using CrudApp.Infrastructure.Database;
 using CrudApp.Infrastructure.ErrorHandling;
 using CrudApp.Infrastructure.Http;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using System.Net.Http.Headers;
+using Xunit.Abstractions;
+using Xunit.Sdk;
 
 namespace CrudApp.Tests;
 
-public class WebAppFixture : IDisposable, IAsyncLifetime
+public class WebAppFixture
 {
     static WebAppFixture()
     {
         ApiExceptionHandler.IsExceptionDetailsInResponseEnabled = true;
     }
 
-    public WebApplicationFactory<CrudAppApiControllerBase> WebAppFactory { get; }
-
+    public WebApplicationFactory<CrudAppApiControllerBase> WebAppFactory { get; private set; } = null!;
+    
     public EntityId InitialUserId { get; private set; }
 
-    public WebAppFixture()
+    
+
+    public virtual async Task StartTestAsync(ITestOutputHelper? testOutputHelper)
     {
-        var dbName = Guid.NewGuid().ToString();
-        // Evenry instance of WebAppFixture will get its own in-memory database.
-        _dbName = Guid.NewGuid().ToString();
+        _testOutputHelper = testOutputHelper;
 
-        // To make sure the in-memory database is not deleted we need to keep at least one connection open.
-        _dbConnection = CreateDbConnection(_dbName);
-        _dbConnection.Open();
-
-        WebAppFactory = new WebApplicationFactory<CrudAppApiControllerBase>()
-            .WithWebHostBuilder(builder =>
-            {
-                builder.ConfigureServices(services =>
-                {
-                    services.Remove(services.First(s => s.ServiceType == typeof(DbContextOptions<CrudAppDbContext>)));
-                    services.AddDbContext<CrudAppDbContext>(dbContextOptionsBuilder =>
-                    {
-                        dbContextOptionsBuilder.UseSqlite(new SqliteConnection($"DataSource={dbName};Mode=Memory;Cache=Shared"));
-                        dbContextOptionsBuilder.UseSqlite(CreateDbConnection(_dbName));
-                        dbContextOptionsBuilder.EnableSensitiveDataLogging(true);
-                    });
-                });
-            });
+        if (!_isInitialized)
+        {
+            await InitializeFixtureAsync();
+            _isInitialized = true;
+        }
     }
 
-    public static async Task<WebAppFixture> CreateAsync()
-    {
-        var webAppFixture = new WebAppFixture();
-        await webAppFixture.InitializeAsync();
-        return webAppFixture;
-    }
-
-    public void Dispose()
-    {
-        WebAppFactory.Dispose();
-    }
-
-    public virtual async Task InitializeAsync()
-    {
-        var scope = WebAppFactory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<CrudAppDbContext>();
-        using var scope = WebAppFactory.Services.CreateScope();
-        using var db = scope.ServiceProvider.GetRequiredService<CrudAppDbContext>();
-        InitialUserId = (await db.EnsureCreatedAsync()).Value;
-    }
-
-    public virtual Task DisposeAsync()
+    public virtual Task StopTestAsync()
     {
         return Task.CompletedTask;
     }
@@ -81,10 +51,71 @@ public class WebAppFixture : IDisposable, IAsyncLifetime
         return client;
     }
 
-    private readonly string _dbName;
+    private bool _isInitialized;
 
-    private readonly SqliteConnection _dbConnection;
+    private List<string>? _logOutputFromBetweenTests;
+
+    private TestOutputLogger.Provider _testOutputLoggerProvider = null!;
+
+    private SqliteConnection _dbConnection = null!;
+    
+    private ITestOutputHelper? _testOutputHelper;
 
     private static SqliteConnection CreateDbConnection(string dbName)
-        => new SqliteConnection($"DataSource={dbName};Mode=Memory;Cache=Shared");
+        => new($"DataSource={dbName};Mode=Memory;Cache=Shared");
+
+    protected virtual async Task InitializeFixtureAsync()
+    {
+        _testOutputLoggerProvider = new TestOutputLogger.Provider(Log);
+
+        // Evenry instance of WebAppFixture will get its own in-memory database.
+        var dbName = Guid.NewGuid().ToString();
+
+        // To make sure the in-memory database is not deleted we need to keep at least one connection open.
+        _dbConnection = CreateDbConnection(dbName);
+        _dbConnection.Open();
+
+        WebAppFactory = new WebApplicationFactory<CrudAppApiControllerBase>()
+            .WithWebHostBuilder(builder =>
+            {
+                builder.ConfigureLogging(loggingBuilder => loggingBuilder.AddProvider(_testOutputLoggerProvider));
+                builder.ConfigureServices(services =>
+                {
+                    services.Remove(services.First(s => s.ServiceType == typeof(DbContextOptions<CrudAppDbContext>)));
+                    services.AddDbContext<CrudAppDbContext>(dbContextOptionsBuilder =>
+                    {
+                        dbContextOptionsBuilder.UseSqlite(CreateDbConnection(dbName));
+                        dbContextOptionsBuilder.EnableSensitiveDataLogging(true);
+                    });
+                });
+            });
+
+        using var scope = WebAppFactory.Services.CreateScope();
+        using var db = scope.ServiceProvider.GetRequiredService<CrudAppDbContext>();
+        InitialUserId = (await db.EnsureCreatedAsync()).Value;
+    }
+
+    private void Log(string message)
+    {
+        if (_testOutputHelper is null)
+        {
+            // No test is currently running... capture logs and try to write them later
+            if (_logOutputFromBetweenTests is null)
+                _logOutputFromBetweenTests = new();
+            _logOutputFromBetweenTests.Add(message);
+        }
+        else
+        {
+            // Write captured logs
+            if (_logOutputFromBetweenTests is not null && _logOutputFromBetweenTests.Count > 0)
+            {
+                var lines = _logOutputFromBetweenTests;
+                _logOutputFromBetweenTests = null;
+                foreach (var line in lines)
+                    _testOutputHelper.WriteLine(line);
+            }
+
+            _testOutputHelper.WriteLine(message);
+        }
+    }
 }
