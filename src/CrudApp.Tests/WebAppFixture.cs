@@ -24,6 +24,12 @@ public class WebAppFixture : IDisposable, IAsyncLifetime
     public WebAppFixture()
     {
         var dbName = Guid.NewGuid().ToString();
+        // Evenry instance of WebAppFixture will get its own in-memory database.
+        _dbName = Guid.NewGuid().ToString();
+
+        // To make sure the in-memory database is not deleted we need to keep at least one connection open.
+        _dbConnection = CreateDbConnection(_dbName);
+        _dbConnection.Open();
 
         WebAppFactory = new WebApplicationFactory<CrudAppApiControllerBase>()
             .WithWebHostBuilder(builder =>
@@ -34,6 +40,8 @@ public class WebAppFixture : IDisposable, IAsyncLifetime
                     services.AddDbContext<CrudAppDbContext>(dbContextOptionsBuilder =>
                     {
                         dbContextOptionsBuilder.UseSqlite(new SqliteConnection($"DataSource={dbName};Mode=Memory;Cache=Shared"));
+                        dbContextOptionsBuilder.UseSqlite(CreateDbConnection(_dbName));
+                        dbContextOptionsBuilder.EnableSensitiveDataLogging(true);
                     });
                 });
             });
@@ -55,6 +63,8 @@ public class WebAppFixture : IDisposable, IAsyncLifetime
     {
         var scope = WebAppFactory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<CrudAppDbContext>();
+        using var scope = WebAppFactory.Services.CreateScope();
+        using var db = scope.ServiceProvider.GetRequiredService<CrudAppDbContext>();
         InitialUserId = (await db.EnsureCreatedAsync()).Value;
     }
 
@@ -70,4 +80,11 @@ public class WebAppFixture : IDisposable, IAsyncLifetime
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(UserIdAuthenticationHandler.HttpAuthenticationScheme, userId.ToString());
         return client;
     }
+
+    private readonly string _dbName;
+
+    private readonly SqliteConnection _dbConnection;
+
+    private static SqliteConnection CreateDbConnection(string dbName)
+        => new SqliteConnection($"DataSource={dbName};Mode=Memory;Cache=Shared");
 }
