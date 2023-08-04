@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authentication;
+﻿using CrudApp.Infrastructure.UtilityCode;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
@@ -8,17 +9,16 @@ namespace CrudApp.Infrastructure.ErrorHandling;
 
 public class ApiExceptionHandler : IAsyncExceptionFilter
 {
+    public static bool IsExceptionDetailsInResponseEnabled { get; set; }
+
     private readonly ProblemDetailsFactory _problemDetailsFactory;
-    private readonly IHostEnvironment _hostEnvironment;
     private readonly ILogger<ApiExceptionHandler> _logger;
 
     public ApiExceptionHandler(
         ProblemDetailsFactory problemDetailsFactory,
-        IHostEnvironment hostEnvironment,
         ILogger<ApiExceptionHandler> logger)
     {
         _problemDetailsFactory = problemDetailsFactory;
-        _hostEnvironment = hostEnvironment;
         _logger = logger;
     }
 
@@ -60,7 +60,7 @@ public class ApiExceptionHandler : IAsyncExceptionFilter
     {
         NotAuthenticatedException => LogLevel.Debug,
         NotAuthorizedException => LogLevel.Debug,
-        ApiResponseException ex => (int)ex.HttpStatus < 500 ? LogLevel.Debug : LogLevel.Error,
+        ApiResponseException ex => ex.HttpStatus < 500 ? LogLevel.Debug : LogLevel.Error,
         ValidationException => LogLevel.Debug,
         Exception => LogLevel.Error
     };
@@ -69,14 +69,12 @@ public class ApiExceptionHandler : IAsyncExceptionFilter
     {
         var problemDetails = _problemDetailsFactory.CreateProblemDetails(
             httpContext,
-            statusCode: (int)ex.HttpStatus,
-            title: ReasonPhrases.GetReasonPhrase((int)ex.HttpStatus),
+            statusCode: ex.HttpStatus,
+            title: ReasonPhrases.GetReasonPhrase(ex.HttpStatus),
             detail: ex.HasMessage ? ex.Message : null);
-        
-        if (_hostEnvironment.IsDevelopment() && ex.InnerException is not null)
-        {
-            problemDetails.Extensions.Add("exception", ex.InnerException.ToString());
-        }
+
+        IncludeExceptionDetails(problemDetails, ex.InnerException);
+
         return problemDetails;
     }
 
@@ -95,11 +93,17 @@ public class ApiExceptionHandler : IAsyncExceptionFilter
             statusCode: HttpStatus.InternalServerError,
             title: ReasonPhrases.GetReasonPhrase(HttpStatus.InternalServerError));
 
-        if (_hostEnvironment.IsDevelopment())
-        {
-            problemDetails.Extensions.Add("exception", ex.ToString());
-        }
+        IncludeExceptionDetails(problemDetails, ex);
 
         return problemDetails;
+    }
+
+    private static void IncludeExceptionDetails(ProblemDetails problemDetails, Exception? exception)
+    {
+        if (IsExceptionDetailsInResponseEnabled && exception is not null)
+        {
+            problemDetails.Extensions.Add("exceptionToString", exception.ToString());
+            problemDetails.Extensions.Add("exceptionMessages", exception.GetExceptionMessagesRecursively().ToList());
+        }
     }
 }

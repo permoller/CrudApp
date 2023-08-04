@@ -53,7 +53,7 @@ public static class FilteringHelper
 
             var valueAsString = match.Groups["value"].Captures[i].Value;
             var lastProperty = propertyInfos[propertyInfos.Count - 1];
-            var valueType = lastProperty.PropertyType;
+            var valueType = Nullable.GetUnderlyingType(lastProperty.PropertyType) ?? lastProperty.PropertyType; // if nullable then get underlying type else get property type as-is
             object? value;
             try
             {
@@ -61,14 +61,14 @@ public static class FilteringHelper
             }
             catch (Exception ex)
             {
-                throw new ApiResponseException(HttpStatus.BadRequest, $"Could not convert value {valueAsString} to {valueType.Name}.", ex);
+                throw new ApiResponseException(HttpStatus.BadRequest, $"Could not convert value '{valueAsString}' to type '{valueType.Name}'.", ex);
             }
 
             var comparisonString = match.Groups["comparison"].Captures[i].Value;
-            QueryFilterComparison? comparison;
+            QueryFilterOperator? comparison;
             try
             {
-                comparison = Enum.Parse<QueryFilterComparison>(comparisonString);
+                comparison = Enum.Parse<QueryFilterOperator>(comparisonString);
             }
             catch (Exception ex)
             {
@@ -89,23 +89,33 @@ public static class FilteringHelper
             foreach (var propertyInfo in filter.PropertyInfos)
                 propertyExpression = Expression.Property(propertyExpression, propertyInfo);
 
-            var valueExpression = Expression.Constant(filter.Value);
-            var condition = filter.Comparison switch
+            var valueExpression = Expression.Constant(filter.Value, propertyExpression.Type);
+            Expression? condition;
+            try
             {
-                QueryFilterComparison.EQ => Expression.Equal(propertyExpression, valueExpression),
-                QueryFilterComparison.NE => Expression.NotEqual(propertyExpression, valueExpression),
-                QueryFilterComparison.GT => Expression.GreaterThan(propertyExpression, valueExpression),
-                QueryFilterComparison.LT => Expression.LessThan(propertyExpression, valueExpression),
-                QueryFilterComparison.GE => Expression.GreaterThanOrEqual(propertyExpression, valueExpression),
-                QueryFilterComparison.LE => Expression.LessThanOrEqual(propertyExpression, valueExpression),
-                _ => throw new NotImplementedException($"Comparison {filter.Comparison} not implemented.")
-            };
+                condition = filter.Operator switch
+                {
+                    QueryFilterOperator.EQ => Expression.Equal(propertyExpression, valueExpression),
+                    QueryFilterOperator.NE => Expression.NotEqual(propertyExpression, valueExpression),
+                    QueryFilterOperator.GT => Expression.GreaterThan(propertyExpression, valueExpression),
+                    QueryFilterOperator.LT => Expression.LessThan(propertyExpression, valueExpression),
+                    QueryFilterOperator.GE => Expression.GreaterThanOrEqual(propertyExpression, valueExpression),
+                    QueryFilterOperator.LE => Expression.LessThanOrEqual(propertyExpression, valueExpression),
+                    _ => null
+                };
+            }
+            catch (InvalidOperationException ex)
+            {
+                throw new ApiResponseException(HttpStatus.BadRequest, $"Filter operator '{filter.Operator}' not supported on type '{filter.Value?.GetType().Name}'.");
+            }
+            if (condition is null)
+                throw new NotImplementedException($"Filter operator '{filter.Operator}' not implemented.");
             body = Expression.AndAlso(body, condition);
         }
         return Expression.Lambda<Func<T, bool>>(body, entityParameter);
     }
 
-    private enum QueryFilterComparison
+    private enum QueryFilterOperator
     {
         EQ, NE, LT, GT, GE, LE,
     }
@@ -113,13 +123,13 @@ public static class FilteringHelper
     private sealed class FilterCondition
     {
         public List<PropertyInfo> PropertyInfos { get; }
-        public QueryFilterComparison Comparison { get; }
+        public QueryFilterOperator Operator { get; }
         public object Value { get; }
 
-        public FilterCondition(List<PropertyInfo> propertyInfos, QueryFilterComparison comparison, object value)
+        public FilterCondition(List<PropertyInfo> propertyInfos, QueryFilterOperator comparison, object value)
         {
             PropertyInfos = propertyInfos;
-            Comparison = comparison;
+            Operator = comparison;
             Value = value;
         }
     }

@@ -1,12 +1,13 @@
 ﻿using CrudApp.Infrastructure.UtilityCode;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
+using System.Text;
 using System.Text.Json;
 
 namespace CrudApp.Tests.Infrastructure.Http;
 internal static class HttpClientExtenstions
 {
-    public static async Task EnsureSuccessAsync(this HttpResponseMessage response)
+    public static async Task EnsureSuccessAsync(this HttpResponseMessage response, int? expectedStatusCode = null)
     {
         try
         {
@@ -42,8 +43,42 @@ internal static class HttpClientExtenstions
                 throw new StringApiException(statusException.Message, ex, response.StatusCode, responseString);
             }
 
-            // Return the status-error message and the ProblemDetails in an exception.
-            throw new ProblemDetailsApiException(statusException.Message, null, response.StatusCode, problem);
+            // Format ProblemDetails as an error message
+            var messageBuilder = new StringBuilder();
+            messageBuilder.Append(problem?.Title);
+            if (!string.IsNullOrEmpty(problem?.Detail))
+                messageBuilder.AppendLine().Append("Detail: ").Append(problem.Detail);
+            if (problem?.Extensions.TryGetValue("errors", out var errorsObj) == true && errorsObj is IDictionary<string, string[]> errors && errors.Count > 0)
+            {
+                messageBuilder.AppendLine().Append("Errors:");
+                foreach (var kvp in errors)
+                {
+                    foreach (var error in kvp.Value)
+                    {
+                        messageBuilder.AppendLine().Append(" * ").Append(kvp.Key).Append(": ").Append(error);
+                    }
+                }
+            }
+            if (problem?.Extensions.TryGetValue("exceptionMessages", out var exceptionObj) == true && exceptionObj is IEnumerable<string> exceptionMessages)
+            {
+                messageBuilder.AppendLine().Append("Exception:");
+                foreach(var exceptionMessage in exceptionMessages)
+                {
+                    messageBuilder.AppendLine().Append(" * ").Append(exceptionMessage);
+                }
+            }
+            var message = messageBuilder.ToString();
+            
+            // If we got nothing from the ProblemDetails, fallback to the status-error message.
+            if (string.IsNullOrWhiteSpace(message))
+                message = statusException.Message;
+
+            throw new ProblemDetailsApiException(message, null, response.StatusCode, problem);
+        }
+
+        if (expectedStatusCode.HasValue)
+        {
+            Assert.Equal(expectedStatusCode.Value, (int)response.StatusCode);
         }
     }
 
@@ -74,6 +109,11 @@ internal static class HttpClientExtenstions
         {
             throw new StringApiException("Error deserializing response content.", ex, response.StatusCode, contentString);
         }
+    }
+
+    public static HttpRequestException WrapWithRequestDetails(this HttpRequestException exception, string httpMethod, string uri)
+    {
+        return new HttpRequestException($"Error calling {httpMethod} {uri}", exception, exception.StatusCode);
     }
 }
 

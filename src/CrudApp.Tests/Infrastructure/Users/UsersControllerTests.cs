@@ -1,6 +1,6 @@
 ﻿using CrudApp.Infrastructure.Http;
 using CrudApp.Infrastructure.Users;
-using System.Net.Http.Json;
+using CrudApp.Tests.Infrastructure.Http;
 
 namespace CrudApp.Tests.Infrastructure.Authentication;
 
@@ -12,7 +12,7 @@ public class UsersControllerTests
         var fixture = await WebAppFixture.CreateAsync();
         var client = fixture.CreateHttpClient();
         var response = await client.GetAsync("/api/users/current");
-        Assert.Equal(HttpStatus.NoContent, (int)response.StatusCode);
+        await response.EnsureSuccessAsync(HttpStatus.NoContent);
     }
 
     [Fact]
@@ -21,8 +21,8 @@ public class UsersControllerTests
         var fixture = await WebAppFixture.CreateAsync();
         var client = fixture.CreateHttpClient(fixture.InitialUserId);
         var response = await client.GetAsync("/api/users/current");
-        Assert.Equal(HttpStatus.Ok, (int)response.StatusCode);
-        var currentUser = await response.Content.ReadFromJsonAsync<User>();
+        await response.EnsureSuccessAsync(HttpStatus.Ok);
+        var currentUser = await response.ReadContentAsync<User>();
         Assert.NotNull(currentUser);
         Assert.Equal(fixture.InitialUserId, currentUser.Id);
     }

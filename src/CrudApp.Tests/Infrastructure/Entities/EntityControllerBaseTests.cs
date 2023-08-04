@@ -6,7 +6,7 @@ using System.Net.Http.Json;
 
 namespace CrudApp.Tests.Infrastructure.Entities;
 
-public class EntityControllerBaseTest
+public class EntityControllerBaseTests
 {
     [Fact]
     public async Task TestCrudActions()
@@ -18,6 +18,8 @@ public class EntityControllerBaseTest
         var entity = new InfrastructureTestEntity(new InfrastructureTestRefEntity() { TestProp = "original ref entity" }) { TestProp = "original entity" };
         var id = await client.PostEntityAsync(entity);
         Assert.NotEqual(default, id);
+
+        // TODO: Test creating entity with same id again
 
         // Read created
         entity = await client.GetEntityAsync<InfrastructureTestEntity>(id);
@@ -60,7 +62,7 @@ public class EntityControllerBaseTest
         await client.DeleteEntityAsync<InfrastructureTestEntity>(id);
 
         // Read deleted
-        var ex = await Assert.ThrowsAsync<ProblemDetailsApiException>(() => client.GetEntityAsync<InfrastructureTestEntity>(id));
+        var ex = await Assert.ThrowsAsync<HttpRequestException>(() => client.GetEntityAsync<InfrastructureTestEntity>(id));
         Assert.Equal(HttpStatus.NotFound, (int?)ex.StatusCode);
     }
 
@@ -72,12 +74,12 @@ public class EntityControllerBaseTest
 
         var entity = new InfrastructureTestEntity(new InfrastructureTestRefEntity()) { TestProp = "test location header" };
         var response = await client.PostAsJsonAsync("/api/infrastructuretest", entity, JsonUtils.ApiJsonSerializerOptions);
-        Assert.Equal(HttpStatus.Created, (int)response.StatusCode);
+        await response.EnsureSuccessAsync(HttpStatus.Created);
         var location = response.Headers.Location;
         Assert.NotNull(location);
-        var id = await response.Content.ReadFromJsonAsync<EntityId>();
+        var id = await response.ReadContentAsync<EntityId>();
 
-        entity = await client.GetFromJsonAsync<InfrastructureTestEntity>(location);
+        entity = await client.GetFromJsonAsync<InfrastructureTestEntity>(location, JsonUtils.ApiJsonSerializerOptions);
         Assert.NotNull(entity);
         Assert.Equal(id, entity.Id);
         Assert.Equal("test location header", entity.TestProp);

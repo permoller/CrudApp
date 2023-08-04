@@ -1,5 +1,6 @@
 ﻿using CrudApp.Infrastructure.Authentication;
 using CrudApp.Infrastructure.Database;
+using CrudApp.Infrastructure.ErrorHandling;
 using CrudApp.Infrastructure.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Data.Sqlite;
@@ -9,8 +10,13 @@ using System.Net.Http.Headers;
 
 namespace CrudApp.Tests;
 
-public sealed class WebAppFixture : IDisposable, IAsyncLifetime
+public class WebAppFixture : IDisposable, IAsyncLifetime
 {
+    static WebAppFixture()
+    {
+        ApiExceptionHandler.IsExceptionDetailsInResponseEnabled = true;
+    }
+
     public WebApplicationFactory<CrudAppApiControllerBase> WebAppFactory { get; }
 
     public EntityId InitialUserId { get; private set; }
@@ -45,14 +51,14 @@ public sealed class WebAppFixture : IDisposable, IAsyncLifetime
         WebAppFactory.Dispose();
     }
 
-    public async Task InitializeAsync()
+    public virtual async Task InitializeAsync()
     {
         var scope = WebAppFactory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<CrudAppDbContext>();
         InitialUserId = (await db.EnsureCreatedAsync()).Value;
     }
 
-    public Task DisposeAsync()
+    public virtual Task DisposeAsync()
     {
         return Task.CompletedTask;
     }

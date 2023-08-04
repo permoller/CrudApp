@@ -106,7 +106,7 @@ public static class ReflectionUtils
             propertyInfo = Array.Find(t.GetProperties(), p => p.Name.Equals(propertyName, StringComparison.OrdinalIgnoreCase));
             if (propertyInfo == default)
             {
-                throw new ApiResponseException(HttpStatus.BadRequest, $"Property {propertyName} not found on type {t.Name}.");
+                throw new ApiResponseException(HttpStatus.BadRequest, $"Property '{propertyName}' not found on type '{t.Name}'.");
             }
             propertyInfos.Add(propertyInfo);
         }
