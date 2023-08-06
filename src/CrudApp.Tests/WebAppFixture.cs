@@ -45,8 +45,8 @@ public class WebAppFixture
 
     public HttpClient CreateHttpClient(EntityId? userId = null)
     {
-        var client = WebAppFactory.CreateClient();
-        if(userId != default)
+        var client = WebAppFactory.CreateDefaultClient();
+        if (userId != default)
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(UserIdAuthenticationHandler.HttpAuthenticationScheme, userId.ToString());
         return client;
     }

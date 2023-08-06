@@ -1,5 +1,6 @@
 using CrudApp.Infrastructure.OpenApi;
 using CrudApp.Infrastructure.UtilityCode;
+using Microsoft.AspNetCore.Http.Extensions;
 
 public class Program
 {
@@ -34,14 +35,21 @@ public class Program
             //.AddLocalization()
             .AddCrudAppDbContext()
             .AddCrudAppJsonOptions()
+            .AddHttpLogging(_ => {})
             .AddControllers();
 
         var app = builder.Build();
 
         if (app.Environment.IsDevelopment())
-        {
             ApiExceptionHandler.IsExceptionDetailsInResponseEnabled = true;
-        }
+        
+
+        // Change the enabled log level of Microsoft.AspNetCore.HttpLogging.HttpLoggingMiddleware to log incomming requests and responses.
+        app.UseHttpLogging();
+
+        // Simple logging of the incomming requests. It only logs a single line once the request is done.
+        app.UseMiddleware<IncommingHttpRequestLoggingMiddleware>();
+
         app.UseSwagger();
         app.UseSwaggerUI();
         app.UseHttpsRedirection();

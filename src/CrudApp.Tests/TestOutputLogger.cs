@@ -30,7 +30,6 @@ public sealed class TestOutputLogger : ILogger
         var stringBuilderCapacity = (_categoryName?.Length ?? 0) + msg.Length + (exceptionString?.Length ?? 0) + 50;
 
         var sb = new StringBuilder(stringBuilderCapacity)
-            .AppendLine()
             .Append(FormatLogLevel(logLevel)).AppendLine(_categoryName);
 
         if (!string.IsNullOrWhiteSpace(msg))
@@ -74,4 +73,5 @@ public sealed class TestOutputLogger : ILogger
             //
         }
     }
+
 }
