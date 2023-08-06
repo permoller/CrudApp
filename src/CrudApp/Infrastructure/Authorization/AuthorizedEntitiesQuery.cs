@@ -20,16 +20,16 @@ public static class AuthorizedEntitiesQuery
         return dbContext.All(entityType, includeSoftDeleted);
     }
 
-    public static async Task<T> GetByIdAuthorized<T>(this CrudAppDbContext dbContext, EntityId id, bool asNoTracking) where T : EntityBase
+    public static async Task<T> GetByIdAuthorized<T>(this CrudAppDbContext dbContext, EntityId id, bool asNoTracking, CancellationToken cancellationToken) where T : EntityBase
     {
         var includeSoftDeleted = true;
         var queryable = dbContext.Authorized<T>(includeSoftDeleted);
         if (asNoTracking)
             queryable = queryable.AsNoTracking();
-        var entity = queryable.FirstOrDefault(e => e.Id == id);
+        var entity = await queryable.FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
         if (entity is null)
         {
-            var exists = await dbContext.All<T>(includeSoftDeleted).AnyAsync(e => e.Id == id);
+            var exists = await dbContext.All<T>(includeSoftDeleted).AnyAsync(e => e.Id == id, cancellationToken);
             if (exists)
                 throw new NotAuthorizedException();
             throw new ApiResponseException(HttpStatus.NotFound);
@@ -37,16 +37,16 @@ public static class AuthorizedEntitiesQuery
         return entity;
     }
 
-    public static async Task<EntityBase> GetByIdAuthorized(this CrudAppDbContext dbContext, Type entityType, EntityId id, bool asNoTracking)
+    public static async Task<EntityBase> GetByIdAuthorized(this CrudAppDbContext dbContext, Type entityType, EntityId id, bool asNoTracking, CancellationToken cancellationToken)
     {
         var includeSoftDeleted = true;
         var queryable = dbContext.Authorized(entityType, includeSoftDeleted);
         if (asNoTracking)
             queryable = queryable.AsNoTracking();
-        var entity = queryable.FirstOrDefault(e => e.Id == id);
+        var entity = await queryable.FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
         if (entity is null)
         {
-            var exists = await dbContext.All(entityType, includeSoftDeleted).AnyAsync(e => e.Id == id);
+            var exists = await dbContext.All(entityType, includeSoftDeleted).AnyAsync(e => e.Id == id, cancellationToken);
             if (exists)
                 throw new NotAuthorizedException();
             throw new ApiResponseException(HttpStatus.NotFound);

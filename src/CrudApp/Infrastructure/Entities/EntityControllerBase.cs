@@ -11,18 +11,18 @@ public abstract class EntityControllerBase<T> : QueryControllerBase<T> where T :
     protected override IQueryable<T> GetQueryable(bool includeSoftDeleted) => DbContext.Authorized<T>(includeSoftDeleted);
 
     [HttpGet("{id}")]
-    public async Task<T> Get([FromRoute] EntityId id)
+    public async Task<T> Get([FromRoute] EntityId id, CancellationToken cancellationToken)
     {
-        var entity = await DbContext.GetByIdAuthorized<T>(id, asNoTracking: true);
+        var entity = await DbContext.GetByIdAuthorized<T>(id, asNoTracking: true, cancellationToken);
         return entity;
     }
 
     [HttpPost]
     [ProducesResponseType(HttpStatus.Created)]
-    public async Task<ActionResult<EntityId>> Post([FromBody] T entity)
+    public async Task<ActionResult<EntityId>> Post([FromBody] T entity, CancellationToken cancellationToken)
     {
         DbContext.Add(entity);
-        await DbContext.SaveChangesAsync();
+        await DbContext.SaveChangesAsync(cancellationToken);
         // We do not return the created entity.
         // We return a response with a location header where the entity can be fetched.
         return CreatedAtAction(nameof(Get), new { id = entity.Id }, entity.Id);
@@ -38,27 +38,27 @@ public abstract class EntityControllerBase<T> : QueryControllerBase<T> where T :
     /// <returns></returns>
     /// <exception cref="ApiResponseException"></exception>
     [HttpPut("{id}")]
-    public async Task Put([FromRoute] EntityId id, [FromBody] T entity)
+    public async Task Put([FromRoute] EntityId id, [FromBody] T entity, CancellationToken cancellationToken)
     {
         if (entity.Id != id)
         {
             throw new ApiResponseException(HttpStatus.BadRequest, "Id in body and in URL must be the same.");
         }
 
-        await UpdateRecursively(entity, visitedEntities: new HashSet<EntityId>());
+        await UpdateRecursively(entity, visitedEntities: new HashSet<EntityId>(), cancellationToken);
 
         await DbContext.SaveChangesAsync();
     }
 
     [HttpDelete("{id}")]
-    public async Task Delete([FromRoute] EntityId id)
+    public async Task Delete([FromRoute] EntityId id, CancellationToken cancellationToken)
     {
-        var entity = await DbContext.GetByIdAuthorized<T>(id, asNoTracking: false);
+        var entity = await DbContext.GetByIdAuthorized<T>(id, asNoTracking: false, cancellationToken);
         DbContext.Remove(entity);
         await DbContext.SaveChangesAsync();
     }
 
-    private async Task UpdateRecursively(EntityBase entity, ISet<EntityId> visitedEntities)
+    private async Task UpdateRecursively(EntityBase entity, ISet<EntityId> visitedEntities, CancellationToken cancellationToken)
     {
         // Prevent looping arround circular references.
         if (!visitedEntities.Add(entity.Id))
@@ -67,7 +67,7 @@ public abstract class EntityControllerBase<T> : QueryControllerBase<T> where T :
         EntityBase existingEntity;
         try
         {
-            existingEntity = await DbContext.GetByIdAuthorized(entity.GetType(), entity.Id, asNoTracking: false);
+            existingEntity = await DbContext.GetByIdAuthorized(entity.GetType(), entity.Id, asNoTracking: false, cancellationToken);
         }
         catch (ApiResponseException ex) when(ex.HttpStatus == HttpStatus.NotFound)
         {
@@ -100,7 +100,7 @@ public abstract class EntityControllerBase<T> : QueryControllerBase<T> where T :
                     {
                         if (item is EntityBase itemEntityBase)
                         {
-                            await UpdateRecursively(itemEntityBase, visitedEntities);
+                            await UpdateRecursively(itemEntityBase, visitedEntities, cancellationToken);
                         }
                     }
                     continue;
@@ -111,7 +111,7 @@ public abstract class EntityControllerBase<T> : QueryControllerBase<T> where T :
             if (childEntity is not EntityBase childEntityBase)
                 continue;
 
-            await UpdateRecursively(childEntityBase, visitedEntities);
+            await UpdateRecursively(childEntityBase, visitedEntities, cancellationToken);
             
         }
 

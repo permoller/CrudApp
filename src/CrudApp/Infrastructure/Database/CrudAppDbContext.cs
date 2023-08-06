@@ -93,15 +93,15 @@ public class CrudAppDbContext : DbContext
         return (IQueryable<EntityBase>)query;
     }
 
-    public async Task<EntityId?> EnsureCreatedAsync()
+    public async Task<EntityId?> EnsureCreatedAsync(CancellationToken cancellationToken)
     {
-        await Database.OpenConnectionAsync();
-        var dbCreated = await Database.EnsureCreatedAsync();
+        await Database.OpenConnectionAsync(cancellationToken);
+        var dbCreated = await Database.EnsureCreatedAsync(cancellationToken);
         if (dbCreated)
         {
             var user = new User();
             Add(user);
-            await SaveChangesAsync();
+            await SaveChangesAsync(cancellationToken);
             return user.Id;
         }
         return default;
