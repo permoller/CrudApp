@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using System.Diagnostics;
 
 namespace CrudApp.Infrastructure.ChangeTracking;
 public enum ChangeType { EntityCreated, EntityUpdated, EntityDeleted }
@@ -17,4 +18,6 @@ public sealed class EntityChange : EntityBase
     public string? ActivityId { get; set; }
 
     public ICollection<PropertyChange>? PropertyChanges { get; set; }
+
+    public override string DisplayName => $"{ChangeType} {EntityType}[{EntityId}]";
 }

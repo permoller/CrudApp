@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using System.Diagnostics;
+using System.Text.Json;
 
 namespace CrudApp.Infrastructure.ChangeTracking;
 
@@ -52,8 +53,8 @@ public static class ChangeTracker
                     EntityChangeId = entityChange.Id,
                     EntityChange = entityChange,
                     PropertyName = prop.Metadata.Name,
-                    OldPropertyValue = changeType == ChangeType.EntityCreated ? null : prop.OriginalValue,
-                    NewPropertyValue = changeType == ChangeType.EntityDeleted ? null : prop.CurrentValue
+                    OldPropertyValueAsJson = changeType == ChangeType.EntityCreated ? null : JsonSerializer.Serialize(prop.OriginalValue, JsonUtils.DbJsonSerializerOptions),
+                    NewPropertyValueAsJson = changeType == ChangeType.EntityDeleted ? null : JsonSerializer.Serialize(prop.CurrentValue, JsonUtils.DbJsonSerializerOptions)
                 };
                 entityChange.PropertyChanges.Add(propertyChange);
                 dbContext.Add(propertyChange);

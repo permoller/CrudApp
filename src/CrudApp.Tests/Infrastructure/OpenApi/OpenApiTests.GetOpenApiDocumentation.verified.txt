@@ -2534,7 +2534,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/EntityChangeEventDto"
+                    "$ref": "#/components/schemas/EntityChangeDto"
                   }
                 }
               }
@@ -6682,7 +6682,7 @@
         },
         "additionalProperties": false
       },
-      "EntityChangeEventDto": {
+      "EntityChangeDto": {
         "required": [
           "EntityChangeEventId"
         ],
@@ -6885,10 +6885,12 @@
           "PropertyName": {
             "type": "string"
           },
-          "OldPropertyValue": {
+          "OldPropertyValueAsJson": {
+            "type": "string",
             "nullable": true
           },
-          "NewPropertyValue": {
+          "NewPropertyValueAsJson": {
+            "type": "string",
             "nullable": true
           },
           "EntityChange": {
