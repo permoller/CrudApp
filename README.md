@@ -22,7 +22,7 @@ followed by a generator ID (allowing multiple simultaious generators to co-exist
 and a counter (allowing multiple IDs to be generated within the same tick of the clock used for the timestamp).
 
 **IMPORTANT**
-If multiple instances of the service are running at the same time (like with horizontal scaling)
+If multiple instances of the application are running at the same time (like with horizontal scaling)
 it is required that each instance is initialized with a different generator-id to ensure unique IDs are generated.
 
 # Automatic registration of entity types in EF Core
@@ -122,9 +122,15 @@ a <code>ValidationProblemDetails</code> object is returned with the errors.
 
 # ASP.NET Integration tests
 
-Automated integration tests have been made that starts an instance of the service that runs agains an in-memory SQLite database.
+Automated integration tests have been made that starts an instance of the application that runs agains an in-memory SQLite database.
 
-[WebApplicationFactory](https://learn.microsoft.com/en-us/aspnet/core/test/integration-tests?view=aspnetcore-7.0) is used to start the service and modify the service registrations in the IoC container for external dependencies like the database.
+[WebApplicationFactory](https://learn.microsoft.com/en-us/aspnet/core/test/integration-tests?view=aspnetcore-7.0) is used to start the application and modify the service registrations in the IoC container for external dependencies like the database.
+
+A new instance of the application with its own in-memory database can be created using <code>WebAppFixture</code>.
+It can be created in individual tests or reused with <code>IClassFixture</code> or <code>ICollectionFixture</code>.
+By reusing an instance test run agains the same database so they may influence each other. But it will also save time by not having to start a new instance.
+
+The server log-output that happens during test execution is captured and written to the output of the individual tests.
 
 # Snapshot tests
 
@@ -159,4 +165,6 @@ This allows generating client code (like for C# or Typescript) that better match
 - Microsoft.EntityFrameworkCore.Sqlite: Sqlite is used as an in-memory database when executing automated tests.
 - Microsoft.EntityFrameworkCore.Design: Required when using EF Core Migrations to update the database schema.
 - Swashbuckle.AspNetCore: Used for exposing OpenAPI documentation and Swagger UI.
-- Verify: Used for snapshot testing.
+- Xunit: Used for running automated tests.
+- Verify: Used for snapshot assertions in tests.
+- Microsoft.AspNetCore.Mvc.Testing: Used for starting the application in integration tests.
