@@ -18,19 +18,17 @@ public class QueryControllerTests : IntegrationTestsBase<QueryControllerTests.Te
         
             Client = CreateHttpClient(InitialUserId);
 
-            async Task AddData(EntityId id, int nonNullableInt, int? nullableInt, string? testProp)
+            async Task AddData(EntityId id, int nonNullableInt, int? nullableInt, string? testProp, string? refTestProp)
             {
-                var data = new InfrastructureTestEntity(new InfrastructureTestRefEntity()) { Id = id, TestProp = testProp, NullableInt = nullableInt, NonNullableInt = nonNullableInt };
+                var data = new InfrastructureTestEntity(new InfrastructureTestRefEntity() { TestProp = refTestProp }) { Id = id, TestProp = testProp, NullableInt = nullableInt, NonNullableInt = nonNullableInt };
                 DataIds.Add(await Client.PostEntityAsync(data));
             }
-            await AddData(1, 1, 10, "Superman / Clark Kent");
-            await AddData(2, 1, 20, "Batman / Bruce Wayne");
-            await AddData(3, 2, 30, "Hulk / Bruce Banner");
-            await AddData(4, 3, null, "Iron Man / Tony Stark");
-            await AddData(5, 0, null, null);
-            await AddData(6, 0, null, "");
-
-            Assert.Equal(new EntityId[] { 1, 2, 3, 4, 5, 6 }, DataIds);
+            await AddData(1, 1, 10, "Superman", "Clark Kent");
+            await AddData(2, 1, 20, "Batman", "Bruce Wayne");
+            await AddData(3, 2, 30, "Hulk", "Bruce Banner");
+            await AddData(4, 3, null, "Iron Man", "Tony Stark");
+            await AddData(5, 0, null, null, null);
+            await AddData(6, 0, null, "", "");
         }
     }
     
@@ -61,14 +59,14 @@ public class QueryControllerTests : IntegrationTestsBase<QueryControllerTests.Te
     [InlineData("NullableInt LT 20", "1")]
     [InlineData("NullableInt GE 20", "2,3")]
     [InlineData("NullableInt LE 20", "1,2")]
-    [InlineData("TestProp EQ Hulk / Bruce Banner", "3")]
-    [InlineData("TestProp NE Hulk / Bruce Banner", "1,2,4,5,6")]
+    [InlineData("TestProp EQ Hulk", "3")]
+    [InlineData("TestProp NE Hulk", "1,2,4,5,6")]
+    [InlineData("NonNullableRef.TestProp EQ Tony Stark", "4")]
     // TODO: Filtering on null-values (not implemented yet)
-    // TODO: Filtering on referenced entities
-    public async Task TestFilter(string filter, string expectedIdsCvs)
+    public async Task TestFilter(string filter, string expectedIdsCsv)
     {
         var filteringParams = new FilteringParams { Filter = filter };
-        var expectedIds = expectedIdsCvs.Split(",").ToList();
+        var expectedIds = expectedIdsCsv.Split(",").ToList();
 
         var count = await Fixture.Client.Count<InfrastructureTestEntity>(filteringParams);
         Assert.Equal(expectedIds.Count, count);
@@ -84,10 +82,10 @@ public class QueryControllerTests : IntegrationTestsBase<QueryControllerTests.Te
     [Theory]
     [InlineData("NonNullableInt EQ one", "Could not convert value 'one' to type 'Int32'.")] // using value that does not match property type
     [InlineData("TestProp EQ one AND two", "Invalid filter syntax.")] // using ' AND ' in value will make the parser think a new condition is starting
-    [InlineData("TestProp GT Hulk / Bruce Banner", "Filter operator 'GT' not supported on type 'String'.")]
-    [InlineData("TestProp LT Hulk / Bruce Banner", "Filter operator 'LT' not supported on type 'String'.")]
-    [InlineData("TestProp GE Hulk / Bruce Banner", "Filter operator 'GE' not supported on type 'String'.")]
-    [InlineData("TestProp LE Hulk / Bruce Banner", "Filter operator 'LE' not supported on type 'String'.")]
+    [InlineData("TestProp GT Hulk", "Filter operator 'GT' not supported on type 'String'.")]
+    [InlineData("TestProp LT Hulk", "Filter operator 'LT' not supported on type 'String'.")]
+    [InlineData("TestProp GE Hulk", "Filter operator 'GE' not supported on type 'String'.")]
+    [InlineData("TestProp LE Hulk", "Filter operator 'LE' not supported on type 'String'.")]
     [InlineData("PropThatDoesNotExists EQ 1", "Property 'PropThatDoesNotExists' not found on type 'InfrastructureTestEntity'.")]
     public async Task FilterLimitations(string filter, string expectedMessage)
     {
