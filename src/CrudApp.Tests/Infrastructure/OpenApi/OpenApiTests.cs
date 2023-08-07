@@ -4,9 +4,9 @@ using Xunit.Abstractions;
 namespace CrudApp.Tests.Infrastructure.OpenApi;
 
 [UsesVerify]
-public class OpenApiTests : IntegrationTestsBase
+public class OpenApiTests : IntegrationTestsBase, IClassFixture<WebAppFixture>
 {
-    public OpenApiTests(ITestOutputHelper testOutputHelper) : base(testOutputHelper, new WebAppFixture()) { }
+    public OpenApiTests(ITestOutputHelper testOutputHelper, WebAppFixture fixture) : base(testOutputHelper, fixture) { }
 
     [Fact]
     public async Task GetOpenApiDocumentation()

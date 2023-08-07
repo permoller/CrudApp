@@ -7,9 +7,9 @@ using Xunit.Abstractions;
 
 namespace CrudApp.Tests.Infrastructure.Entities;
 
-public class EntityControllerBaseTests : IntegrationTestsBase
+public class EntityControllerBaseTests : IntegrationTestsBase, IClassFixture<WebAppFixture>
 {
-    public EntityControllerBaseTests(ITestOutputHelper testOutputHelper) : base(testOutputHelper, new WebAppFixture()) { }
+    public EntityControllerBaseTests(ITestOutputHelper testOutputHelper, WebAppFixture fixture) : base(testOutputHelper, fixture) { }
 
     [Fact]
     public async Task TestCrudActions()
