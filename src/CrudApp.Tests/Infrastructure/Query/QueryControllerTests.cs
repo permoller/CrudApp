@@ -41,7 +41,13 @@ public class QueryControllerTests : IntegrationTestsBase<QueryControllerTests.Te
         Assert.Equal(Fixture.DataIds.Count, count);
 
         var items = await Fixture.Client.Query<InfrastructureTestEntity>();
-        Assert.Equal(items.Select(i => i.Id), Fixture.DataIds);
+        Assert.Equal(Fixture.DataIds, items.OrderBy(i => i.Id).Select(i => i.Id));
+
+        var hulk = items.Single(i => i.Id == 3);
+        Assert.Equal(2, hulk.NonNullableInt);
+        Assert.Equal(30, hulk.NullableInt);
+        Assert.Equal("Hulk", hulk.TestProp);
+        Assert.Equal("Bruce Banner", hulk.NonNullableRef.TestProp);
     }
 
     [Theory]
