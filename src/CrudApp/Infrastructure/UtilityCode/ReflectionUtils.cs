@@ -68,13 +68,49 @@ public static class ReflectionUtils
     public static bool HasAttribute<T>(this Type? type) where T : Attribute
         => type?.GetCustomAttribute<T>(true) is not null;
 
+    /// <summary>
+    /// Reference types and <see cref="Nullable{T}"/> may be null.
+    /// Other value types may not be null.
+    /// </summary>
+    public static bool? MayTypeBeNull(this Type? type)
+    {
+        if (type is null)
+            return null;
+
+        // Reference types may be null
+        if (!type.IsValueType)
+            return true;
+
+        // Nullable<T> is the only value type that may be null
+        var isNullableStruct = type.IsGenericType && !type.IsGenericTypeDefinition && type.GetGenericTypeDefinition() == typeof(Nullable<>);
+        return isNullableStruct;
+    }
+
     private static readonly NullabilityInfoContext _nullabilityInfoContext = new();
 
-    public static bool MayBeNull(this PropertyInfo? propertyInfo)
-        => propertyInfo?.GetNullabilityState() == NullabilityState.Nullable;
+    /// <summary>
+    /// Reference types marked with nullable and <see cref="Nullable{T}"/> may be null.
+    /// Other value types and reference types that are not marked as nullable may not be null.
+    /// </summary>
+    public static bool? MayPropertyBeNull(this PropertyInfo? propertyInfo)
+    {
+        if (propertyInfo is null)
+            return null;
 
-    public static bool MayNotBeNull(this PropertyInfo? propertyInfo)
-        => propertyInfo?.GetNullabilityState() == NullabilityState.NotNull;
+        if (propertyInfo.PropertyType.MayTypeBeNull() == false)
+            return false;
+
+        // Look for reference nullability attributes
+        var nullabilityState = _nullabilityInfoContext.Create(propertyInfo).ReadState;
+        return nullabilityState switch
+        {
+            NullabilityState.NotNull => false,
+            NullabilityState.Nullable => true,
+            _ => null
+        };
+    }
+
+    
 
     private static NullabilityState GetNullabilityState(this PropertyInfo? propertyInfo)
     {
@@ -92,6 +128,7 @@ public static class ReflectionUtils
         // Look for reference nullability attributes
         return _nullabilityInfoContext.Create(propertyInfo).ReadState;
     }
+
 
     public static List<PropertyInfo> ParsePropertyPath(this Type type, string path)
     {

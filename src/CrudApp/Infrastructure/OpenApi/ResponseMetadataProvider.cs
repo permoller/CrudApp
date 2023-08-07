@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.Filters;
+using CrudApp.Infrastructure.UtilityCode;
 
 namespace CrudApp.Infrastructure.OpenApi;
 
@@ -63,7 +64,7 @@ public class ResponseMetadataProvider : IApplicationModelProvider
             else
             {
                 action.Filters.Add(new ProducesResponseTypeAttribute(returnType, HttpStatus.Ok));
-                if((!returnType.IsValueType || Nullable.GetUnderlyingType(returnType) != null))
+                if(returnType.MayTypeBeNull() == true)
                     action.Filters.Add(new ProducesResponseTypeAttribute(typeof(void), HttpStatus.NoContent));
             }
         }

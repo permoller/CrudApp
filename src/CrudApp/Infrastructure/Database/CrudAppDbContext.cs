@@ -58,7 +58,7 @@ public class CrudAppDbContext : DbContext
                 if (nav.PropertyInfo is null)
                     continue;
 
-                if (nav.PropertyInfo.MayNotBeNull())
+                if (nav.PropertyInfo.MayPropertyBeNull() == false)
                     nav.SetIsEagerLoaded(true);
             }
 
