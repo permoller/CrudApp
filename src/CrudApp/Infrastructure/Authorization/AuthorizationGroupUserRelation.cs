@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using CrudApp.Infrastructure.Users;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace CrudApp.Infrastructure.Authorization;
 
@@ -15,4 +17,11 @@ public class AuthorizationGroupUserRelation : EntityBase
 
     public AuthorizationGroup? AuthorizationGroup { get; set; }
     public AuthorizationRole? AuthorizationRole { get; set; }
+    public sealed class Configuration : IEntityTypeConfiguration<AuthorizationGroupUserRelation>
+    {
+        public void Configure(EntityTypeBuilder<AuthorizationGroupUserRelation> builder)
+        {
+            builder.HasOne<User>().WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
+        }
+    }
 }
