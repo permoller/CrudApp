@@ -48,8 +48,9 @@ internal static class HttpClientExtenstions
             messageBuilder.Append(problem?.Title);
             if (!string.IsNullOrEmpty(problem?.Detail))
                 messageBuilder.AppendLine().Append("Detail: ").Append(problem.Detail);
-            if (problem?.Extensions.TryGetValue("errors", out var errorsObj) == true && errorsObj is IDictionary<string, string[]> errors && errors.Count > 0)
+            if (problem?.Extensions.TryGetValue("errors", out var errorsObj) == true && errorsObj is JsonElement errorsElm && errorsElm.ValueKind == JsonValueKind.Object)
             {
+                var errors = errorsElm.Deserialize<IDictionary<string, string[]>>(JsonUtils.ApiJsonSerializerOptions);
                 messageBuilder.AppendLine().Append("Errors:");
                 foreach (var kvp in errors)
                 {
