@@ -59,7 +59,7 @@ public abstract class EntityBase
     /// The version is automatically incrementet in <see cref="CrudAppDbContext"/> when saving changes.
     /// </summary>
     [ConcurrencyCheck]
-    public long Version { get; set; } = 1;
+    public long Version { get; set; } = 0;
 
     /// <summary>
     /// Flag indicating the entity is deleted and should normally not be included in the results when querying for entities.
