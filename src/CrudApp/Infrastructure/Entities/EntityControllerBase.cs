@@ -1,7 +1,6 @@
 ﻿using CrudApp.Infrastructure.Query;
-using CrudApp.Infrastructure.UtilityCode;
 using Microsoft.AspNetCore.Mvc;
-using System.Collections;
+using System.Reflection;
 
 namespace CrudApp.Infrastructure.Entities;
 
@@ -45,31 +44,12 @@ public abstract class EntityControllerBase<T> : QueryControllerBase<T> where T :
             throw new ApiResponseException(HttpStatus.BadRequest, "Id in body and in URL must be the same.");
         }
 
-        await UpdateRecursively(entity, visitedEntities: new HashSet<EntityId>(), cancellationToken);
-
-        await DbContext.SaveChangesAsync();
-    }
-
-    [HttpDelete("{id}")]
-    public async Task Delete([FromRoute] EntityId id, CancellationToken cancellationToken)
-    {
-        var entity = await DbContext.GetByIdAuthorized<T>(id, asNoTracking: false, cancellationToken);
-        DbContext.Remove(entity);
-        await DbContext.SaveChangesAsync();
-    }
-
-    private async Task UpdateRecursively(EntityBase entity, ISet<EntityId> visitedEntities, CancellationToken cancellationToken)
-    {
-        // Prevent looping arround circular references.
-        if (!visitedEntities.Add(entity.Id))
-            return;
-
         EntityBase existingEntity;
         try
         {
             existingEntity = await DbContext.GetByIdAuthorized(entity.GetType(), entity.Id, asNoTracking: false, cancellationToken);
         }
-        catch (ApiResponseException ex) when(ex.HttpStatus == HttpStatus.NotFound)
+        catch (ApiResponseException ex) when (ex.HttpStatus == HttpStatus.NotFound)
         {
             throw new ApiResponseException(HttpStatus.Conflict, $"Entity {entity.Id} does not exist in the database. It may have been deleted. Adding new entities is not supported by the update endpoint.");
         }
@@ -77,45 +57,25 @@ public abstract class EntityControllerBase<T> : QueryControllerBase<T> where T :
         if (existingEntity.Version != entity.Version)
             throw new ApiResponseException(HttpStatus.Conflict, $"Entity {entity.Id} has a version conflict. Version in request: {entity.Version}. Version in database: {existingEntity.Version}.");
 
-        // Update child entities that can be reach via navigation properties
-        foreach (var navProp in DbContext.Entry(existingEntity).Navigations.Select(nav => nav.Metadata.PropertyInfo))
+
+        var propertiesToUpdate = existingEntity
+            .GetType()
+            .GetProperties(BindingFlags.Instance | BindingFlags.Public)
+            .Where(p => p.CanRead && p.CanWrite);
+        foreach (var propInfo in propertiesToUpdate)
         {
-            if (navProp is null)
-                continue;
-
-            
-            var childEntity = navProp.GetValue(entity);
-
-            // Only update children that are supplied in the request
-            if (childEntity is null)
-                continue;
-
-            // If child is a collection of EntityBase we update them individually
-            if (childEntity is IEnumerable collection)
-            {
-                var collectionTypeArguments = collection.GetType().FindGenericArgumentsForGenericTypeDefinition(typeof(ICollection<>));
-                if (collectionTypeArguments is not null && collectionTypeArguments[0].IsAssignableTo(typeof(EntityBase)))
-                {
-                    foreach(var item in collection)
-                    {
-                        if (item is EntityBase itemEntityBase)
-                        {
-                            await UpdateRecursively(itemEntityBase, visitedEntities, cancellationToken);
-                        }
-                    }
-                    continue;
-                }
-            }
-
-            // Only uodate children that are of type EntityBase
-            if (childEntity is not EntityBase childEntityBase)
-                continue;
-
-            await UpdateRecursively(childEntityBase, visitedEntities, cancellationToken);
-            
+            var newValue = propInfo.GetValue(entity);
+            propInfo.SetValue(existingEntity, newValue);
         }
 
-        // Update the current entity values
-        DbContext.Entry(existingEntity).CurrentValues.SetValues(entity);
+        await DbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    [HttpDelete("{id}")]
+    public async Task Delete([FromRoute] EntityId id, CancellationToken cancellationToken)
+    {
+        var entity = await DbContext.GetByIdAuthorized<T>(id, asNoTracking: false, cancellationToken);
+        DbContext.Remove(entity);
+        await DbContext.SaveChangesAsync(cancellationToken);
     }
 }

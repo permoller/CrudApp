@@ -5,5 +5,4 @@
 /// </summary>
 public class AuthorizationRole : EntityBase
 {
-    public ICollection<AuthorizationGroupUserRelation>? AuthorizationGroupUserRelations { get; set; }
 }

@@ -10,6 +10,4 @@
 /// </summary>
 public class AuthorizationGroup : EntityBase
 {
-    public ICollection<AuthorizationGroupEntityRelation>? AuthorizationGroupEntityRelations { get; set; }
-    public ICollection<AuthorizationGroupUserRelation>? AuthorizationGroupUserRelations { get; set; }
 }

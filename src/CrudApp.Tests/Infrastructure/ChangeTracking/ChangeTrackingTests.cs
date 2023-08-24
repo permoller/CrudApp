@@ -15,22 +15,22 @@ public class ChangeTrackingTests : IntegrationTestsBase, IClassFixture<WebAppFix
     {
         var client = Fixture.CreateHttpClient();
 
-        var entity = new InfrastructureTestEntity(new InfrastructureTestRefEntity() { TestProp = "original ref entity" }) { TestProp = "original entity" };
+        var entity = new InfrastructureTestEntity(new InfrastructureTestOwnedEntity() { OwnedTestProp = "original ref entity" }) { TestProp = "original entity" };
         var id = await client.PostEntityAsync(entity);
-        var changeFilter = new FilteringParams() { Filter = $"{nameof(EntityChange.EntityId)} EQ {id}" };
-        var changes = await client.Query<EntityChange>(changeFilter);
+        var changeFilter = new FilteringParams() { Filter = $"{nameof(EntityChangeDto.EntityChange)}.{nameof(EntityChange.EntityId)} EQ {id}" };
+        var changes = await client.Query<EntityChangeDto>(changeFilter);
 
 
         entity = await client.GetEntityAsync<InfrastructureTestEntity>(id);
         entity.TestProp = "updated entity";
         await client.PutEntityAsync(entity);
-        changes = await client.Query<EntityChange>(changeFilter);
+        changes = await client.Query<EntityChangeDto>(changeFilter);
 
 
         entity = await client.GetEntityAsync<InfrastructureTestEntity>(id);
-        entity.NonNullableRef.TestProp = "updated ref entity";
+        entity.NonNullableOwned.OwnedTestProp = "updated ref entity";
         await client.PutEntityAsync(entity);
-        changes = await client.Query<EntityChange>(changeFilter);
+        changes = await client.Query<EntityChangeDto>(changeFilter);
 
 
     }

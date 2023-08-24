@@ -15,12 +15,12 @@ public class AuthorizationGroupUserRelation : EntityBase
     public EntityId UserId { get; set; }
     public EntityId AuthorizationRoleId { get; set; }
 
-    public AuthorizationGroup? AuthorizationGroup { get; set; }
-    public AuthorizationRole? AuthorizationRole { get; set; }
     public sealed class Configuration : IEntityTypeConfiguration<AuthorizationGroupUserRelation>
     {
         public void Configure(EntityTypeBuilder<AuthorizationGroupUserRelation> builder)
         {
+            builder.HasOne<AuthorizationGroup>().WithMany().HasForeignKey(e => e.AuthorizationGroupId).OnDelete(DeleteBehavior.Cascade);
+            builder.HasOne<AuthorizationRole>().WithMany().HasForeignKey(e => e.AuthorizationRoleId).OnDelete(DeleteBehavior.Cascade);
             builder.HasOne<User>().WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
         }
     }

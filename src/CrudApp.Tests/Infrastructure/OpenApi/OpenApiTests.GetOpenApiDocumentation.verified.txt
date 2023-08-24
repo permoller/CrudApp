@@ -6480,22 +6480,6 @@
             "$ref": "#/components/schemas/EntityBase"
           }
         ],
-        "properties": {
-          "AuthorizationGroupEntityRelations": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AuthorizationGroupEntityRelation"
-            },
-            "nullable": true
-          },
-          "AuthorizationGroupUserRelations": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AuthorizationGroupUserRelation"
-            },
-            "nullable": true
-          }
-        },
         "additionalProperties": false
       },
       "AuthorizationGroupEntityRelation": {
@@ -6521,14 +6505,6 @@
           },
           "EntityType": {
             "type": "string"
-          },
-          "AuthorizationGroup": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/AuthorizationGroup"
-              }
-            ],
-            "nullable": true
           }
         },
         "additionalProperties": false
@@ -6557,22 +6533,6 @@
           "AuthorizationRoleId": {
             "type": "integer",
             "format": "int64"
-          },
-          "AuthorizationGroup": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/AuthorizationGroup"
-              }
-            ],
-            "nullable": true
-          },
-          "AuthorizationRole": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/AuthorizationRole"
-              }
-            ],
-            "nullable": true
           }
         },
         "additionalProperties": false
@@ -6584,15 +6544,6 @@
             "$ref": "#/components/schemas/EntityBase"
           }
         ],
-        "properties": {
-          "AuthorizationGroupUserRelations": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AuthorizationGroupUserRelation"
-            },
-            "nullable": true
-          }
-        },
         "additionalProperties": false
       },
       "ChangeType": {
@@ -6634,6 +6585,7 @@
       "EntityChange": {
         "required": [
           "ChangeType",
+          "DisplayName",
           "Time"
         ],
         "type": "object",
@@ -6672,40 +6624,32 @@
             "type": "string",
             "nullable": true
           },
-          "PropertyChanges": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/PropertyChange"
-            },
-            "nullable": true
+          "DisplayName": {
+            "type": "string",
+            "readOnly": true
           }
         },
         "additionalProperties": false
       },
       "EntityChangeDto": {
         "required": [
-          "EntityChangeEventId"
+          "EntityChange",
+          "PropertyChanges"
         ],
         "type": "object",
         "properties": {
-          "EntityChangeEventId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "EntityChangeEvent": {
+          "EntityChange": {
             "allOf": [
               {
                 "$ref": "#/components/schemas/EntityChange"
               }
-            ],
-            "nullable": true
+            ]
           },
-          "PropertyChangeEvents": {
+          "PropertyChanges": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/PropertyChange"
-            },
-            "nullable": true
+            }
           }
         },
         "additionalProperties": false
@@ -6736,29 +6680,21 @@
       },
       "InfrastructureTestChildEntity": {
         "required": [
-          "InfrastructureTestEntityId"
+          "Id",
+          "OwnerId"
         ],
         "type": "object",
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/EntityBase"
-          }
-        ],
         "properties": {
-          "TestProp": {
-            "type": "string",
-            "nullable": true
-          },
-          "InfrastructureTestEntityId": {
+          "Id": {
             "type": "integer",
             "format": "int64"
           },
-          "InfrastructureTestEntity": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/InfrastructureTestEntity"
-              }
-            ],
+          "OwnerId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "TestProp": {
+            "type": "string",
             "nullable": true
           }
         },
@@ -6766,9 +6702,9 @@
       },
       "InfrastructureTestEntity": {
         "required": [
+          "Children",
           "NonNullableInt",
-          "NonNullableRef",
-          "NonNullableRefId"
+          "NonNullableOwned"
         ],
         "type": "object",
         "allOf": [
@@ -6790,27 +6726,18 @@
             "type": "integer",
             "format": "int32"
           },
-          "NullableRefId": {
-            "type": "integer",
-            "format": "int64",
-            "nullable": true
-          },
-          "NullableRef": {
+          "NullableOwned": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/InfrastructureTestRefEntity"
+                "$ref": "#/components/schemas/InfrastructureTestOwnedEntity"
               }
             ],
             "nullable": true
           },
-          "NonNullableRefId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "NonNullableRef": {
+          "NonNullableOwned": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/InfrastructureTestRefEntity"
+                "$ref": "#/components/schemas/InfrastructureTestOwnedEntity"
               }
             ]
           },
@@ -6818,21 +6745,21 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/InfrastructureTestChildEntity"
-            },
-            "nullable": true
+            }
           }
         },
         "additionalProperties": false
       },
-      "InfrastructureTestRefEntity": {
-        "type": "object",
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/EntityBase"
-          }
+      "InfrastructureTestOwnedEntity": {
+        "required": [
+          "RequiredProp"
         ],
+        "type": "object",
         "properties": {
-          "TestProp": {
+          "RequiredProp": {
+            "type": "string"
+          },
+          "OwnedTestProp": {
             "type": "string",
             "nullable": true
           }
@@ -6868,6 +6795,7 @@
       },
       "PropertyChange": {
         "required": [
+          "DisplayName",
           "EntityChangeId",
           "PropertyName"
         ],
@@ -6893,13 +6821,9 @@
             "type": "string",
             "nullable": true
           },
-          "EntityChange": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/EntityChange"
-              }
-            ],
-            "nullable": true
+          "DisplayName": {
+            "type": "string",
+            "readOnly": true
           }
         },
         "additionalProperties": false

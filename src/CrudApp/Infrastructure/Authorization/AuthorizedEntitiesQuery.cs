@@ -10,8 +10,10 @@ public static class AuthorizedEntitiesQuery
         // TODO: Include this when authorization data is actually created... no no one has access to enything
         //var userId = AuthorizationContext.Current?.UserId ?? AuthenticationContext.Current?.UserId ?? throw new NotAuthenticatedException();
 
-        //var authorizedEntityIds = dbContext.All<AuthorizationGroupUserRelation>().Where(m => m.UserId == userId)
-        //    .SelectMany(m => m.AuthorizationGroup!.AuthorizationGroupEntityRelations!.Select(e => e.Id));
+        //var authorizedEntityIds =
+        //    from m in dbContext.All<AuthorizationGroupUserRelation>().Where(m => m.UserId == userId)
+        //    join e in dbContext.All<AuthorizationGroupEntityRelation>() on m.AuthorizationGroupId equals e.AuthorizationGroupId
+        //    select e.EntityId;
 
         //return dbContext.All<T>(includeSoftDeleted).Where(t => authorizedEntityIds.Contains(t.Id));
     }

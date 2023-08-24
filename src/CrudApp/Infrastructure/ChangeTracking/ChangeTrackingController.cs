@@ -1,13 +1,24 @@
 ﻿using CrudApp.Infrastructure.Query;
-using Microsoft.EntityFrameworkCore;
 
 namespace CrudApp.Infrastructure.ChangeTracking;
 
 
-public class ChangeTrackingController : QueryControllerBase<EntityChange>
+public sealed class EntityChangeDto
 {
-    protected override IQueryable<EntityChange> GetQueryable(bool includeSoftDeleted)
+    public EntityChange EntityChange { get; set; } = null!;
+    public List<PropertyChange> PropertyChanges { get; set; } = null!;
+}
+
+public class ChangeTrackingController : QueryControllerBase<EntityChangeDto>
+{
+    protected override IQueryable<EntityChangeDto> GetQueryable(bool includeSoftDeleted)
     {
-        return DbContext.Authorized<EntityChange>().Include(e => e.PropertyChanges).AsNoTracking().Select(e => e);
+        var query = from e in DbContext.Authorized<EntityChange>()
+                    select new EntityChangeDto
+                    {
+                        EntityChange = e,
+                        PropertyChanges = DbContext.Authorized<PropertyChange>(includeSoftDeleted).Where(p => p.EntityChangeId == e.Id).ToList()
+                    };
+        return query;
     }
 }

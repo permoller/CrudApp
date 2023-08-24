@@ -1,22 +1,26 @@
-﻿using System.Text.Json.Serialization;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace CrudApp.Infrastructure.Testing;
 
 /// <summary>
 /// This is used to test the application infrastructure.
 /// </summary>
+[EntityTypeConfiguration(typeof(Configuration))]
 public class InfrastructureTestEntity : EntityBase
 {
     [JsonConstructor]
     private InfrastructureTestEntity()
     {
         // used when deserializing from JSON and creating entities from database
-        NonNullableRef = null!;
+        NonNullableOwned = null!;
     }
 
-    public InfrastructureTestEntity(InfrastructureTestRefEntity nonNullableRef)
+    public InfrastructureTestEntity(InfrastructureTestOwnedEntity nonNullableOwned)
     {
-        NonNullableRef = nonNullableRef;
+        NonNullableOwned = nonNullableOwned;
     }
 
     public string? TestProp { get; set; }
@@ -24,23 +28,32 @@ public class InfrastructureTestEntity : EntityBase
     public int? NullableInt { get; set; }
     public int NonNullableInt { get; set; }
 
-    public EntityId? NullableRefId { get; set; }
-    public InfrastructureTestRefEntity? NullableRef { get; set; }
+    public InfrastructureTestOwnedEntity? NullableOwned { get; set; }
     
-    public EntityId NonNullableRefId { get; set; }
-    public InfrastructureTestRefEntity NonNullableRef { get; set; }
-    
-    public ICollection<InfrastructureTestChildEntity>? Children { get; set; }
+    public InfrastructureTestOwnedEntity NonNullableOwned { get; set; }
+
+    public ICollection<InfrastructureTestChildEntity> Children { get; set; } = new List<InfrastructureTestChildEntity>();
+
+    public class Configuration : IEntityTypeConfiguration<InfrastructureTestEntity>
+    {
+        public void Configure(EntityTypeBuilder<InfrastructureTestEntity> builder)
+        {
+            builder.OwnsOne(e => e.NonNullableOwned).WithOwner();
+            builder.OwnsOne(e => e.NullableOwned).WithOwner();
+            builder.HasMany(e => e.Children).WithOne().HasForeignKey(child => child.OwnerId);
+        }
+    }
 }
 
-public class InfrastructureTestRefEntity : EntityBase
+public class InfrastructureTestOwnedEntity
 {
-    public string? TestProp { get; set; }
+    public string RequiredProp { get; set; } = "test"; // at least one required property is needed for EF Core to know if 
+    public string? OwnedTestProp { get; set; }
 }
 
-public class InfrastructureTestChildEntity : EntityBase
+public class InfrastructureTestChildEntity
 {
+    public EntityId Id { get; set; }
+    public EntityId OwnerId { get; set; }
     public string? TestProp { get; set; }
-    public EntityId InfrastructureTestEntityId { get; set; }
-    public InfrastructureTestEntity? InfrastructureTestEntity { get; set; }
 }

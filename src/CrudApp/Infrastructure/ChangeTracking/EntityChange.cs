@@ -17,7 +17,5 @@ public sealed class EntityChange : EntityBase
     public DateTimeOffset Time { get; set; }
     public string? ActivityId { get; set; }
 
-    public ICollection<PropertyChange>? PropertyChanges { get; set; }
-
     public override string DisplayName => $"{ChangeType} {EntityType}[{EntityId}]";
 }

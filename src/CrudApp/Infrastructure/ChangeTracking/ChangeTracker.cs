@@ -42,21 +42,18 @@ public static class ChangeTracker
                 EntityId = entry.Entity.Id,
                 UserId = AuthenticationContext.Current?.UserId
             };
-            entityChange.PropertyChanges = new List<PropertyChange>();
             dbContext.Add(entityChange);
-            
+
             // create property change event for each changed property
             foreach (var prop in entry.Properties.Where(p => IsChangeTrackingEnabled(p) && (p.IsModified || changeType != ChangeType.EntityUpdated)))
             {
                 var propertyChange = new PropertyChange
                 {
                     EntityChangeId = entityChange.Id,
-                    EntityChange = entityChange,
                     PropertyName = prop.Metadata.Name,
                     OldPropertyValueAsJson = changeType == ChangeType.EntityCreated ? null : JsonSerializer.Serialize(prop.OriginalValue, JsonUtils.DbJsonSerializerOptions),
                     NewPropertyValueAsJson = changeType == ChangeType.EntityDeleted ? null : JsonSerializer.Serialize(prop.CurrentValue, JsonUtils.DbJsonSerializerOptions)
                 };
-                entityChange.PropertyChanges.Add(propertyChange);
                 dbContext.Add(propertyChange);
             }
         }

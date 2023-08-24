@@ -18,9 +18,9 @@ public class QueryControllerTests : IntegrationTestsBase<QueryControllerTests.Te
         
             Client = CreateHttpClient(InitialUserId);
 
-            async Task AddData(EntityId id, int nonNullableInt, int? nullableInt, string? testProp, string? refTestProp)
+            async Task AddData(EntityId id, int nonNullableInt, int? nullableInt, string? testProp, string? ownedTestProp)
             {
-                var data = new InfrastructureTestEntity(new InfrastructureTestRefEntity() { TestProp = refTestProp }) { Id = id, TestProp = testProp, NullableInt = nullableInt, NonNullableInt = nonNullableInt };
+                var data = new InfrastructureTestEntity(new InfrastructureTestOwnedEntity() { OwnedTestProp = ownedTestProp }) { Id = id, TestProp = testProp, NullableInt = nullableInt, NonNullableInt = nonNullableInt };
                 DataIds.Add(await Client.PostEntityAsync(data));
             }
             await AddData(1, 1, 10, "Superman", "Clark Kent");
@@ -47,7 +47,7 @@ public class QueryControllerTests : IntegrationTestsBase<QueryControllerTests.Te
         Assert.Equal(2, hulk.NonNullableInt);
         Assert.Equal(30, hulk.NullableInt);
         Assert.Equal("Hulk", hulk.TestProp);
-        Assert.Equal("Bruce Banner", hulk.NonNullableRef.TestProp);
+        Assert.Equal("Bruce Banner", hulk.NonNullableOwned.OwnedTestProp);
     }
 
     [Theory]
@@ -67,7 +67,7 @@ public class QueryControllerTests : IntegrationTestsBase<QueryControllerTests.Te
     [InlineData("NullableInt LE 20", "1,2")]
     [InlineData("TestProp EQ Hulk", "3")]
     [InlineData("TestProp NE Hulk", "1,2,4,5,6")]
-    [InlineData("NonNullableRef.TestProp EQ Tony Stark", "4")]
+    [InlineData("NonNullableOwned.OwnedTestProp EQ Tony Stark", "4")]
     // TODO: Filtering on null-values (not implemented yet)
     public async Task TestFilter(string filter, string expectedIdsCsv)
     {

@@ -14,12 +14,13 @@ public class EntityControllerBaseTests : IntegrationTestsBase, IClassFixture<Web
     [Fact]
     public async Task TestCrudActions()
     {
-        
+        long expectedVersion = 0;
         var client = Fixture.CreateHttpClient(Fixture.InitialUserId);
 
         // Create
-        var entity = new InfrastructureTestEntity(new InfrastructureTestRefEntity() { TestProp = "original ref entity" }) { TestProp = "original entity" };
+        var entity = new InfrastructureTestEntity(new InfrastructureTestOwnedEntity() { OwnedTestProp = "original owned entity" }) { TestProp = "original entity" };
         var id = await client.PostEntityAsync(entity);
+        expectedVersion++;
         Assert.NotEqual(default, id);
 
         // TODO: Test creating entity with same id again
@@ -28,38 +29,111 @@ public class EntityControllerBaseTests : IntegrationTestsBase, IClassFixture<Web
         entity = await client.GetEntityAsync<InfrastructureTestEntity>(id);
         Assert.NotNull(entity);
         Assert.Equal(id, entity.Id);
-        Assert.Equal(1, entity.Version);
+        Assert.Equal(expectedVersion, entity.Version);
         Assert.False(entity.IsSoftDeleted);
         Assert.Equal("original entity", entity.TestProp);
-        Assert.Equal(entity.NonNullableRefId, entity.NonNullableRef.Id);
-        Assert.Equal("original ref entity", entity.NonNullableRef.TestProp);
+        Assert.NotNull(entity.NonNullableOwned);
+        Assert.Equal("original owned entity", entity.NonNullableOwned.OwnedTestProp);
+        Assert.Null(entity.NullableOwned);
+        //Assert.Empty(entity.Children);
 
         // Update
         entity.TestProp = "updated entity";
-        entity.NonNullableRef.TestProp = "updated ref entity";
         await client.PutEntityAsync(entity);
+        expectedVersion++;
 
         // Read updated
         entity = await client.GetEntityAsync<InfrastructureTestEntity>(id);
         Assert.NotNull(entity);
         Assert.Equal(id, entity.Id);
-        Assert.Equal(2, entity.Version);
+        Assert.Equal(expectedVersion, entity.Version);
         Assert.False(entity.IsSoftDeleted);
         Assert.Equal("updated entity", entity.TestProp);
-        Assert.Equal(2, entity.NonNullableRef.Version);
-        Assert.Equal("updated ref entity", entity.NonNullableRef.TestProp);
+        Assert.NotNull(entity.NonNullableOwned);
+        Assert.Equal("original owned entity", entity.NonNullableOwned.OwnedTestProp);
+        Assert.Null(entity.NullableOwned);
+
+        // Update NonNullableOwned
+        entity.NonNullableOwned.OwnedTestProp = "updated owned entity";
+        await client.PutEntityAsync(entity);
+        expectedVersion++;
+
+        // Read updated NonNullableOwned
+        entity = await client.GetEntityAsync<InfrastructureTestEntity>(id);
+        Assert.NotNull(entity);
+        Assert.Equal(id, entity.Id);
+        Assert.Equal(expectedVersion, entity.Version);
+        Assert.False(entity.IsSoftDeleted);
+        Assert.Equal("updated entity", entity.TestProp);
+        Assert.NotNull(entity.NonNullableOwned);
+        Assert.Equal("updated owned entity", entity.NonNullableOwned.OwnedTestProp);
+        Assert.Null(entity.NullableOwned);
+
+        // Add NullableOwned
+        entity.NullableOwned = new InfrastructureTestOwnedEntity() { OwnedTestProp = "created NullableOwned" };
+        await client.PutEntityAsync(entity);
+        expectedVersion++;
+
+        // Read added NullableOwned
+        entity = await client.GetEntityAsync<InfrastructureTestEntity>(id);
+        Assert.NotNull(entity);
+        Assert.Equal(id, entity.Id);
+        Assert.Equal(expectedVersion, entity.Version);
+        Assert.False(entity.IsSoftDeleted);
+        Assert.Equal("updated entity", entity.TestProp);
+        Assert.NotNull(entity.NonNullableOwned);
+        Assert.Equal("updated owned entity", entity.NonNullableOwned.OwnedTestProp);
+        Assert.NotNull(entity.NullableOwned);
+        Assert.Equal("created NullableOwned", entity.NullableOwned.OwnedTestProp);
+
+        // Update NullableOwned
+        entity.NullableOwned.OwnedTestProp = "updated NullableOwned";
+        await client.PutEntityAsync(entity);
+        expectedVersion++;
+
+        // Read updated NullableOwned
+        entity = await client.GetEntityAsync<InfrastructureTestEntity>(id);
+        Assert.NotNull(entity);
+        Assert.Equal(id, entity.Id);
+        Assert.Equal(expectedVersion, entity.Version);
+        Assert.False(entity.IsSoftDeleted);
+        Assert.Equal("updated entity", entity.TestProp);
+        Assert.NotNull(entity.NonNullableOwned);
+        Assert.Equal("updated owned entity", entity.NonNullableOwned.OwnedTestProp);
+        Assert.NotNull(entity.NullableOwned);
+        Assert.Equal("updated NullableOwned", entity.NullableOwned.OwnedTestProp);
+
+        // Remove NullableOwned
+        entity.NullableOwned = null;
+        await client.PutEntityAsync(entity);
+        expectedVersion++;
+
+        // Read removed NullableOwned
+        entity = await client.GetEntityAsync<InfrastructureTestEntity>(id);
+        Assert.NotNull(entity);
+        Assert.Equal(id, entity.Id);
+        Assert.Equal(expectedVersion, entity.Version);
+        Assert.False(entity.IsSoftDeleted);
+        Assert.Equal("updated entity", entity.TestProp);
+        Assert.NotNull(entity.NonNullableOwned);
+        Assert.Equal("updated owned entity", entity.NonNullableOwned.OwnedTestProp);
+        Assert.Null(entity.NullableOwned);
 
         // Soft delete
         entity.IsSoftDeleted = true;
         await client.PutEntityAsync(entity);
+        expectedVersion++;
 
         // Read soft deleted
         entity = await client.GetEntityAsync<InfrastructureTestEntity>(id);
         Assert.NotNull(entity);
         Assert.Equal(id, entity.Id);
-        Assert.Equal(3, entity.Version);
+        Assert.Equal(expectedVersion, entity.Version);
         Assert.True(entity.IsSoftDeleted);
-        Assert.Equal(2, entity.NonNullableRef.Version);
+        Assert.Equal("updated entity", entity.TestProp);
+        Assert.NotNull(entity.NonNullableOwned);
+        Assert.Equal("updated owned entity", entity.NonNullableOwned.OwnedTestProp);
+        Assert.Null(entity.NullableOwned);
 
         // Delete
         await client.DeleteEntityAsync<InfrastructureTestEntity>(id);
@@ -74,7 +148,7 @@ public class EntityControllerBaseTests : IntegrationTestsBase, IClassFixture<Web
     {
         var client = Fixture.CreateHttpClient(Fixture.InitialUserId);
 
-        var entity = new InfrastructureTestEntity(new InfrastructureTestRefEntity()) { TestProp = "test location header" };
+        var entity = new InfrastructureTestEntity(new InfrastructureTestOwnedEntity()) { TestProp = "test location header" };
         var response = await client.PostAsJsonAsync("/api/infrastructuretest", entity, JsonUtils.ApiJsonSerializerOptions);
         await response.EnsureSuccessAsync(HttpStatus.Created);
         var location = response.Headers.Location;
