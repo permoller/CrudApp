@@ -7,6 +7,13 @@ namespace CrudApp.Infrastructure.Testing;
 /// </summary>
 public class InfrastructureTestController : EntityControllerBase<InfrastructureTestEntity>
 {
+    ILogger<InfrastructureTestController> _logger;
+
+    public InfrastructureTestController(ILogger<InfrastructureTestController> logger)
+    {
+        _logger = logger;
+    }
+
     [Route("void"), HttpGet, HttpPut, HttpPost, HttpDelete]
     public void Void()
     {
@@ -39,5 +46,23 @@ public class InfrastructureTestController : EntityControllerBase<InfrastructureT
     {
         // Used for testing the status code returned from an action when an object is returned.
         return new(new());
+    }
+
+    [Route("logging"), HttpGet]
+    public string Logging(string value)
+    {
+        using (var __ = _logger.BeginScope("Method {method}.", nameof(Logging)))
+        using (var _ = _logger.BeginScope("outer scope"))
+        using (var ___ = _logger.BeginScope("inner scope"))
+        {
+            return LoggingInnerMethod(value);
+        }
+    }
+
+    private string LoggingInnerMethod(string value)
+    {
+        using (var __ = _logger.BeginScope("Inner method {method}.", nameof(LoggingInnerMethod)))
+            _logger.LogInformation("Value {value}", value);
+        return value;
     }
 }

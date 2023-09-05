@@ -102,6 +102,20 @@ Each property-name can optionally be followed by <code>desc</code> to order desc
 
 When ordering is used one can also use skip and take parameters to implement pagination.
 
+# Logging
+
+The application uses <code>ILogger</code> for logging.
+
+<code>SinkLoggerProvider</code> has been made as an example of a custom implementation of <code>ILoggerProvider</code>.
+
+The loggers it creates transforms the log-events into a <code>LogEntry</code> that reuses some of the fields from the [Elastic Common Schema](https://www.elastic.co/guide/en/ecs/current/ecs-field-reference.html).
+
+Multiple <code>ILogSink</code> can be registered. They will receive the <code>LogEntry</code> so they can be logged to different locations. There are two examples:
+- <code>TextWriterLogSink</code> writes the <code>LogEntry</code> as JSON or as plain text to a <code>TextWriter</code> (configured as plain text to <code>Console.Out</code> in the code).
+- <code>OpenSearchBuffer</code> writes the <code>LogEntry</code> as JSON to an in-memory buffer that periodicly is send to an OpenSearch server that can be started using <code>crud-app-dev-env/docker-compose.yml</code>.
+
+NOTE that the build in console logger can be configured to log as JSON. So if your tooling can handle the JSON from it, it is probably a better choice than roling your own.
+
 # API exception handling
 
 An exception filter (<code>ApiExceptionHandler</code>) handles the exceptions by converting them to [ProblemDetails](https://datatracker.ietf.org/doc/html/rfc7807) that are returned with an appropiate HTTP status code.

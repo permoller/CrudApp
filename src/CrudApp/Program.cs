@@ -1,6 +1,6 @@
+using CrudApp.Infrastructure.Logging;
 using CrudApp.Infrastructure.OpenApi;
 using CrudApp.Infrastructure.UtilityCode;
-using Microsoft.AspNetCore.Http.Extensions;
 
 public class Program
 {
@@ -17,18 +17,10 @@ public class Program
     public static void Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
-
+        
         builder
             .Services
-            .AddLogging(loggingBuilder => {
-                loggingBuilder.ClearProviders();
-#if DEBUG
-                // Do not use structured logging in local development environment. It is hard to read.
-                loggingBuilder.AddConsole();
-#else
-        loggingBuilder.AddJsonConsole();
-#endif
-            })
+            .AddCrudAppLogging(builder.Configuration)
             .AddCrudAppExceptionHandling()
             .AddCrudAppAuthentication()
             .AddCrudAppOpenApi()
@@ -61,4 +53,5 @@ public class Program
         app.MapControllers();
         app.Run();
     }
+
 }
