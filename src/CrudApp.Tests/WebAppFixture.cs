@@ -10,7 +10,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Net.Http.Headers;
 using Xunit.Abstractions;
-using Xunit.Sdk;
 
 namespace CrudApp.Tests;
 
@@ -68,7 +67,7 @@ public class WebAppFixture
     {
         _testOutputLoggerProvider = new TestOutputLogger.Provider(Log);
 
-        // Evenry instance of WebAppFixture will get its own in-memory database.
+        // Every instance of WebAppFixture will get its own in-memory database.
         var dbName = Guid.NewGuid().ToString();
 
         // To make sure the in-memory database is not deleted we need to keep at least one connection open.

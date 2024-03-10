@@ -1,5 +1,6 @@
 ﻿using CrudApp.Infrastructure.Query;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Reflection;
 
 namespace CrudApp.Infrastructure.Entities;
@@ -20,6 +21,9 @@ public abstract class EntityControllerBase<T> : QueryControllerBase<T> where T :
     [ProducesResponseType(HttpStatus.Created)]
     public async Task<ActionResult<EntityId>> Post([FromBody] T entity, CancellationToken cancellationToken)
     {
+        if (entity.Id != default && await DbContext.All<T>(includeSoftDeleted: true).AnyAsync(e => e.Id == entity.Id, cancellationToken))
+            throw new ApiResponseException(HttpStatus.BadRequest, $"{typeof(T).Name} with id {entity.Id} already exists.");
+
         DbContext.Add(entity);
         await DbContext.SaveChangesAsync(cancellationToken);
         // We do not return the created entity.
@@ -29,8 +33,7 @@ public abstract class EntityControllerBase<T> : QueryControllerBase<T> where T :
 
     /// <summary>
     /// Updates the given entity.
-    /// If the entity has navigation-properties that contains EntityBase objects they will also be updated.
-    /// Adding and removing objects via collection-navigation-properties is not supported, but updating existing entities is.
+    /// If the entity has navigation-properties to owned entities they will also be updated.
     /// </summary>
     /// <param name="id"></param>
     /// <param name="entity"></param>
@@ -57,16 +60,7 @@ public abstract class EntityControllerBase<T> : QueryControllerBase<T> where T :
         if (existingEntity.Version != entity.Version)
             throw new ApiResponseException(HttpStatus.Conflict, $"Entity {entity.Id} has a version conflict. Version in request: {entity.Version}. Version in database: {existingEntity.Version}.");
 
-
-        var propertiesToUpdate = existingEntity
-            .GetType()
-            .GetProperties(BindingFlags.Instance | BindingFlags.Public)
-            .Where(p => p.CanRead && p.CanWrite);
-        foreach (var propInfo in propertiesToUpdate)
-        {
-            var newValue = propInfo.GetValue(entity);
-            propInfo.SetValue(existingEntity, newValue);
-        }
+        DbContext.SetValuesIncludingNavigationProperties(existingEntity, entity);
 
         await DbContext.SaveChangesAsync(cancellationToken);
     }

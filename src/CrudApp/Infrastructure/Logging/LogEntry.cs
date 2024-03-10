@@ -4,6 +4,7 @@ namespace CrudApp.Infrastructure.Logging;
 
 /// <summary>
 /// Based on a subset of the Elastic Common Schema (https://www.elastic.co/guide/en/ecs/current/ecs-field-reference.html)
+/// Also includes some fields not found in ECS.
 /// </summary>
 public sealed class LogEntry
 {
@@ -34,6 +35,12 @@ public sealed class LogEntry
     /// <summary>
     /// Not part of ECS
     /// </summary>
+    [JsonPropertyName("state")]
+    public Dictionary<string, string?>? State { get; set; }
+
+    /// <summary>
+    /// Not part of ECS
+    /// </summary>
     [JsonPropertyName("scopes")]
     public List<Scope>? Scopes { get; set; }
 }
@@ -45,12 +52,6 @@ public class Log
 
     [JsonPropertyName("logger")]
     public string? Logger { get; set; }
-
-    /// <summary>
-    /// Not part of ECS
-    /// </summary>
-    [JsonPropertyName("state")]
-    public Dictionary<string, string?>? State { get; set; }
 }
 
 public class Trace

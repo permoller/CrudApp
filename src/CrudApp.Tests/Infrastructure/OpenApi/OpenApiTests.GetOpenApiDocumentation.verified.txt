@@ -6793,9 +6793,9 @@
       },
       "InfrastructureTestEntity": {
         "required": [
-          "Children",
+          "CollectionOfOwnedEntities",
           "NonNullableInt",
-          "NonNullableOwned"
+          "NonNullableOwnedEntity"
         ],
         "type": "object",
         "allOf": [
@@ -6817,7 +6817,7 @@
             "type": "integer",
             "format": "int32"
           },
-          "NullableOwned": {
+          "NullableOwnedEntity": {
             "allOf": [
               {
                 "$ref": "#/components/schemas/InfrastructureTestOwnedEntity"
@@ -6825,14 +6825,14 @@
             ],
             "nullable": true
           },
-          "NonNullableOwned": {
+          "NonNullableOwnedEntity": {
             "allOf": [
               {
                 "$ref": "#/components/schemas/InfrastructureTestOwnedEntity"
               }
             ]
           },
-          "Children": {
+          "CollectionOfOwnedEntities": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/InfrastructureTestChildEntity"

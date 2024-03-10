@@ -28,7 +28,7 @@ public class ChangeTrackingTests : IntegrationTestsBase, IClassFixture<WebAppFix
 
 
         entity = await client.GetEntityAsync<InfrastructureTestEntity>(id);
-        entity.NonNullableOwned.OwnedTestProp = "updated ref entity";
+        entity.NonNullableOwnedEntity.OwnedTestProp = "updated ref entity";
         await client.PutEntityAsync(entity);
         changes = await client.Query<EntityChangeDto>(changeFilter);
 

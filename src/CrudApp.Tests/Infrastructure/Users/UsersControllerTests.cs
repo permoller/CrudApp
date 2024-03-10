@@ -14,7 +14,7 @@ public class UsersControllerTests : IntegrationTestsBase, IClassFixture<WebAppFi
     {
         var client = Fixture.CreateHttpClient();
         var response = await client.GetAsync("/api/users/current");
-        await response.EnsureSuccessAsync(HttpStatus.NoContent);
+        await response.ApiEnsureSuccessAsync(HttpStatus.NoContent);
     }
 
     [Fact]
@@ -22,8 +22,8 @@ public class UsersControllerTests : IntegrationTestsBase, IClassFixture<WebAppFi
     {
         var client = Fixture.CreateHttpClient(Fixture.InitialUserId);
         var response = await client.GetAsync("/api/users/current");
-        await response.EnsureSuccessAsync(HttpStatus.Ok);
-        var currentUser = await response.ReadContentAsync<User>();
+        await response.ApiEnsureSuccessAsync(HttpStatus.Ok);
+        var currentUser = await response.ApiReadContentAsync<User>();
         Assert.NotNull(currentUser);
         Assert.Equal(Fixture.InitialUserId, currentUser.Id);
     }

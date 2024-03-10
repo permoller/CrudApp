@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using CrudApp.Infrastructure.UtilityCode;
+using Microsoft.Extensions.Logging;
 using System.Text;
 
 namespace CrudApp.Tests;
@@ -24,19 +25,26 @@ public sealed class TestOutputLogger : ILogger
     {
         var msg = formatter(state, exception);
         msg = "       " + msg?.ReplaceLineEndings(Environment.NewLine + "       ");
-        var exceptionString = "       " + exception?.ToString()?.ReplaceLineEndings(Environment.NewLine + "       ");
+
+        var exceptionMessages = exception is null ? null : "       " + exception.GetMessagesIncludingData().ReplaceLineEndings(Environment.NewLine + "       ");
+        var exceptionString = exception is null ? null : "       " + exception.ToString().ReplaceLineEndings(Environment.NewLine + "       ");
 
         // Estimate the space required for the final message, so the string builder does not need to keep alocating more memory
-        var stringBuilderCapacity = (_categoryName?.Length ?? 0) + msg.Length + (exceptionString?.Length ?? 0) + 50;
+        var stringBuilderCapacity = (_categoryName?.Length ?? 0) + msg.Length + (exceptionMessages?.Length ?? 0) + (exceptionString?.Length ?? 0) + 100;
 
         var sb = new StringBuilder(stringBuilderCapacity)
             .Append(FormatLogLevel(logLevel)).AppendLine(_categoryName);
 
         if (!string.IsNullOrWhiteSpace(msg))
             sb.AppendLine(msg);
-        
+
         if (!string.IsNullOrWhiteSpace(exceptionString))
-            sb.AppendLine("Exception:").AppendLine(exceptionString);
+            sb
+                .AppendLine("       Exception:")
+                .AppendLine(exceptionMessages)
+                .AppendLine()
+                .AppendLine(exceptionString);
+
 
         _provider.WriteLine(sb.ToString());
     }

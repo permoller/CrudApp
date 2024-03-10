@@ -32,9 +32,9 @@ public static class LoggingServiceCollectionExtensions
     {
         // The OpenSearch sink is made from a buffer where log entries are collected and a background service that sends the collected log entries to the OpenSearch bulk endpoint.
 
-        services.AddSingleton<OpenSearchBuffer>();
+        services.AddSingleton<OpenSearchBufferLogSink>();
         // Make sure we get the same OpenSearchBuffer singleton instance when injecting ILogSink
-        services.TryAddEnumerable(ServiceDescriptor.Singleton<ILogSink, OpenSearchBuffer>(sp => sp.GetRequiredService<OpenSearchBuffer>()));
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<ILogSink, OpenSearchBufferLogSink>(sp => sp.GetRequiredService<OpenSearchBufferLogSink>()));
         
         services.AddHostedService<OpenSearchSender>();
         services.Configure<OpenSearchOptions>(configuration.GetSection("OpenSearch"));

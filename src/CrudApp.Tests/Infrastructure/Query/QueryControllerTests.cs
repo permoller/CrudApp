@@ -47,7 +47,7 @@ public class QueryControllerTests : IntegrationTestsBase<QueryControllerTests.Te
         Assert.Equal(2, hulk.NonNullableInt);
         Assert.Equal(30, hulk.NullableInt);
         Assert.Equal("Hulk", hulk.TestProp);
-        Assert.Equal("Bruce Banner", hulk.NonNullableOwned.OwnedTestProp);
+        Assert.Equal("Bruce Banner", hulk.NonNullableOwnedEntity.OwnedTestProp);
     }
 
     [Theory]
@@ -67,7 +67,7 @@ public class QueryControllerTests : IntegrationTestsBase<QueryControllerTests.Te
     [InlineData("NullableInt LE 20", "1,2")]
     [InlineData("TestProp EQ Hulk", "3")]
     [InlineData("TestProp NE Hulk", "1,2,4,5,6")]
-    [InlineData("NonNullableOwned.OwnedTestProp EQ Tony Stark", "4")]
+    [InlineData("NonNullableOwnedEntity.OwnedTestProp EQ Tony Stark", "4")]
     // TODO: Filtering on null-values (not implemented yet)
     public async Task TestFilter(string filter, string expectedIdsCsv)
     {
@@ -97,12 +97,14 @@ public class QueryControllerTests : IntegrationTestsBase<QueryControllerTests.Te
     {
         var filteringParams = new FilteringParams { Filter = filter };
 
-        var countException = await Assert.ThrowsAsync<HttpRequestException>(() => Fixture.Client.Count<InfrastructureTestEntity>(filteringParams));
-        var countProblem = ((ProblemDetailsApiException)countException.InnerException!).Response!;
-        Assert.Equal(expectedMessage, countProblem.Detail);
+        var countException = await Assert.ThrowsAsync<ProblemDetailsApiException>(() => Fixture.Client.Count<InfrastructureTestEntity>(filteringParams));
+        var countProblem = countException.ProblemDetails;
+        Assert.NotNull(countProblem);
+        Assert.Contains(expectedMessage, countProblem.Detail);
 
-        var queryException = await Assert.ThrowsAsync<HttpRequestException>(() => Fixture.Client.Query<InfrastructureTestEntity>(filteringParams));
-        var queryProblem = ((ProblemDetailsApiException)queryException.InnerException!).Response!;
-        Assert.Equal(expectedMessage, queryProblem.Detail);
+        var queryException = await Assert.ThrowsAsync<ProblemDetailsApiException>(() => Fixture.Client.Query<InfrastructureTestEntity>(filteringParams));
+        var queryProblem = queryException.ProblemDetails;
+        Assert.NotNull(queryProblem);
+        Assert.Contains(expectedMessage, queryProblem.Detail);
     }
 }

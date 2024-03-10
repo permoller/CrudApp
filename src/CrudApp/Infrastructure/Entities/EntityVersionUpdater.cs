@@ -8,39 +8,77 @@ public static class EntityVersionUpdater
     public static void UpdateVersionOfModifiedEntities(CrudAppDbContext dbContext)
     {
         // update the version number of all modified entities
-        foreach (var entry in dbContext.ChangeTracker.Entries<EntityBase>().Where(e => IsChangedRecursive(dbContext, e)))
-            entry.Entity.Version += 1;
+        foreach (var entry in dbContext.ChangeTracker.Entries<EntityBase>().Where(e => IsChangedRecursive(dbContext, e.Entity)))
+            entry.Entity.Version = entry.Property(e => e.Version).OriginalValue + 1;
     }
 
-    private static bool IsChangedRecursive(CrudAppDbContext dbContext, EntityEntry entry, List<EntityEntry>? visited = null)
+    private static bool IsChangedRecursive(CrudAppDbContext dbContext, object? entity, List<EntityEntry>? visited = null)
     {
-        if (entry is null)
+        if (entity is null)
             return false;
+
+        var entityEntry = dbContext.Entry(entity);
 
         if (visited is null)
             visited = new List<EntityEntry>();
 
-        if (visited.Contains(entry))
+        if (visited.Contains(entityEntry))
             return false;
 
-        visited.Add(entry);
+        visited.Add(entityEntry);
 
-        if (entry.State == EntityState.Added || entry.State == EntityState.Deleted || entry.State == EntityState.Modified)
+        if (entityEntry.State == EntityState.Added || entityEntry.State == EntityState.Deleted || entityEntry.State == EntityState.Modified)
             return true;
 
-        foreach (var nav in entry.Navigations)
+        foreach (var nav in entityEntry.Navigations)
         {
-            var isOwned = nav.Metadata.TargetEntityType.IsInOwnershipPath(entry.Metadata);
-            if (!isOwned)
+            if (!nav.IsLoaded)
                 continue;
 
-            if (nav.CurrentValue is null)
-                continue;
+            var isReferencedEntitiesOwned = nav.Metadata.TargetEntityType.IsInOwnershipPath(entityEntry.Metadata);
 
-            var ownedEntityEntry = dbContext.Entry(nav.CurrentValue);
+            if (nav is CollectionEntry collectionEntry)
+            {
+                var currentCollection = collectionEntry.CurrentValue;
 
-            if (IsChangedRecursive(dbContext, ownedEntityEntry, visited))
-                return true;
+                // TODO: Figure out how to detect if an entity was removed
+
+                //var originalCollection = ???
+
+                //if (originalCollection.Except(currentCollection).Any())
+                //    return true;
+
+                //if (currentCollection.Except(originalCollection).Any())
+                //    return true;
+
+                if (currentCollection is not null && isReferencedEntitiesOwned)
+                {
+                    foreach (var currentEntity in currentCollection)
+                    {
+                        if (IsChangedRecursive(dbContext, currentEntity, visited))
+                            return true;
+                    }
+                }
+            }
+            else if (nav is ReferenceEntry)
+            {
+                var currentEntity = nav.CurrentValue;
+
+                // TODO: Figure out how to detect if an entity was removed
+
+                //var originalEntity = ???
+                //if (originalEntity is null && currentEntity is null)
+                //    continue;
+
+                //if (originalEntity is null || currentEntity is null)
+                //    return true;
+
+                //if (originalEntity != currentEntity)
+                //    return true;
+
+                if (isReferencedEntitiesOwned && IsChangedRecursive(dbContext, currentEntity, visited))
+                    return true;
+            }
         }
 
         return false;

@@ -14,10 +14,6 @@ public sealed class ApiResponseException : Exception
     public int HttpStatus { get; }
     public bool HasMessage { get; private set; }
 
-    public ApiResponseException(int status) : this(status, null)
-    {
-    }
-
     public ApiResponseException(int status, string? message) : this(status, message, null)
     {
     }

@@ -1,7 +1,6 @@
 ﻿using CrudApp.Infrastructure.Entities;
 using CrudApp.Infrastructure.UtilityCode;
 using CrudApp.Tests.Infrastructure.Http;
-using System;
 using System.Net.Http.Json;
 
 namespace CrudApp.Tests.Infrastructure.Entities;
@@ -33,61 +32,43 @@ internal static class EntityHttpClientBase
         throw new ArgumentException($"No entity controller exists for entity type {typeof(T).Name}.");
     }
 
-    public static async Task<T?> GetEntityAsync<T>(this HttpClient httpClient, EntityId id) where T : EntityBase
+    public static async Task<T> GetEntityAsync<T>(this HttpClient httpClient, EntityId id) where T : EntityBase
     {
         var path = GetPath<T>(id);
-        try
-        {
-            var response = await httpClient.GetAsync(path);
-            await response.EnsureSuccessAsync();
-            return await response.ReadContentAsync<T>();
-        }
-        catch (HttpRequestException ex)
-        {
-            throw ex.WrapWithRequestDetails("GET", path);
-        }
+        var response = await httpClient.ApiGetAsync(path);
+        await response.ApiEnsureSuccessAsync();
+        var receivedEntity = await response.ApiReadContentAsync<T>();
+        ArgumentNullException.ThrowIfNull(receivedEntity);
+        return receivedEntity;
     }
 
     public static async Task<EntityId> PostEntityAsync<T>(this HttpClient httpClient, T entity) where T : EntityBase
     {
         var path = GetPath<T>();
-        try
-        {
-            var response = await httpClient.PostAsJsonAsync(path, entity, JsonUtils.ApiJsonSerializerOptions);
-            await response.EnsureSuccessAsync();
-            return await response.ReadContentAsync<EntityId>();
-        }
-        catch (HttpRequestException ex)
-        {
-            throw ex.WrapWithRequestDetails("POST", path);
-        }
+        var response = await httpClient.ApiPostAsJsonAsync(path, entity);
+        await response.ApiEnsureSuccessAsync();
+        return await response.ApiReadContentAsync<EntityId>();
     }
 
     public static async Task PutEntityAsync<T>(this HttpClient httpClient, T entity) where T : EntityBase
     {
         var path = GetPath<T>(entity.Id);
-        try
-        {
-            var response = await httpClient.PutAsJsonAsync(path, entity, JsonUtils.ApiJsonSerializerOptions);            
-            await response.EnsureSuccessAsync();
-        }
-        catch (HttpRequestException ex)
-        {
-            throw ex.WrapWithRequestDetails("PUT", path);
-        }
+        var response = await httpClient.PutAsJsonAsync(path, entity);
+        await response.ApiEnsureSuccessAsync();
+    }
+
+    public static async Task<T> PutAndGetEntity<T>(this HttpClient httpClient, T entity) where T : EntityBase
+    {
+        await httpClient.PutEntityAsync(entity);
+        var receivedEntity = await httpClient.GetEntityAsync<T>(entity.Id);
+        ArgumentNullException.ThrowIfNull(receivedEntity);
+        return receivedEntity;
     }
 
     public static async Task DeleteEntityAsync<T>(this HttpClient httpClient, EntityId id) where T : EntityBase
     {
         var path = GetPath<T>(id);
-        try
-        {
-            var response = await httpClient.DeleteAsync(path);
-            await response.EnsureSuccessAsync();
-        }
-        catch (HttpRequestException ex)
-        {
-            throw ex.WrapWithRequestDetails("DELETE", path);
-        }
+        var response = await httpClient.ApiDeleteAsync(path);
+        await response.ApiEnsureSuccessAsync();
     }
 }

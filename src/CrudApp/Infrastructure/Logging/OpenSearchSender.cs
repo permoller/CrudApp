@@ -6,16 +6,16 @@ namespace CrudApp.Infrastructure.Logging;
 
 /// <summary>
 /// Handles sending log entries in batches to OpenSearch.
-/// Each batch is prepared in <see cref="OpenSearchBuffer"/>.
+/// Each batch is prepared in <see cref="OpenSearchBufferLogSink"/>.
 /// </summary>
 public sealed class OpenSearchSender : BackgroundService
 {
     public const string HttpClientName = "OpenSearchSender";
 
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly OpenSearchBuffer _buffer;
+    private readonly OpenSearchBufferLogSink _buffer;
 
-    public OpenSearchSender(IHttpClientFactory httpClientFactory, OpenSearchBuffer buffer)
+    public OpenSearchSender(IHttpClientFactory httpClientFactory, OpenSearchBufferLogSink buffer)
     {
         _httpClientFactory = httpClientFactory;
         _buffer = buffer;

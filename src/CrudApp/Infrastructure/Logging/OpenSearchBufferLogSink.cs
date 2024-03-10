@@ -6,7 +6,7 @@ namespace CrudApp.Infrastructure.Logging;
 /// <summary>
 /// A buffer for the request to the bulk-endpoint in OpenSearch.
 /// </summary>
-public sealed class OpenSearchBuffer : ILogSink
+public sealed class OpenSearchBufferLogSink : ILogSink
 {
     private MemoryStream _buffer = new();
     private readonly object _lock = new object();

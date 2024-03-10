@@ -33,11 +33,11 @@ public sealed class Logger : ILogger
         {
             Timestamp = DateTimeOffset.UtcNow,
             Message = message,
+            State = StateToDictionary(state),
             Log = new()
             {
                 Level = GetLogLevelString(logLevel),
                 Logger = category,
-                State = StateToDictionary(state)
             }
         };
 
@@ -52,9 +52,9 @@ public sealed class Logger : ILogger
         {
             logEntry.Error = new()
             {
-                Message = string.Join(Environment.NewLine, exception.GetExceptionMessagesRecursively()),
-                StackTrace = exception.StackTrace,
-                Type = exception.GetType().Name
+                Message = exception.GetMessagesIncludingData(),
+                StackTrace = exception.ToString(),
+                Type = exception.GetType().Name,
             };
         }
 
@@ -87,10 +87,9 @@ public sealed class Logger : ILogger
 
     private static Dictionary<string, string?>? StateToDictionary<TState>(TState state)
     {
-        
         if (state is IEnumerable<KeyValuePair<string, object?>> stateProperties)
         {
-           var dictionary = new Dictionary<string, string?>();
+            var dictionary = new Dictionary<string, string?>();
             foreach (var property in stateProperties)
             {
                 dictionary[property.Key] = property.Value?.ToString();

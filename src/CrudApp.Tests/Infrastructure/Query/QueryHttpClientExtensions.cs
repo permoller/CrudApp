@@ -49,17 +49,10 @@ internal static class QueryHttpClientExtensions
             queryBuilder.Add(nameof(includeSoftDeleted), includeSoftDeleted.ToString());
 
         var path = GetPath<T>("query", queryBuilder);
-
-        try
-        {
-            var response = await httpClient.GetAsync(path);
-            await response.EnsureSuccessAsync();
-            return (await response.ReadContentAsync<List<T>>())!;
-        }
-        catch (HttpRequestException ex)
-        {
-            throw ex.WrapWithRequestDetails("GET", path);
-        }
+        
+        var response = await httpClient.ApiGetAsync(path);
+        await response.ApiEnsureSuccessAsync();
+        return (await response.ApiReadContentAsync<List<T>>()) ?? new List<T>();
     }
 
     public static async Task<long> Count<T>(this HttpClient httpClient, FilteringParams? filteringParams = null, bool includeSoftDeleted = false)
@@ -73,17 +66,8 @@ internal static class QueryHttpClientExtensions
             queryBuilder.Add(nameof(includeSoftDeleted), includeSoftDeleted.ToString());
 
         var path = GetPath<T>("count", queryBuilder);
-
-        try
-        {
-            var response = await httpClient.GetAsync(path);
-            await response.EnsureSuccessAsync();
-            return await response.ReadContentAsync<long>();
-        }
-        catch (HttpRequestException ex)
-        {
-            throw ex.WrapWithRequestDetails("GET", path);
-        }
-        
+        var response = await httpClient.ApiGetAsync(path);
+        await response.ApiEnsureSuccessAsync();
+        return await response.ApiReadContentAsync<long>();
     }
 }

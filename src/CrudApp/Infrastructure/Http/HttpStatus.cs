@@ -6,7 +6,7 @@ namespace CrudApp.Infrastructure.Http;
 /// These are the HTTP status codes that are returned by the application.
 /// Note that the ASP.NET pipeline itself and external gateways/proxies may return other status codes.
 /// </summary>
-public readonly struct HttpStatus
+public static class HttpStatus
 {
     public static readonly int[] KnownStatusCodes = { Ok, Created, NoContent, BadRequest, Unauthorized, Forbidden, NotFound, Conflict, InternalServerError };
    

@@ -34,7 +34,7 @@ public static class AuthorizedEntitiesQuery
             var exists = await dbContext.All<T>(includeSoftDeleted).AnyAsync(e => e.Id == id, cancellationToken);
             if (exists)
                 throw new NotAuthorizedException();
-            throw new ApiResponseException(HttpStatus.NotFound);
+            throw new ApiResponseException(HttpStatus.NotFound, $"{typeof(T).Name} with id {id} not found.");
         }
         return entity;
     }
@@ -51,7 +51,7 @@ public static class AuthorizedEntitiesQuery
             var exists = await dbContext.All(entityType, includeSoftDeleted).AnyAsync(e => e.Id == id, cancellationToken);
             if (exists)
                 throw new NotAuthorizedException();
-            throw new ApiResponseException(HttpStatus.NotFound);
+            throw new ApiResponseException(HttpStatus.NotFound, $"{entityType.Name} with id {id} not found.");
         }
         return entity;
     }

@@ -32,7 +32,7 @@ public class ApiExceptionHandler : IAsyncExceptionFilter
             return;
         }
         
-        switch (context.Exception)
+        switch (exception)
         {
             case NotAuthenticatedException:
                 _logger.Log(GetLogLevel(exception), exception, "Handling exception by issuing an authentication challenge.");
@@ -48,8 +48,9 @@ public class ApiExceptionHandler : IAsyncExceptionFilter
                 {
                     ApiResponseException ex => CreateProblemDetails(context.HttpContext, ex),
                     ValidationException ex => CreateValidationProblemDetails(context.HttpContext, ex),
-                    Exception ex => CreateInternalServerErrorProblemDetails(context.HttpContext, ex)
+                    Exception ex => CreateInternalServerErrorProblemDetails(context.HttpContext)
                 };
+                IncludeExceptionDetails(problemDetails, exception);
                 context.Result = new ObjectResult(problemDetails) { StatusCode = problemDetails.Status };
                 break;
         }
@@ -71,12 +72,10 @@ public class ApiExceptionHandler : IAsyncExceptionFilter
             httpContext,
             statusCode: ex.HttpStatus,
             title: ReasonPhrases.GetReasonPhrase(ex.HttpStatus),
-            detail: ex.HasMessage ? ex.Message : null);
-
-        IncludeExceptionDetails(problemDetails, ex.InnerException);
-
+            detail: ex.GetMessagesIncludingData(e => e is ApiResponseException));
         return problemDetails;
     }
+    
 
     private ProblemDetails CreateValidationProblemDetails(HttpContext httpContext, ValidationException ex)
     {
@@ -86,24 +85,21 @@ public class ApiExceptionHandler : IAsyncExceptionFilter
         return problemDetails;
     }
 
-    private ProblemDetails CreateInternalServerErrorProblemDetails(HttpContext httpContext, Exception ex)
+    private ProblemDetails CreateInternalServerErrorProblemDetails(HttpContext httpContext)
     {
         var problemDetails = _problemDetailsFactory.CreateProblemDetails(
             httpContext,
             statusCode: HttpStatus.InternalServerError,
             title: ReasonPhrases.GetReasonPhrase(HttpStatus.InternalServerError));
-
-        IncludeExceptionDetails(problemDetails, ex);
-
         return problemDetails;
     }
 
-    private static void IncludeExceptionDetails(ProblemDetails problemDetails, Exception? exception)
+    private static void IncludeExceptionDetails(ProblemDetails problemDetails, Exception exception)
     {
-        if (IsExceptionDetailsInResponseEnabled && exception is not null)
+        if (IsExceptionDetailsInResponseEnabled)
         {
-            problemDetails.Extensions.Add("exceptionToString", exception.ToString());
-            problemDetails.Extensions.Add("exceptionMessages", exception.GetExceptionMessagesRecursively().ToList());
+            problemDetails.Detail = exception.GetMessagesIncludingData();
+            problemDetails.Extensions.Add("exception", exception.ToString());
         }
     }
 }
