@@ -117,7 +117,7 @@ Multiple <code>ILogSink</code> can be registered. They will receive the <code>Lo
 - <code>TextWriterLogSink</code> writes the <code>LogEntry</code> as JSON or as plain text to a <code>TextWriter</code> (configured as plain text to <code>Console.Out</code> in the code).
 - <code>OpenSearchBufferLogSink</code> writes the <code>LogEntry</code> as JSON to an in-memory buffer that periodicly is send to an OpenSearch server that can be started using <code>crud-app-dev-env/docker-compose.yml</code>.
 
-NOTE that the build in console logger can be configured to log as JSON. So if your tooling can handle the JSON from it, it is probably a better choice than roling your own.
+NOTE that the default console logger that comes with .NET can be configured to log as JSON. So if your tooling can handle the JSON from it, it is probably a better choice than roling your own.
 
 # API exception handling
 
