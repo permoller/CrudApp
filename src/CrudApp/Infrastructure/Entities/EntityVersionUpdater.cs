@@ -8,24 +8,19 @@ public static class EntityVersionUpdater
     public static void UpdateVersionOfModifiedEntities(CrudAppDbContext dbContext)
     {
         // update the version number of all modified entities
-        foreach (var entry in dbContext.ChangeTracker.Entries<EntityBase>().Where(e => IsChangedRecursive(dbContext, e.Entity)))
+        foreach (var entry in dbContext.ChangeTracker.Entries<EntityBase>().Where(e => IsChangedRecursive(dbContext, e.Entity, new())))
             entry.Entity.Version = entry.Property(e => e.Version).OriginalValue + 1;
     }
 
-    private static bool IsChangedRecursive(CrudAppDbContext dbContext, object? entity, List<EntityEntry>? visited = null)
+    private static bool IsChangedRecursive(CrudAppDbContext dbContext, object? entity, HashSet<EntityEntry> visited)
     {
         if (entity is null)
             return false;
 
         var entityEntry = dbContext.Entry(entity);
 
-        if (visited is null)
-            visited = new List<EntityEntry>();
-
-        if (visited.Contains(entityEntry))
+        if (!visited.Add(entityEntry))
             return false;
-
-        visited.Add(entityEntry);
 
         if (entityEntry.State == EntityState.Added || entityEntry.State == EntityState.Deleted || entityEntry.State == EntityState.Modified)
             return true;

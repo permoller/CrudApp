@@ -113,19 +113,20 @@ public class CrudAppDbContext : DbContext
     /// <summary>
     /// Updates <paramref name="existingEntity"/> with the values from <paramref name="newEntity"/>.
     /// It also recursivly updates the loaded navigation properties.
-    /// WARNING: It does not handle indirect circular references.
     /// </summary>
     /// <typeparam name="T"></typeparam>
     /// <param name="existingEntity">The entity to update. This should be loaded from the database.</param>
     /// <param name="newEntity">The entity with the new values. This should not have been loaded from the database.</param>
     public void SetValuesIncludingNavigationProperties<T>(T existingEntity, T newEntity) where T : EntityBase
     {
-        SetValuesRecursively(existingEntity, newEntity);
+        SetValuesRecursively(existingEntity, newEntity, new());
     }
 
-    private void SetValuesRecursively(object existingEntity, object newEntity)
+    private void SetValuesRecursively(object existingEntity, object newEntity, HashSet<EntityEntry> visited)
     {
         var entry = Entry(existingEntity);
+        if (!visited.Add(entry))
+            return;
         
         foreach(var memberEntry in entry.Members)
         {
@@ -160,7 +161,7 @@ public class CrudAppDbContext : DbContext
                     }
                     else
                     {
-                        SetValuesRecursively(existingValue, newValue);
+                        SetValuesRecursively(existingValue, newValue, visited);
                     }
                 }
                 // Collection-navigation property (points to a collection of entities)
@@ -181,11 +182,10 @@ public class CrudAppDbContext : DbContext
                         {
                             Add(newItem);
                             existingChildCollection.GetType().InvokeMember("Add", BindingFlags.InvokeMethod, null, existingChildCollection, new[] { newItem });
-
                         }
                         else
                         {
-                            SetValuesRecursively(existingItem, newItem);
+                            SetValuesRecursively(existingItem, newItem, visited);
                         }
                     }
 
