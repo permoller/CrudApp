@@ -36,7 +36,7 @@ If a navigation-property on an entity is not marked as nullable, it is configure
 
 # EF Core - Value converters
 
-Properties in the entity types can be marked with custom attributes to add converters that allows storing enums as strings and objects as JSON in the database.
+Properties in the entity types can be marked with custom attributes to add converters that allows storing enums as strings (<code>EnumValueConverter</code>) and objects as JSON (<code>JsonValueConverter</code>) in the database.
 The attributes are detected and the converters added in <code>CrudAppDbContext</code>.
 
 # Database migrations
@@ -55,6 +55,7 @@ The property is used by EF Core to do optimistic concurrence control.
 This means that when an entity is loaded, modified and saved back to the database, the action will fail if someone else has updated the entity.
 
 **??? Does it work if an entity is received in a PUT request, which loads the entity, updates it and then saves the entity ???**
+**WARNING: Updating the version does not always work correctly for changes to navigation properties**
 
 # Authentication
 
@@ -64,12 +65,14 @@ It gives a simple way to make authenticated requests by adding a value like <cod
 
 # Authorization
 
-# Change tracking
+# Change tracking / Audit log
 
 When entity changes are saved to the database in <code>CrudAppDbContext</code>, the changes are detected and also saved to the database.
 For each changed entity an <code>EntityChange</code> is saved along with a list of <code>PropertyChange</code>.
 
 The attribute <code>SkipChangeTracking</code> can be applied to an entity or individual properties to disable change tracking.
+
+**WARNING: This detecting and saving changes for navigation properties does not always work correctly**
 
 # Generic filter/query functionality
 
@@ -112,7 +115,7 @@ The loggers it creates transforms the log-events into a <code>LogEntry</code> th
 
 Multiple <code>ILogSink</code> can be registered. They will receive the <code>LogEntry</code> so they can be logged to different locations. There are two examples:
 - <code>TextWriterLogSink</code> writes the <code>LogEntry</code> as JSON or as plain text to a <code>TextWriter</code> (configured as plain text to <code>Console.Out</code> in the code).
-- <code>OpenSearchBuffer</code> writes the <code>LogEntry</code> as JSON to an in-memory buffer that periodicly is send to an OpenSearch server that can be started using <code>crud-app-dev-env/docker-compose.yml</code>.
+- <code>OpenSearchBufferLogSink</code> writes the <code>LogEntry</code> as JSON to an in-memory buffer that periodicly is send to an OpenSearch server that can be started using <code>crud-app-dev-env/docker-compose.yml</code>.
 
 NOTE that the build in console logger can be configured to log as JSON. So if your tooling can handle the JSON from it, it is probably a better choice than roling your own.
 
@@ -136,13 +139,13 @@ a <code>ValidationProblemDetails</code> object is returned with the errors.
 
 # ASP.NET Integration tests
 
-Automated integration tests have been made that starts an instance of the application that runs agains an in-memory SQLite database.
+Automated integration tests have been made that starts an instance of the application that runs against an in-memory SQLite database.
 
 [WebApplicationFactory](https://learn.microsoft.com/en-us/aspnet/core/test/integration-tests?view=aspnetcore-7.0) is used to start the application and modify the service registrations in the IoC container for external dependencies like the database.
 
 A new instance of the application with its own in-memory database can be created using <code>WebAppFixture</code>.
 It can be created in individual tests or reused with <code>IClassFixture</code> or <code>ICollectionFixture</code>.
-By reusing an instance test run agains the same database so they may influence each other. But it will also save time by not having to start a new instance.
+By reusing an instance, test run against the same database so they may influence each other. But it will also save time by not having to start a new instance.
 
 The server log-output that happens during test execution is captured and written to the output of the individual tests.
 
@@ -167,10 +170,10 @@ With [WinMerge](https://winmerge.org/) you click a button in the diff-window to 
 
 OpenAPI documentation and Swagger UI is exposed.
 
-In <code>OpenApiServiceCollectionExtensions</code> it is configured to take advantage of nullable reference types and maintain type inheritance in the generated schemas.
+In <code>OpenApiServiceCollectionExtensions</code> OpenAPI is configured to take advantage of nullable reference types and maintain type inheritance in the generated schemas.
 This allows generating client code (like for C# or Typescript) that better matches the C# types used by the server.
 
-<code>ResponseMetadataProvider</code> is used to add details regarding the response status codes and types, like the ProblemDetails response returned from <code>ApiExceptionHandler</code>.
+<code>ResponseMetadataProvider</code> is used to add default details regarding the response status codes and types, like the ProblemDetails response returned from <code>ApiExceptionHandler</code>.
 
 <code>AuthenticationServiceColectionExtensions</code> configures the authentication information, so you can authenticate when using Swagger UI.
 
