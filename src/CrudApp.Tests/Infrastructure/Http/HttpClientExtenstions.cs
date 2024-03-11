@@ -87,7 +87,7 @@ internal static class HttpClientExtenstions
             if (!string.IsNullOrEmpty(problem.Detail))
                 sb.AppendLine().Append("Detail: ").Append(problem.Detail.ReplaceLineEndings(Environment.NewLine + "        "));
             
-            if (problem.TryGetExtension<Dictionary<string, string[]>>("errors", out var errors) && errors.Count > 0)
+            if (problem.TryGetExtension<Dictionary<string, string[]>>("Errors", out var errors) && errors.Count > 0)
             {
                 sb.AppendLine().Append("Errors:");
                 foreach (var kvp in errors)

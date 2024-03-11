@@ -3,7 +3,6 @@ using Xunit.Abstractions;
 
 namespace CrudApp.Tests.Infrastructure.OpenApi;
 
-[UsesVerify]
 public class OpenApiTests : IntegrationTestsBase, IClassFixture<WebAppFixture>
 {
     public OpenApiTests(ITestOutputHelper testOutputHelper, WebAppFixture fixture) : base(testOutputHelper, fixture) { }
