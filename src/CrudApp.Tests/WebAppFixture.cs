@@ -77,7 +77,7 @@ public class WebAppFixture
         WebAppFactory = new WebApplicationFactory<CrudAppApiControllerBase>()
             .WithWebHostBuilder(builder =>
             {
-                builder.ConfigureLogging(loggingBuilder => loggingBuilder.AddProvider(_testOutputLoggerProvider));
+                builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders().AddProvider(_testOutputLoggerProvider));
                 builder.ConfigureServices(services =>
                 {
                     services.Remove(services.First(s => s.ServiceType == typeof(DbContextOptions<CrudAppDbContext>)));
