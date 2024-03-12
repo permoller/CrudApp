@@ -36,6 +36,8 @@ public static class EntityVersionUpdater
             {
                 var currentCollection = collectionEntry.CurrentValue;
 
+                if (collectionEntry.IsModified)
+                    return true;
                 // TODO: Figure out how to detect if an entity was removed
 
                 //var originalCollection = ???
@@ -55,9 +57,12 @@ public static class EntityVersionUpdater
                     }
                 }
             }
-            else if (nav is ReferenceEntry)
+            else if (nav is ReferenceEntry refEntry)
             {
-                var currentEntity = nav.CurrentValue;
+                var currentEntity = refEntry.CurrentValue;
+                
+                if (refEntry.IsModified)
+                    return true;
 
                 // TODO: Figure out how to detect if an entity was removed
 

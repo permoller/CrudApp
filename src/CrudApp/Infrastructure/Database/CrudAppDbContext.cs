@@ -117,16 +117,26 @@ public class CrudAppDbContext : DbContext
     /// <typeparam name="T"></typeparam>
     /// <param name="existingEntity">The entity to update. This should be loaded from the database.</param>
     /// <param name="newEntity">The entity with the new values. This should not have been loaded from the database.</param>
-    public void SetValuesIncludingNavigationProperties<T>(T existingEntity, T newEntity) where T : EntityBase
+    public void UpdateExisting<T>(T existingEntity, T newEntity) where T : EntityBase
     {
-        SetValuesRecursively(existingEntity, newEntity, new());
+        var modified = SetValuesRecursively(existingEntity, newEntity, new());
+        if (modified)
+        {
+            var entry = Entry(existingEntity);
+            entry.DetectChanges();
+            // Not all changes (like removing an entity from a collection) requires Entity Framework to update the owner entity.
+            // But we want it to be marked as changed so we can detect it later and update the version-property.
+            if (entry.State == EntityState.Unchanged)
+                entry.State = EntityState.Modified;
+        }
     }
 
-    private void SetValuesRecursively(object existingEntity, object newEntity, HashSet<EntityEntry> visited)
+    private bool SetValuesRecursively(object existingEntity, object newEntity, HashSet<EntityEntry> visited)
     {
+        var modified = false;
         var entry = Entry(existingEntity);
         if (!visited.Add(entry))
-            return;
+            return modified;
         
         foreach(var memberEntry in entry.Members)
         {
@@ -148,6 +158,7 @@ public class CrudAppDbContext : DbContext
                 if (memberEntry is PropertyEntry)
                 {
                     propInfo.SetValue(existingEntity, newValue);
+                    modified = true;
                 }
                 // Navigation property (points to an entity)
                 else if (memberEntry is ReferenceEntry referenceEntry)
@@ -158,10 +169,11 @@ public class CrudAppDbContext : DbContext
                     if (existingValue is null || newValue is null)
                     {
                         propInfo.SetValue(existingEntity, newValue);
+                        modified = true;
                     }
                     else
                     {
-                        SetValuesRecursively(existingValue, newValue, visited);
+                        modified |= SetValuesRecursively(existingValue, newValue, visited);
                     }
                 }
                 // Collection-navigation property (points to a collection of entities)
@@ -182,10 +194,11 @@ public class CrudAppDbContext : DbContext
                         {
                             Add(newItem);
                             existingChildCollection.GetType().InvokeMember("Add", BindingFlags.InvokeMethod, null, existingChildCollection, new[] { newItem });
+                            modified = true;
                         }
                         else
                         {
-                            SetValuesRecursively(existingItem, newItem, visited);
+                            modified |= SetValuesRecursively(existingItem, newItem, visited);
                         }
                     }
 
@@ -195,7 +208,9 @@ public class CrudAppDbContext : DbContext
                         ArgumentNullException.ThrowIfNull(existingItem);
                         if (!newChildCollection.Contains(existingItem, primaryKeyComparer))
                         {
+                            
                             existingChildCollection.GetType().InvokeMember("Remove", BindingFlags.InvokeMethod, null, existingChildCollection, new[] { existingItem });
+                            modified = true;
                             Remove(existingItem);
                         }
                     }
@@ -211,7 +226,9 @@ public class CrudAppDbContext : DbContext
                 throw;
             }
         }
+        return modified;
     }
+
 
     private static bool IsNavigationTargetOwnedByEntity(NavigationEntry navigationEntry, EntityEntry entityEntry) =>
         navigationEntry.Metadata.TargetEntityType.IsInOwnershipPath(entityEntry.Metadata);

@@ -2,13 +2,12 @@
 using CrudApp.Infrastructure.Testing;
 using CrudApp.Infrastructure.UtilityCode;
 using CrudApp.Tests.Infrastructure.Http;
-using System;
 using System.Net.Http.Json;
 using Xunit.Abstractions;
 
 namespace CrudApp.Tests.Infrastructure.Entities;
 
-// TODO: Test adding, updating and removing entities from owned and non-owned collection and non-owned properties.
+// TODO: Test adding, updating and removing entities from non-owned collection and non-owned properties.
 public class EntityControllerBaseTests : IntegrationTestsBase, IClassFixture<WebAppFixture>
 {
     HttpClient _client;
@@ -52,10 +51,8 @@ public class EntityControllerBaseTests : IntegrationTestsBase, IClassFixture<Web
 
     private async Task DeleteEntity()
     {
-        await _client.DeleteEntityAsync<InfrastructureTestEntity>(_entity.Id);
-        var ex = await Assert.ThrowsAsync<ProblemDetailsApiException>(async () => await _client.GetEntityAsync<InfrastructureTestEntity>(_entity.Id));
-        Assert.Equal(HttpStatus.NotFound, (int?)ex.StatusCode);
-        Assert.Contains($"{typeof(InfrastructureTestEntity).Name} with id {_entity.Id} not found.", ex.Message);
+        if (!_entity.IsSoftDeleted)
+            await _client.DeleteEntityAsync<InfrastructureTestEntity>(_entity.Id);
     }
 
     [Fact]
@@ -63,7 +60,14 @@ public class EntityControllerBaseTests : IntegrationTestsBase, IClassFixture<Web
     {
         var ex = await Assert.ThrowsAsync<ProblemDetailsApiException>(async () => await _client.PostEntityAsync(_entity));
         Assert.Equal(HttpStatus.BadRequest, (int?)ex.StatusCode);
-        Assert.Contains($"{typeof(InfrastructureTestEntity).Name} with id {_entity.Id} already exists.", ex.Message);
+        Assert.Contains($"{_entity.DisplayName} already exists with the same id {_entity.Id}.", ex.Message);
+    }
+
+    [Fact]
+    public async Task UpdateWithoutChanges()
+    {
+        var actual = await _client.PutAndGetEntity(_entity);
+        AssertEqual(_entity, actual);
     }
 
     [Fact]
@@ -114,8 +118,7 @@ public class EntityControllerBaseTests : IntegrationTestsBase, IClassFixture<Web
         // Remove owned entity
         _entity.NullableOwnedEntity = null;
         actual = await _client.PutAndGetEntity(_entity);
-        // TODO: Fix version not being updated when removing owned entity
-        // _entity.Version++;
+        _entity.Version++;
         AssertEqual(_entity, actual);
     }
 
@@ -140,19 +143,30 @@ public class EntityControllerBaseTests : IntegrationTestsBase, IClassFixture<Web
         // Remove owned entity from collection
         _entity.CollectionOfOwnedEntities.Remove(entityInCollection);
         actual = await _client.PutAndGetEntity(_entity);
-        // TODO: Fix version not being updated when removing owned entity from collection
-        //_entity.Version++;
+        _entity.Version++;
         AssertEqual(_entity, actual);
     }
 
     [Fact]
     public async Task SoftDelete()
     {
-        // TODO: Soft delete should be done using the DELETE endpoint
-        _entity.IsSoftDeleted = true;
-        await _client.PutEntityAsync(_entity);
+        await _client.DeleteEntityAsync<InfrastructureTestEntity>(_entity.Id);
+
+        var ex = await Assert.ThrowsAsync<ProblemDetailsApiException>(async () => await _client.GetEntityAsync<InfrastructureTestEntity>(_entity.Id));
+        Assert.Equal(HttpStatus.NotFound, (int?)ex.StatusCode);
+        Assert.Contains($"{_entity.DisplayName} has been deleted.", ex.Message);
+
+        ex = await Assert.ThrowsAsync<ProblemDetailsApiException>(async () => await _client.PutEntityAsync(_entity));
+        Assert.Equal(HttpStatus.NotFound, (int?)ex.StatusCode);
+        Assert.Contains($"{_entity.DisplayName} has been deleted.", ex.Message);
+
+        ex = await Assert.ThrowsAsync<ProblemDetailsApiException>(async () => await _client.DeleteEntityAsync<InfrastructureTestEntity>(_entity.Id));
+        Assert.Equal(HttpStatus.NotFound, (int?)ex.StatusCode);
+        Assert.Contains($"{_entity.DisplayName} has been deleted.", ex.Message);
+
+        var actual = await _client.GetEntityAsync<InfrastructureTestEntity>(_entity.Id, includeSoftDeleted: true);
         _entity.Version++;
-        var actual = await _client.GetEntityAsync<InfrastructureTestEntity>(_entity.Id);
+        _entity.IsSoftDeleted = true;
         AssertEqual(_entity, actual);
     }
 

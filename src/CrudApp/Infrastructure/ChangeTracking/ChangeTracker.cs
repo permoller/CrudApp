@@ -26,8 +26,7 @@ public static class ChangeTracker
                 _ => throw new NotSupportedException($"Entity state '{entry.State}' not supported.")
             };
 
-            // TODO: Figure out how to support navigation properties and collections
-
+            
             // skip unchanged entities
             if (changeType is null)
                 continue;
@@ -58,6 +57,8 @@ public static class ChangeTracker
                 };
                 dbContext.Add(propertyChange);
             }
+
+            // TODO: Figure out how to support navigation properties (references and collections pointing to other entities)
         }
     }
 

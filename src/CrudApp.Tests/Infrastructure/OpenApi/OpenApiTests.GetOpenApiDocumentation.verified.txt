@@ -19,6 +19,14 @@
               "type": "integer",
               "format": "int64"
             }
+          },
+          {
+            "name": "includeSoftDeleted",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
           }
         ],
         "responses": {
@@ -637,6 +645,14 @@
             "schema": {
               "type": "integer",
               "format": "int64"
+            }
+          },
+          {
+            "name": "includeSoftDeleted",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
             }
           }
         ],
@@ -1257,6 +1273,14 @@
               "type": "integer",
               "format": "int64"
             }
+          },
+          {
+            "name": "includeSoftDeleted",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
           }
         ],
         "responses": {
@@ -1875,6 +1899,14 @@
             "schema": {
               "type": "integer",
               "format": "int64"
+            }
+          },
+          {
+            "name": "includeSoftDeleted",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
             }
           }
         ],
@@ -4465,6 +4497,14 @@
               "type": "integer",
               "format": "int64"
             }
+          },
+          {
+            "name": "includeSoftDeleted",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
           }
         ],
         "responses": {
@@ -5169,6 +5209,14 @@
               "type": "integer",
               "format": "int64"
             }
+          },
+          {
+            "name": "includeSoftDeleted",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
           }
         ],
         "responses": {
@@ -5869,6 +5917,14 @@
             "schema": {
               "type": "integer",
               "format": "int64"
+            }
+          },
+          {
+            "name": "includeSoftDeleted",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
             }
           }
         ],

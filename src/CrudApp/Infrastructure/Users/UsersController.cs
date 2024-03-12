@@ -12,6 +12,7 @@ public class UsersController : EntityControllerBase<User>
             return default;
 
         var user = await DbContext.GetByIdAuthorized<User>(userId.Value, asNoTracking: true, cancellationToken);
+        user.AssertNotDeleted();
         return user;
     }
 }

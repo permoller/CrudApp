@@ -10,3 +10,4 @@ global using CrudApp.Infrastructure.Database;
 global using CrudApp.Infrastructure.Entities;
 global using CrudApp.Infrastructure.ErrorHandling;
 global using CrudApp.Infrastructure.Http;
+global using CrudApp.Infrastructure.UtilityCode;
