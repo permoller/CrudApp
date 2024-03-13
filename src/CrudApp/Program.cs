@@ -1,6 +1,5 @@
 using CrudApp.Infrastructure.Logging;
 using CrudApp.Infrastructure.OpenApi;
-using CrudApp.Infrastructure.UtilityCode;
 
 public class Program
 {

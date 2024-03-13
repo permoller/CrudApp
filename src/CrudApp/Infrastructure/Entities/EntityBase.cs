@@ -12,9 +12,7 @@ public abstract class EntityBase
             $"{nameof(EntityBase)}.{nameof(NewEntityId)} needs to be initialized before it is used.");
 
     // We need a lock to make sure we do not accidently generate multiple different IDs for the same entity.
-    // It could be an instance specific object (not static) and that might mean less blocking of threads.
-    // But that would also mean we get an extra object for each entity-instance, which requires more memory and garbage collection.
-    private static readonly object _idLock = new();
+    private readonly object _idLock = new();
 
     
     private EntityId? _id;
