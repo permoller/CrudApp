@@ -91,7 +91,7 @@ public class WebAppFixture
 
         using var scope = WebAppFactory.Services.CreateScope();
         using var db = scope.ServiceProvider.GetRequiredService<CrudAppDbContext>();
-        InitialUserId = (await db.EnsureCreatedAsync(CancellationToken.None)).Value;
+        InitialUserId = (await db.EnsureDatabaseCreatedAsync(CancellationToken.None)).Value;
     }
 
     private void Log(string message)

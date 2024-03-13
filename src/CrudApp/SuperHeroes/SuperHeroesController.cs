@@ -8,6 +8,6 @@ public class SuperHeroesController : EntityControllerBase<SuperHero>
     [HttpGet("/api/[controller]/top-ten")]
     public async Task<IEnumerable<SuperHero>> GetTopTen(CancellationToken cancellationToken)
     {
-        return await DbContext.Authorized<SuperHero>().AsNoTracking().ToListAsync(cancellationToken);
+        return await DbContext.Authorized<SuperHero>().Take(10).AsNoTracking().ToListAsync(cancellationToken);
     }
 }

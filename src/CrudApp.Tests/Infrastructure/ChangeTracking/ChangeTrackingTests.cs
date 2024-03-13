@@ -13,6 +13,7 @@ public class ChangeTrackingTests : IntegrationTestsBase, IClassFixture<WebAppFix
     [Fact]
     public async Task Test()
     {
+        // TODO: Test ChangeTracking... it is probably not working.
         var client = Fixture.CreateHttpClient();
 
         var entity = new InfrastructureTestEntity(new InfrastructureTestOwnedEntity() { OwnedTestProp = "original ref entity" }) { TestProp = "original entity" };

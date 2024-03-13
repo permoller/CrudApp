@@ -57,7 +57,7 @@ public abstract class EntityControllerBase<T> : QueryControllerBase<T> where T :
         if (existingEntity.Version != entity.Version)
             throw new ApiResponseException(HttpStatus.Conflict, $"{entity.DisplayName} has a version conflict. Version in request: {entity.Version}. Version in database: {existingEntity.Version}.");
 
-        DbContext.UpdateExisting(existingEntity, entity);
+        DbContext.UpdateExistingEntity(existingEntity, entity);
 
         await DbContext.SaveChangesAsync(cancellationToken);
     }

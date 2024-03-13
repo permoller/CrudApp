@@ -15,6 +15,6 @@ public class DbController : ControllerBase
     [HttpGet("/db/ensure")]
     public async Task<EntityId?> EnsureCreatedAsync(CancellationToken cancellationToken)
     {
-        return await _dbContext.EnsureCreatedAsync(cancellationToken);
+        return await _dbContext.EnsureDatabaseCreatedAsync(cancellationToken);
     }
 }

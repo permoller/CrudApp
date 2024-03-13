@@ -35,8 +35,9 @@ internal static class EntityHttpClientBase
     public static async Task<T> GetEntityAsync<T>(this HttpClient httpClient, EntityId id, bool includeSoftDeleted = false) where T : EntityBase
     {
         var path = GetPath<T>(id);
-        if (includeSoftDeleted)
-            path += "?includeSoftDeleted=true";
+        if(includeSoftDeleted)
+            path += $"?{nameof(includeSoftDeleted)}={includeSoftDeleted}";
+
         var response = await httpClient.ApiGetAsync(path);
         await response.ApiEnsureSuccessAsync();
         var receivedEntity = await response.ApiReadContentAsync<T>();

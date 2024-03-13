@@ -68,11 +68,13 @@ public class QueryControllerTests : IntegrationTestsBase<QueryControllerTests.Te
     [InlineData("TestProp EQ Hulk", "3")]
     [InlineData("TestProp NE Hulk", "1,2,4,5,6")]
     [InlineData("NonNullableOwnedEntity.OwnedTestProp EQ Tony Stark", "4")]
+    [InlineData("NonNullableInt EQ 1 AND NullableInt EQ 20", "2")]
+    [InlineData("NonNullableInt EQ 1 AND NullableInt EQ 30", "")]
     // TODO: Filtering on null-values (not implemented yet)
     public async Task TestFilter(string filter, string expectedIdsCsv)
     {
         var filteringParams = new FilteringParams { Filter = filter };
-        var expectedIds = expectedIdsCsv.Split(",").ToList();
+        var expectedIds = expectedIdsCsv.Split(",", StringSplitOptions.RemoveEmptyEntries).ToList();
 
         var count = await Fixture.Client.Count<InfrastructureTestEntity>(filteringParams);
         Assert.Equal(expectedIds.Count, count);
@@ -88,6 +90,7 @@ public class QueryControllerTests : IntegrationTestsBase<QueryControllerTests.Te
     [Theory]
     [InlineData("NonNullableInt EQ one", "Could not convert value 'one' to type 'Int32'.")] // using value that does not match property type
     [InlineData("TestProp EQ one AND two", "Invalid filter syntax.")] // using ' AND ' in value will make the parser think a new condition is starting
+    [InlineData("NonNullableInt EQ 1 OR NullableInt EQ 30", "Could not convert value '1 OR NullableInt EQ 30' to type 'Int32'.")] // using OR is not supported, so it is assumed to be part of a string value
     [InlineData("TestProp GT Hulk", "Filter operator 'GT' not supported on type 'String'.")]
     [InlineData("TestProp LT Hulk", "Filter operator 'LT' not supported on type 'String'.")]
     [InlineData("TestProp GE Hulk", "Filter operator 'GE' not supported on type 'String'.")]
