@@ -37,7 +37,10 @@ public static class LoggingServiceCollectionExtensions
         services.TryAddEnumerable(ServiceDescriptor.Singleton<ILogSink, OpenSearchBufferLogSink>(sp => sp.GetRequiredService<OpenSearchBufferLogSink>()));
         
         services.AddHostedService<OpenSearchSender>();
-        services.Configure<OpenSearchOptions>(configuration.GetSection("OpenSearch"));
+        services.AddOptions<OpenSearchOptions>()
+            .Bind(configuration.GetSection("OpenSearch"))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
         services.AddHttpClient(OpenSearchSender.HttpClientName, (sp, client) => {
             var options = sp.GetRequiredService<IOptions<OpenSearchOptions>>();
             client.BaseAddress = new Uri(options.Value.BaseAddress);
