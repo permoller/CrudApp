@@ -80,11 +80,11 @@ public class WebAppFixture
                 builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders().AddProvider(_testOutputLoggerProvider));
                 builder.ConfigureServices(services =>
                 {
-                    services.Remove(services.First(s => s.ServiceType == typeof(DbContextOptions<CrudAppDbContext>)));
-                    services.AddDbContext<CrudAppDbContext>(dbContextOptionsBuilder =>
+                    services.PostConfigure<DatabaseOptions>(options =>
                     {
-                        dbContextOptionsBuilder.UseSqlite(CreateDbConnection(dbName));
-                        dbContextOptionsBuilder.EnableSensitiveDataLogging(true);
+                        options.ConnectionString = $"DataSource={dbName};Mode=Memory;Cache=Shared";
+                        options.EnableSensitiveDataLogging = true;
+                        options.EnableDetailedErrors = true;
                     });
                 });
             });

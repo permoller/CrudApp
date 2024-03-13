@@ -24,7 +24,7 @@ public class Program
             .AddCrudAppAuthentication()
             .AddCrudAppOpenApi()
             //.AddLocalization()
-            .AddCrudAppDbContext()
+            .AddCrudAppDbContext(builder.Configuration)
             .AddCrudAppJsonOptions()
             .AddHttpLogging(_ => {})
             .AddControllers();

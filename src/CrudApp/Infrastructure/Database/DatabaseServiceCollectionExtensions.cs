@@ -1,18 +1,23 @@
-﻿using Microsoft.Data.Sqlite;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace CrudApp.Infrastructure.Database;
 
 public static class DatabaseServiceCollectionExtensions
 {
-    public static IServiceCollection AddCrudAppDbContext(this IServiceCollection services)
+    public static IServiceCollection AddCrudAppDbContext(this IServiceCollection services, ConfigurationManager configuration)
     {
-        services.AddDbContext<CrudAppDbContext>(dbContextOptionsBuilder =>
+        services.AddOptions<DatabaseOptions>()
+            .Bind(configuration.GetSection(nameof(DatabaseOptions)))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+
+        services.AddDbContext<CrudAppDbContext>((serviceProvider, dbContextOptionsBuilder) =>
         {
-            dbContextOptionsBuilder.UseSqlite(new SqliteConnection("DataSource=CrudApp.db"));
-#if DEBUG
-            dbContextOptionsBuilder.EnableSensitiveDataLogging(true);
-#endif
+            var dbOptions = serviceProvider.GetRequiredService<IOptions<DatabaseOptions>>().Value;
+            dbContextOptionsBuilder.UseSqlite(dbOptions.ConnectionString);
+            dbContextOptionsBuilder.EnableDetailedErrors(dbOptions.EnableDetailedErrors);
+            dbContextOptionsBuilder.EnableSensitiveDataLogging(dbOptions.EnableSensitiveDataLogging);
         });
         return services;
     }
