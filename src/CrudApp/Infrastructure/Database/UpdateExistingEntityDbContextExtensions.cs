@@ -5,11 +5,12 @@ using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace CrudApp.Infrastructure.Database;
 
-public static class UpdateEntityDbContextExtensions
+public static class UpdateExistingEntityDbContextExtensions
 {
     /// <summary>
     /// Updates <paramref name="existingEntity"/> with the values from <paramref name="newEntity"/>.
-    /// It also recursivly updates the loaded navigation properties.
+    /// It also recursivly updates the loaded navigation properties to owned entities. They must be loaded.
+    /// Non-owned navigation properties are not updated and are not required to be loaded.
     /// </summary>
     /// <typeparam name="T"></typeparam>
     /// <param name="dbContext"></param>
