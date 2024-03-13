@@ -7,7 +7,7 @@ using Xunit.Abstractions;
 
 namespace CrudApp.Tests.Infrastructure.Entities;
 
-// TODO: Test adding, updating and removing entities from non-owned collection and non-owned properties.
+// TODO: Test adding, updating and removing entities from non-owned collection and non-owned properties. These updates are intentionally ignored.
 public class EntityControllerBaseTests : IntegrationTestsBase, IClassFixture<WebAppFixture>
 {
     HttpClient _client;
