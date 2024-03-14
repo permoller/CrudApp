@@ -23,7 +23,7 @@ public class EntityControllerBaseTests : IntegrationTestsBase, IClassFixture<Web
     public override async Task InitializeAsync()
     {
         await base.InitializeAsync();
-        _client = Fixture.CreateHttpClient(Fixture.InitialUserId);
+        _client = Fixture.CreateHttpClient(Fixture.RootUserId);
         _entity = await CreateEntity();
     }
 
@@ -173,7 +173,7 @@ public class EntityControllerBaseTests : IntegrationTestsBase, IClassFixture<Web
     [Fact]
     public async Task CreateShouldReturnLocationHeader()
     {
-        var client = Fixture.CreateHttpClient(Fixture.InitialUserId);
+        var client = Fixture.CreateHttpClient(Fixture.RootUserId);
 
         var entity = new InfrastructureTestEntity(new InfrastructureTestOwnedEntity()) { TestProp = "test location header" };
         var response = await client.ApiPostAsJsonAsync("/api/infrastructuretest", entity);

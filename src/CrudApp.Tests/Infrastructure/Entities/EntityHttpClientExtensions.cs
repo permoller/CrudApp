@@ -11,7 +11,7 @@ internal static class EntityHttpClientBase
 
     static EntityHttpClientBase()
     {
-        var entityControllerTypes = typeof(EntityControllerBase<>).GetSubclasses();
+        var entityControllerTypes = typeof(EntityControllerBase<>).GetSubclassesInApplication();
         foreach(var entityControllerType in entityControllerTypes)
         {
             var type = entityControllerType.GetGenericArgumentsForGenericTypeDefinition(typeof(EntityControllerBase<>))[0];

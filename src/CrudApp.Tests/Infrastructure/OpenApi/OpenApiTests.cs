@@ -10,7 +10,7 @@ public class OpenApiTests : IntegrationTestsBase, IClassFixture<WebAppFixture>
     [Fact]
     public async Task GetOpenApiDocumentation()
     {
-        var client = Fixture.CreateHttpClient(Fixture.InitialUserId);
+        var client = Fixture.CreateHttpClient(Fixture.RootUserId);
         var response = await client.GetAsync("/swagger/v1/swagger.json");
         Assert.Equal(HttpStatus.Ok, (int)response.StatusCode);
         var openApiDoc = await response.Content.ReadAsStringAsync();

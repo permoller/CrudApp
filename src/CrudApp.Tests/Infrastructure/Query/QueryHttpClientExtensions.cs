@@ -10,7 +10,7 @@ internal static class QueryHttpClientExtensions
 
     static QueryHttpClientExtensions()
     {
-        var queryControllerTypes = typeof(QueryControllerBase<>).GetSubclasses();
+        var queryControllerTypes = typeof(QueryControllerBase<>).GetSubclassesInApplication();
         foreach (var queryControllerType in queryControllerTypes)
         {
             var type = queryControllerType.GetGenericArgumentsForGenericTypeDefinition(typeof(QueryControllerBase<>))[0];

@@ -11,12 +11,12 @@ public class QueryControllerTests : IntegrationTestsBase<QueryControllerTests.Te
     {
         public HttpClient Client = null!;
         public List<EntityId> DataIds = new();
-        
-        protected override async Task InitializeFixtureAsync()
+
+        public async override Task InitializeAsync()
         {
-            await base.InitializeFixtureAsync();
-        
-            Client = CreateHttpClient(InitialUserId);
+            await base.InitializeAsync();
+
+            Client = CreateHttpClient(RootUserId);
 
             async Task AddData(EntityId id, int nonNullableInt, int? nullableInt, string? testProp, string? ownedTestProp)
             {

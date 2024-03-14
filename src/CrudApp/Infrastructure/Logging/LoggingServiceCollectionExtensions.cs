@@ -38,7 +38,7 @@ public static class LoggingServiceCollectionExtensions
         
         services.AddHostedService<OpenSearchSender>();
         services.AddOptions<OpenSearchOptions>()
-            .Bind(configuration.GetSection("OpenSearch"))
+            .Bind(configuration.GetSection(nameof(OpenSearchOptions)))
             .ValidateDataAnnotations()
             .ValidateOnStart();
         services.AddHttpClient(OpenSearchSender.HttpClientName, (sp, client) => {

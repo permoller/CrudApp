@@ -20,11 +20,11 @@ public class UsersControllerTests : IntegrationTestsBase, IClassFixture<WebAppFi
     [Fact]
     public async Task GetCurrentUser_ShouldReturnUser_WhenAuthenticated()
     {
-        var client = Fixture.CreateHttpClient(Fixture.InitialUserId);
+        var client = Fixture.CreateHttpClient(Fixture.RootUserId);
         var response = await client.GetAsync("/api/users/current");
         await response.ApiEnsureSuccessAsync(HttpStatus.Ok);
         var currentUser = await response.ApiReadContentAsync<User>();
         Assert.NotNull(currentUser);
-        Assert.Equal(Fixture.InitialUserId, currentUser.Id);
+        Assert.Equal(Fixture.RootUserId, currentUser.Id);
     }
 }

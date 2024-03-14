@@ -2,14 +2,18 @@
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using CrudApp.Infrastructure.Users;
 using CrudApp.Infrastructure.ChangeTracking;
+using Microsoft.Extensions.Options;
 
 namespace CrudApp.Infrastructure.Database;
 
 public class CrudAppDbContext : DbContext
 {
-    public CrudAppDbContext(DbContextOptions<CrudAppDbContext> options) : base(options)
+    private readonly DatabaseOptions _dbOptions;
+
+    public CrudAppDbContext(IOptions<DatabaseOptions> options)
     {
         SavingChanges += OnSavingChanges;
+        _dbOptions = options.Value;
     }
 
     private void OnSavingChanges(object? sender, SavingChangesEventArgs e)
@@ -20,10 +24,35 @@ public class CrudAppDbContext : DbContext
         ChangeTrackingCleanup.DeleteChangeEntitiesForDeletedEntities(this);
     }
 
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        base.OnConfiguring(optionsBuilder);
+        switch (_dbOptions.DbType)
+        {
+            case DatabaseType.Sqlite:
+                optionsBuilder.UseSqlite(_dbOptions.ConnectionString);
+                break;
+            case DatabaseType.Postgres:
+                optionsBuilder.UseNpgsql(_dbOptions.ConnectionString);
+                break;
+            case DatabaseType.MsSql:
+                optionsBuilder.UseSqlServer(_dbOptions.ConnectionString);
+                break;
+            case DatabaseType.MySql:
+                optionsBuilder.UseMySql(_dbOptions.ConnectionString, ServerVersion.AutoDetect(_dbOptions.ConnectionString));
+                break;
+            default:
+                throw new NotSupportedException($"DB Provider {_dbOptions.DbType} not supported.");
+        }
+
+        optionsBuilder.EnableDetailedErrors(_dbOptions.EnableDetailedErrors);
+        optionsBuilder.EnableSensitiveDataLogging(_dbOptions.EnableSensitiveDataLogging);
+    }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         // Add entity types
-        foreach (var entityType in typeof(EntityBase).GetSubclasses())
+        foreach (var entityType in typeof(EntityBase).GetSubclassesInApplication())
         {
             var entityTypeBuilder = modelBuilder.Entity(entityType);
 

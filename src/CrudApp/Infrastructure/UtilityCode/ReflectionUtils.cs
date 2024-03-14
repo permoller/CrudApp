@@ -4,15 +4,15 @@ namespace CrudApp.Infrastructure.UtilityCode;
 
 public static class ReflectionUtils
 {
-    public static IEnumerable<Type> GetAllTypes()
-        => AppDomain.CurrentDomain.GetAssemblies().SelectMany(a => a.GetTypes());
+    public static IEnumerable<Type> GetAllTypesInApplication()
+        => AppDomain.CurrentDomain.GetAssemblies().Where(a => a.GetName().Name?.StartsWith("CrudApp") == true).SelectMany(a => a.GetTypes());
 
-    public static IEnumerable<Type> GetSubclasses(this Type? baseClass, bool includeAbstractClasses = false)
+    public static IEnumerable<Type> GetSubclassesInApplication(this Type? baseClass, bool includeAbstractClasses = false)
     {
         if (baseClass is null)
             return Enumerable.Empty<Type>();
 
-        var allTypes = GetAllTypes();
+        var allTypes = GetAllTypesInApplication();
         if (!includeAbstractClasses)
             allTypes = allTypes.Where(t => !t.IsAbstract);
 
@@ -111,25 +111,6 @@ public static class ReflectionUtils
     }
 
     
-
-    private static NullabilityState GetNullabilityState(this PropertyInfo? propertyInfo)
-    {
-        if (propertyInfo is null)
-            return NullabilityState.Unknown;
-
-        // Nullable<T> may always be null
-        if (Nullable.GetUnderlyingType(propertyInfo.PropertyType) is not null)
-            return NullabilityState.Nullable;
-
-        // Other value types may not be null
-        if (propertyInfo.PropertyType.IsValueType)
-            return NullabilityState.NotNull;
-
-        // Look for reference nullability attributes
-        return _nullabilityInfoContext.Create(propertyInfo).ReadState;
-    }
-
-
     public static List<PropertyInfo> ParsePropertyPath(this Type type, string path)
     {
         if (string.IsNullOrWhiteSpace(path))
