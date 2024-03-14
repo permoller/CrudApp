@@ -67,7 +67,7 @@ public class CrudAppDbContext : DbContext
                 if (propertyInfo.HasAttribute<JsonValueConverterAttribute>())
                     entityType.GetProperty(propertyInfo.Name).SetValueConverter(JsonValueConverterAttribute.GetConverter(propertyInfo.PropertyType));
 
-                if (propertyInfo.HasAttribute<JsonValueConverterAttribute>())
+                if (propertyInfo.HasAttribute<EnumValueConverterAttribute>())
                     entityType.GetProperty(propertyInfo.Name).SetValueConverter(EnumValueConverterAttribute.GetConverter(propertyInfo.PropertyType));
 
                 // SQLite can not compare/order by DateTimeOffset.
