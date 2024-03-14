@@ -18,11 +18,11 @@ internal class SqliteTestDb : ITestDb
 
     public async Task InitializeAsync()
     {
-        var connectionString = $"DataSource={_dbName};Mode=Memory;Cache=Shared";
-        // To make sure the in-memory database is not deleted we need to keep at least one connection open.
-        _sqliteDbConnection = new SqliteConnection(connectionString);
+        ConnectionString = $"DataSource={_dbName};Mode=Memory;Cache=Shared";
+
+        // To make sure the in-memory database is not deleted once created we need to keep at least one connection open.
+        _sqliteDbConnection = new SqliteConnection(ConnectionString);
         await _sqliteDbConnection.OpenAsync();
-        ConnectionString = connectionString;
     }
 
     public async Task DisposeAsync()

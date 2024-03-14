@@ -17,6 +17,8 @@ namespace CrudApp.Tests;
 
 public class WebAppFixture : IAsyncLifetime
 {
+    static int _dbCounter = 0;
+
     static WebAppFixture()
     {
         ApiExceptionHandler.IsExceptionDetailsInResponseEnabled = true;
@@ -61,7 +63,8 @@ public class WebAppFixture : IAsyncLifetime
     {
         _testOutputLoggerProvider = new TestOutputLogger.Provider(Log);
 
-        _testDb = await CreateTestDbAsync(DatabaseType.MySql, Guid.NewGuid().ToString());
+        var dbName = "test_db_" + Interlocked.Increment(ref _dbCounter);
+        _testDb = await CreateTestDbAsync(DatabaseType.MySql, dbName);
         WebAppFactory = InitializeWebAppFactory(_testDb);
         RootUserId = await InitializeRootUserAsync();
     }

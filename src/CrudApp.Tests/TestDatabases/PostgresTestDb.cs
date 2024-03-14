@@ -1,15 +1,13 @@
 ﻿using CrudApp.Infrastructure.Database;
-using Npgsql;
 using Testcontainers.PostgreSql;
 
 namespace CrudApp.Tests.TestDatabases;
 internal class PostgresTestDb : ITestDb
 {
-    private static readonly SemaphoreSlim _semaphore = new SemaphoreSlim(1, 1);
+    private static readonly SemaphoreSlim _semaphore = new(1, 1);
     private static PostgreSqlContainer? _container;
 
     private readonly string _dbName;
-    private string _adminConnectionString;
 
     public PostgresTestDb(string dbName)
     {
@@ -38,35 +36,33 @@ internal class PostgresTestDb : ITestDb
                 _semaphore.Release();
             }
         }
-
-        // When connecting to a Postgres DB we must always to connect to an existing database.
-        // This means DBContext can not create it for us. We must create an empty DB and then DBContext will be able to connect and create the tables.
-        _adminConnectionString = _container.GetConnectionString() + ";Include Error Detail=True";
-        Assert.Contains(";Database=postgres;", _adminConnectionString);
-        using var connection = new NpgsqlConnection(_adminConnectionString);
-        await connection.OpenAsync();
-        using var command = connection.CreateCommand();
-        command.CommandText = $"CREATE DATABASE \"{_dbName}\"";
-        await command.ExecuteNonQueryAsync();
-
-        // Return connection string pointing to the empty database
-        ConnectionString = _adminConnectionString.Replace(";Database=postgres;", $";Database={_dbName};");
+        
+        var port = _container.GetMappedPublicPort(PostgreSqlBuilder.PostgreSqlPort);
+        var host = _container.Hostname;
+        var usr = PostgreSqlBuilder.DefaultUsername;
+        var pwd = PostgreSqlBuilder.DefaultPassword;
+        ConnectionString = $"Host={host};Port={port};Database={_dbName};Username={usr};Password={pwd};Include Error Detail=True";
+        
+        // When connecting to Postgres you must connect to an existing database.
+        // You would normally connect to an "administration" database like the default database named postgress to create another database.
+        // When using DBContext.Database.EnsureCreated() it does not connect to an "administration" database.
+        // Instead EnsureCreated() tries to connect to the database that it should create which fails because it does not exists.
+        // For that reason we create an empty database here and let EnsureCreated() create the tables.
+        var result = await _container.ExecScriptAsync($"CREATE DATABASE {_dbName}");
+        Assert.True(0 == result.ExitCode, result.Stderr + Environment.NewLine + result.Stdout);
     }
 
     public async Task DisposeAsync()
     {
         if (_container is not null)
         {
-            using var connection = new NpgsqlConnection(_adminConnectionString);
-            await connection.OpenAsync();
-            using var command = connection.CreateCommand();
-            command.CommandText = $"""
+            var result = await _container.ExecScriptAsync($"""
                 SELECT pg_terminate_backend(pg_stat_activity.pid)
                 FROM pg_stat_activity
                 WHERE pg_stat_activity.datname = '{_dbName}';
-                DROP DATABASE "{_dbName}";
-                """;
-            await command.ExecuteNonQueryAsync();
+                DROP DATABASE IF EXISTS {_dbName};
+                """);
+            Assert.True(0 == result.ExitCode, result.Stderr + Environment.NewLine + result.Stdout);
         }
     }
 }
