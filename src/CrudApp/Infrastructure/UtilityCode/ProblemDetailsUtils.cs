@@ -8,7 +8,8 @@ public static class ProblemDetailsUtils
 {
     public static bool TryGetExtension<T>(this ProblemDetails problemDetails, string key, [NotNullWhen(true)] out T? value)
     {
-        if (problemDetails.Extensions.TryGetValue(key, out var obj) && obj is not null)
+        var obj = problemDetails.Extensions.FirstOrDefault(kvp => StringComparer.OrdinalIgnoreCase.Equals(key, kvp.Key)).Value;
+        if (obj is not null)
         {
             if (obj is T t)
             {
