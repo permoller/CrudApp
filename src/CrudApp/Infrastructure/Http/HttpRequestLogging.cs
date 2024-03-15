@@ -5,7 +5,7 @@ public static partial class HttpRequestLogging
     [LoggerMessage(
         EventId = 1,
         Level = LogLevel.Information,
-        Message = "{Direction} HTTP request completed {Method} {Scheme}://{Host}{PathBase}{Path}{Query}{Fragment} -> {StatusCode} in {ElapsedMilliseconds}ms")]
+        Message = "{Direction} HTTP request completed {Method} {Scheme}://{Host}{PathBase}{Path}{Query}{Fragment} with status {StatusCode} in {ElapsedMilliseconds}ms")]
     public static partial void HttpRequestCompleted(
         ILogger logger,
         string direction,
