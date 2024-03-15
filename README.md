@@ -119,9 +119,13 @@ The application uses `ILogger` for logging.
 
 The loggers it creates transforms the log-events into a `LogEntry` that reuses some of the fields from the [Elastic Common Schema](https://www.elastic.co/guide/en/ecs/current/ecs-field-reference.html).
 
+If an exception is logged the `Exception.Message` and `Exception.Data` are combined for the exception and inner exceptions and added to `LogEntry.Error.Message`, making it easy to log the messages and data.
+If you want the full stacktrace you get from calling `Exception.ToString()` that is included in `LogEntry.Error.Stacktrace`. Note that the stacktrace does not include the data that might be added to the exceptions.
+
+
 Multiple `ILogSink` can be registered. They will receive the `LogEntry` so they can be logged to different locations. There are two examples:
 - `TextWriterLogSink` writes the `LogEntry` as JSON or as plain text to a `TextWriter` (configured as plain text to `Console.Out` in the code).
-- `OpenSearchBufferLogSink` writes the `LogEntry` as JSON to an in-memory buffer that periodicly is send to an OpenSearch server that can be started using `crud-app-dev-env/docker-compose.yml`.
+- `OpenSearchBufferLogSink` writes the `LogEntry` as JSON to an in-memory buffer that periodicly is send to an OpenSearch server that can be started using `crud-app-dev-env/docker-compose.yml`. This will only be enabled if the configuration `OpenSearchOptions:BaseAddress` is set.
 
 NOTE that the default console logger that comes with .NET can be configured to log as JSON. So if your tooling can handle the JSON from it, it is probably a better choice than roling your own.
 
@@ -129,8 +133,8 @@ NOTE that the default console logger that comes with .NET can be configured to l
 
 An exception filter (`ApiExceptionHandler`) handles the exceptions by converting them to [ProblemDetails](https://datatracker.ietf.org/doc/html/rfc7807) that are returned with an appropiate HTTP status code.
 
-When there is an error message that should be returned from the API call one can throw the `ApiResponseException`.
-It contains the HTTP status code and a message that will be returned to the client by the exception handler.
+When there is an error message that should be returned from the API call one can throw an `ApiResponseException`. It contains the HTTP status code and a message that will be returned to the client in the details-field of the `ProblemDetails` response.
+The message also includes the key-value pairs from `Exception.Data` and messages (and data) from inner-exceptions of type `ApiResponseException`.
 
 Other more specific exception types can also be made and handled to return more details.
 An example is `ValidationException` which contains errors per property on an entity.
