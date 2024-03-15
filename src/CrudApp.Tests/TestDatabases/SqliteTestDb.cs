@@ -13,7 +13,6 @@ internal class SqliteTestDb : ITestDb
         _dbName = dbName;
     }
 
-    public DatabaseType DbType => DatabaseType.Sqlite;
     public string ConnectionString { get; private set; }
 
     public async Task InitializeAsync()

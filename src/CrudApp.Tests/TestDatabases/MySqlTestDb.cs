@@ -14,8 +14,6 @@ internal class MySqlTestDb : ITestDb
         _dbName = dbName;
     }
 
-    public DatabaseType DbType => DatabaseType.MySql;
-
     public string ConnectionString { get; private set; }
 
 

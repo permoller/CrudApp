@@ -14,8 +14,6 @@ internal class PostgresTestDb : ITestDb
         _dbName = dbName;
     }
 
-    public DatabaseType DbType => DatabaseType.Postgres;
-
     public string ConnectionString { get; private set; }
 
     public async Task InitializeAsync()

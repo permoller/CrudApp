@@ -11,7 +11,12 @@ using Microsoft.Extensions.Options;
 using System.Net.Http.Headers;
 using Xunit.Abstractions;
 using CrudApp.Tests.TestDatabases;
-
+using Microsoft.Extensions.Configuration;
+using System.Xml.Linq;
+using System.Data;
+using Microsoft.Extensions.Primitives;
+using System.Threading;
+using Microsoft.EntityFrameworkCore;
 
 namespace CrudApp.Tests;
 
@@ -63,10 +68,31 @@ public class WebAppFixture : IAsyncLifetime
     {
         _testOutputLoggerProvider = new TestOutputLogger.Provider(Log);
 
-        var dbName = "test_db_" + Interlocked.Increment(ref _dbCounter);
-        _testDb = await CreateTestDbAsync(DatabaseType.MySql, dbName);
-        WebAppFactory = InitializeWebAppFactory(_testDb);
-        RootUserId = await InitializeRootUserAsync();
+        WebAppFactory = new WebApplicationFactory<CrudAppApiControllerBase>()
+            .WithWebHostBuilder(builder =>
+            {
+                // Make sure we load appsettings.Unittest.json
+                builder.UseEnvironment("Unittest");
+
+                // Create test DB and configure connection string
+                builder.ConfigureAppConfiguration(configBuilder =>
+                {
+                    _testDb = StartTestDbAsync(configBuilder.Build()).GetAwaiter().GetResult();
+                    configBuilder.AddInMemoryCollection(new Dictionary<string, string?> {
+                        { $"{nameof(DatabaseOptions)}:{nameof(DatabaseOptions.ConnectionString)}", _testDb.ConnectionString }
+                    });
+                });
+
+                // Capture log output
+                builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders().AddProvider(_testOutputLoggerProvider));
+            });
+
+        // Create tables and root user
+        using var scope = WebAppFactory.Services.CreateScope();
+        using var db = scope.ServiceProvider.GetRequiredService<CrudAppDbContext>();
+        var rootUserId = await db.EnsureDatabaseCreatedAsync(CancellationToken.None);
+        ArgumentNullException.ThrowIfNull(rootUserId); // We just created the database, so a new user should have been inserted.
+        RootUserId = rootUserId.Value;
     }
 
     public virtual async Task DisposeAsync()
@@ -76,36 +102,6 @@ public class WebAppFixture : IAsyncLifetime
             await _testDb.DisposeAsync();
             _testDb = null;
         }
-    }
-
-
-    protected virtual WebApplicationFactory<CrudAppApiControllerBase> InitializeWebAppFactory(ITestDb testDb)
-    {
-        return new WebApplicationFactory<CrudAppApiControllerBase>()
-            .WithWebHostBuilder(builder =>
-            {
-                builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders().AddProvider(_testOutputLoggerProvider));
-                builder.ConfigureServices(services =>
-                {
-                    services.Configure<DatabaseOptions>(o =>
-                    {
-                        o.DbType = testDb.DbType;
-                        o.ConnectionString = testDb.ConnectionString;
-                        o.EnableDetailedErrors = true;
-                        o.EnableSensitiveDataLogging = true;
-                    });
-                });
-            });
-    }
-
-    protected virtual async Task<EntityId> InitializeRootUserAsync()
-    {
-        using var scope = WebAppFactory.Services.CreateScope();
-        using var db = scope.ServiceProvider.GetRequiredService<CrudAppDbContext>();
-        var user = new User();
-        db.Add(user);
-        await db.SaveChangesAsync();
-        return user.Id;
     }
 
     private void Log(string message)
@@ -133,8 +129,10 @@ public class WebAppFixture : IAsyncLifetime
     }
 
 
-    private static async Task<ITestDb> CreateTestDbAsync(DatabaseType dbType, string dbName)
+    private static async Task<ITestDb> StartTestDbAsync(IConfiguration config)
     {
+        var dbName = "test_db_" + Interlocked.Increment(ref _dbCounter);
+        var dbType = Enum.Parse<DatabaseType>(config[$"{nameof(DatabaseOptions)}:{nameof(DatabaseOptions.DbType)}"]!);
         ITestDb testDb = dbType switch
         {
             DatabaseType.Sqlite => new SqliteTestDb(dbName),
@@ -146,16 +144,6 @@ public class WebAppFixture : IAsyncLifetime
 
         await testDb.InitializeAsync();
 
-        var dbOptions = new DatabaseOptions
-        {
-            DbType = dbType,
-            ConnectionString = testDb.ConnectionString,
-            EnableDetailedErrors = true,
-            EnableSensitiveDataLogging = true,
-        };
-
-        using var dbContext = new CrudAppDbContext(Options.Create(dbOptions));
-        await dbContext.Database.EnsureCreatedAsync();
         return testDb;
     }
 

@@ -14,8 +14,6 @@ internal sealed class MsSqlTestDb : ITestDb
         _dbName = dbName;
     }
 
-    public DatabaseType DbType => DatabaseType.MsSql;
-
     public string ConnectionString { get; private set; }
 
     public async Task InitializeAsync()
