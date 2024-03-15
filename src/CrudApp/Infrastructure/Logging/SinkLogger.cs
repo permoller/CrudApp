@@ -31,7 +31,7 @@ public sealed class SinkLogger : ILogger
     {
         var logEntry = new LogEntry
         {
-            Timestamp = DateTimeOffset.UtcNow,
+            Timestamp = DateTimeOffset.Now,
             Message = message,
             State = StateToDictionary(state),
             Log = new()

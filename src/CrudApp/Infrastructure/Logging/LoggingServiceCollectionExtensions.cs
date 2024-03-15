@@ -24,7 +24,7 @@ public static class LoggingServiceCollectionExtensions
 
     private static IServiceCollection AddTextWriterSink(this IServiceCollection services, TextWriter textWriter, TextWriterLogSink.Format format)
     {
-        services.TryAddEnumerable(ServiceDescriptor.Singleton<ILogSink>(new TextWriterLogSink(textWriter, format)));
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<ILogSink>(new TextWriterLogSink(textWriter, format, onlyPrintLastSegmentOfCategoriesStartingWith: "CrudApp.")));
         return services;
     }
 
