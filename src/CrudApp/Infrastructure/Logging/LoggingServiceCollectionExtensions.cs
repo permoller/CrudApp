@@ -32,19 +32,31 @@ public static class LoggingServiceCollectionExtensions
     {
         // The OpenSearch sink is made from a buffer where log entries are collected and a background service that sends the collected log entries to the OpenSearch bulk endpoint.
 
-        services.AddSingleton<OpenSearchBufferLogSink>();
-        // Make sure we get the same OpenSearchBuffer singleton instance when injecting ILogSink
-        services.TryAddEnumerable(ServiceDescriptor.Singleton<ILogSink, OpenSearchBufferLogSink>(sp => sp.GetRequiredService<OpenSearchBufferLogSink>()));
-        
-        services.AddHostedService<OpenSearchSender>();
+        // Only register services if a url to OpenSearch is provided
+        if (string.IsNullOrEmpty(configuration[$"{nameof(OpenSearchOptions)}:{nameof(OpenSearchOptions.BaseAddress)}"]))
+            return services;
+
+        // Configure options
         services.AddOptions<OpenSearchOptions>()
             .Bind(configuration.GetSection(nameof(OpenSearchOptions)))
             .ValidateDataAnnotations()
             .ValidateOnStart();
+
+        // Register the buffer where log entries are saved until they are send to OpenSearch
+        services.AddSingleton<OpenSearchBufferLogSink>();
+
+        // Make sure we get the existing OpenSearchBufferLogSink singleton instance when injecting ILogSink
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<ILogSink, OpenSearchBufferLogSink>(sp => sp.GetRequiredService<OpenSearchBufferLogSink>()));
+
+        // Add background service to send log entries to OpenSearch
+        services.AddHostedService<OpenSearchSender>();
+
+        // Configure HTTP client used when sending log entries to OpenSearch
         services.AddHttpClient(OpenSearchSender.HttpClientName, (sp, client) => {
             var options = sp.GetRequiredService<IOptions<OpenSearchOptions>>();
-            client.BaseAddress = new Uri(options.Value.BaseAddress);
+            client.BaseAddress = options.Value.BaseAddress;
         });
+        
 
         return services;
     }

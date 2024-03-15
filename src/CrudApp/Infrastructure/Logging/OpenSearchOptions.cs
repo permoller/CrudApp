@@ -2,5 +2,5 @@
 
 public class OpenSearchOptions
 {
-    public string BaseAddress { get; set; }
+    public Uri BaseAddress { get; set; }
 }
