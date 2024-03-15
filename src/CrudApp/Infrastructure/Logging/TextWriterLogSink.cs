@@ -38,7 +38,7 @@ public class TextWriterLogSink : ILogSink
                 category = category.Substring(i + 1);
         }
         
-        return $"[{logEntry.Timestamp:yyyy-MM-dd HH:mm:ss zzz}] [{logEntry.Trace?.Id,-32}] [{logEntry.Log?.Level,-11}] [{category,-40}] {logEntry.Message}{errorLabel}{logEntry.Error?.Message}".ReplaceLineEndings("  [newline]  ");
+        return $"{logEntry.Timestamp:yyyy-MM-dd HH:mm:ss zzz} | {logEntry.Trace?.Id,-32} | {logEntry.Log?.Level,-11} | {category,-40} | {logEntry.Message}{errorLabel}{logEntry.Error?.Message}".ReplaceLineEndings("  [newline]  ");
     }
 
 
