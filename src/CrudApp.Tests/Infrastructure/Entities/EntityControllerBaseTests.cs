@@ -126,11 +126,10 @@ public class EntityControllerBaseTests : IntegrationTestsBase, IClassFixture<Web
     public async Task UpdateOwnedEntityCollection()
     {
         // Add owned entity in collection
-        var entityInCollection = new InfrastructureTestChildEntity() { Id = _entity.CollectionOfOwnedEntities.Count + 1, OwnerId = _entity.Id, TestProp = "added" };
+        var entityInCollection = new InfrastructureTestChildEntity() { TestProp = "added" };
         _entity.CollectionOfOwnedEntities.Add(entityInCollection);
         var actual = await _client.PutAndGetEntity(_entity);
         _entity.Version++;
-        entityInCollection.OwnerId = _entity.Id;
         entityInCollection.Id = actual.CollectionOfOwnedEntities.Single().Id;
         AssertEqual(_entity, actual);
 
@@ -144,6 +143,15 @@ public class EntityControllerBaseTests : IntegrationTestsBase, IClassFixture<Web
         _entity.CollectionOfOwnedEntities.Remove(entityInCollection);
         actual = await _client.PutAndGetEntity(_entity);
         _entity.Version++;
+        AssertEqual(_entity, actual);
+
+        // Add two owned entities in collection
+        _entity.CollectionOfOwnedEntities.Add(new() { TestProp = "first" });
+        _entity.CollectionOfOwnedEntities.Add(new() { TestProp = "second" });
+        actual = await _client.PutAndGetEntity(_entity);
+        _entity.Version++;
+        _entity.CollectionOfOwnedEntities.Single(e => e.TestProp == "first").Id = actual.CollectionOfOwnedEntities.First(e => e.TestProp == "first").Id;
+        _entity.CollectionOfOwnedEntities.Single(e => e.TestProp == "second").Id = actual.CollectionOfOwnedEntities.First(e => e.TestProp == "second").Id;
         AssertEqual(_entity, actual);
     }
 
@@ -237,9 +245,7 @@ public class EntityControllerBaseTests : IntegrationTestsBase, IClassFixture<Web
                     Assert.Equal(expectedChild is null, actualChild is null);
                     if (expectedChild is not null && actualChild is not null)
                     {
-                        Assert.Equal(expected.Id, expectedChild.OwnerId); // OwnerId should match id of the owner-entity
                         Assert.Equal(expectedChild.Id, actualChild.Id);
-                        Assert.Equal(expectedChild.OwnerId, actualChild.OwnerId);
                         Assert.Equal(expectedChild.TestProp, actualChild.TestProp);
                     }
                 }

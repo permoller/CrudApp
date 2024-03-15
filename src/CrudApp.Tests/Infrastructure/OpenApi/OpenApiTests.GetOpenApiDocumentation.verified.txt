@@ -6826,16 +6826,11 @@
       },
       "InfrastructureTestChildEntity": {
         "required": [
-          "Id",
-          "OwnerId"
+          "Id"
         ],
         "type": "object",
         "properties": {
           "Id": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "OwnerId": {
             "type": "integer",
             "format": "int64"
           },

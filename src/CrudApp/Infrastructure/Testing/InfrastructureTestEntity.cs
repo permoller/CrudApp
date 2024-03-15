@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Runtime.CompilerServices;
 using System.Text.Json.Serialization;
 
@@ -41,9 +42,9 @@ public class InfrastructureTestEntity : EntityBase
     {
         public void Configure(EntityTypeBuilder<InfrastructureTestEntity> builder)
         {
-            builder.OwnsOne(e => e.NonNullableOwnedEntity).WithOwner();
-            builder.OwnsOne(e => e.NullableOwnedEntity).WithOwner();
-            builder.OwnsMany(e => e.CollectionOfOwnedEntities).WithOwner().HasForeignKey(child => child.OwnerId);
+            builder.OwnsOne(e => e.NonNullableOwnedEntity);
+            builder.OwnsOne(e => e.NullableOwnedEntity);
+            builder.OwnsMany(e => e.CollectionOfOwnedEntities);
         }
     }
 }
@@ -56,7 +57,8 @@ public class InfrastructureTestOwnedEntity
 
 public class InfrastructureTestChildEntity
 {
+    [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public EntityId Id { get; set; }
-    public EntityId OwnerId { get; set; }
     public string? TestProp { get; set; }
 }

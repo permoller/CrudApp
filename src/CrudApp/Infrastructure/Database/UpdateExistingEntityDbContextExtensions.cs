@@ -99,12 +99,13 @@ public static class UpdateExistingEntityDbContextExtensions
                     // Handle added and updated items
                     foreach (var newItem in newChildCollection)
                     {
-                        var existingItem = existingChildCollection.FirstOrDefault(e => primaryKeyComparer.Equals(e, newItem));
+                        var existingItem = primaryKeyComparer.HasDefaultKey(newItem)
+                            ? null
+                            : existingChildCollection.FirstOrDefault(e => primaryKeyComparer.Equals(e, newItem));
                         if (existingItem is null)
                         {
-                            existingChildCollection.GetType().InvokeMember("Add", BindingFlags.InvokeMethod, null, existingChildCollection, new[] { newItem });
-                            collectionEntry.FindEntry(newItem); // This hopefully makes shared entity types supported, by making sure the new item is tracked as detached before changing the state to added
                             dbContext.Add(newItem);
+                            existingChildCollection.GetType().InvokeMember("Add", BindingFlags.InvokeMethod, null, existingChildCollection, new[] { newItem });
                             modified = true;
                         }
                         else
@@ -146,6 +147,8 @@ public static class UpdateExistingEntityDbContextExtensions
     {
         private readonly List<PropertyInfo> _primaryKeyProperties = new();
 
+        private readonly object?[] _defaultKey;
+
         public EntityPrimayKeyComparer(IEntityType entityType)
         {
             var primaryKey = entityType.FindPrimaryKey();
@@ -159,11 +162,18 @@ public static class UpdateExistingEntityDbContextExtensions
 
                 _primaryKeyProperties.Add(clrProp);
             }
+
+            _defaultKey = _primaryKeyProperties.Select(p => p.PropertyType.GetDefault()).ToArray();
         }
 
-        private object?[] GetKey(object? o)
+        public object?[] GetKey(object? o)
         {
             return _primaryKeyProperties.Select(p => o is null ? null : p.GetValue(o)).ToArray();
+        }
+
+        public bool HasDefaultKey(object? o)
+        {
+            return _defaultKey.SequenceEqual(GetKey(o));
         }
 
         public new bool Equals(object? x, object? y)
