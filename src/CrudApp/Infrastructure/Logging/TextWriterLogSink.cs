@@ -26,7 +26,13 @@ public class TextWriterLogSink : ILogSink
     }
 
     private static string FormatAsPlainText(LogEntry logEntry)
-        => $"[{logEntry.Timestamp:O}] [{logEntry.Trace?.Id,-32}] [{logEntry.Log?.Level,-11}] [{logEntry.Log?.Logger,-75}] {logEntry.Message?.ReplaceLineEndings("  [newline]  ")}";
+    {
+        var errorLabel = logEntry.Error is null ? null : " Error: ";
+        return $"[{logEntry.Timestamp:O}] [{logEntry.Trace?.Id,-32}] [{logEntry.Log?.Level,-11}] [{logEntry.Log?.Logger,-75}] {logEntry.Message}{errorLabel}{logEntry.Error?.Message}".ReplaceLineEndings("  [newline]  ");
+    }
+
+
+
 
     private static string FormatAsJson(LogEntry logEntry)
         => JsonSerializer.Serialize(logEntry);
