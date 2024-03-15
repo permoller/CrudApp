@@ -17,6 +17,7 @@ using System.Data;
 using Microsoft.Extensions.Primitives;
 using System.Threading;
 using Microsoft.EntityFrameworkCore;
+using System.Diagnostics;
 
 namespace CrudApp.Tests;
 
@@ -66,6 +67,7 @@ public class WebAppFixture : IAsyncLifetime
 
     public virtual async Task InitializeAsync()
     {
+        var swTotal = Stopwatch.StartNew();
         _testOutputLoggerProvider = new TestOutputLogger.Provider(Log);
 
         WebAppFactory = new WebApplicationFactory<CrudAppApiControllerBase>()
@@ -90,7 +92,12 @@ public class WebAppFixture : IAsyncLifetime
         // Create tables and root user
         using var scope = WebAppFactory.Services.CreateScope();
         using var db = scope.ServiceProvider.GetRequiredService<CrudAppDbContext>();
+        var swEnsureDb = Stopwatch.StartNew();
         var rootUserId = await db.EnsureDatabaseCreatedAsync(CancellationToken.None);
+        swEnsureDb.Stop();
+        swTotal.Stop();
+        Log("EnsureDatabaseCreated in seconds: " + swEnsureDb.Elapsed.TotalSeconds);
+        Log("Total test fixture setup in seconds: " + swTotal.Elapsed.TotalSeconds);
         ArgumentNullException.ThrowIfNull(rootUserId); // We just created the database, so a new user should have been inserted.
         RootUserId = rootUserId.Value;
     }
