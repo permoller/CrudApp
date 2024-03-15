@@ -27,6 +27,7 @@ public sealed class OpenSearchSender : BackgroundService
         {
             await Task.Delay(2000, stoppingToken);
             await SendDataInBuffer();
+            // TODO: Figure out how to handle exceptions... currently the application crashes, but maybe it is better to continue in a degraded mode where we do not log to OpenSearch
         }
     }
 
