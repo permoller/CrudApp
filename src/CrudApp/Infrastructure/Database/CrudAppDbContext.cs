@@ -120,7 +120,6 @@ public class CrudAppDbContext : DbContext
 
     public async Task<EntityId?> EnsureDatabaseCreatedAsync(CancellationToken cancellationToken)
     {
-        await Database.OpenConnectionAsync(cancellationToken);
         var dbCreated = await Database.EnsureCreatedAsync(cancellationToken);
         if (dbCreated)
         {
