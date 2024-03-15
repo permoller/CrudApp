@@ -18,7 +18,7 @@ public sealed class SinkLoggerProvider : ILoggerProvider
 
     public ILogger CreateLogger(string categoryName)
     {
-        return new Logger(this, categoryName);
+        return new SinkLogger(this, categoryName);
     }
 
     public void Dispose()

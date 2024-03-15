@@ -3,12 +3,12 @@ using System.Diagnostics;
 
 namespace CrudApp.Infrastructure.Logging;
 
-public sealed class Logger : ILogger
+public sealed class SinkLogger : ILogger
 {
     private readonly SinkLoggerProvider _provider;
     private readonly string _category;
 
-    public Logger(SinkLoggerProvider provider, string category)
+    public SinkLogger(SinkLoggerProvider provider, string category)
     {
         _provider = provider;
         _category = category;
