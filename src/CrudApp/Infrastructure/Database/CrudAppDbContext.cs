@@ -69,14 +69,14 @@ public class CrudAppDbContext : DbContext
 
                 if (propertyInfo.HasAttribute<EnumValueConverterAttribute>())
                     entityType.GetProperty(propertyInfo.Name).SetValueConverter(EnumValueConverterAttribute.GetConverter(propertyInfo.PropertyType));
-
+                
                 // SQLite can not compare/order by DateTimeOffset.
                 // https://docs.microsoft.com/en-us/ef/core/providers/sqlite/limitations#query-limitations
                 // Use a converter to save the DateTimeOffset as a long.
-                // Note that we loose some precision and comparing times with different offsets may not work as expected.
+                // Note that we loose some precision and times with different offsets representing the same UTC time will not be equal.
                 if (Database.ProviderName == "Microsoft.EntityFrameworkCore.Sqlite" &&
                     (propertyInfo.PropertyType == typeof(DateTimeOffset) || propertyInfo.PropertyType == typeof(DateTimeOffset?)))
-                    entityType.GetProperty(propertyInfo.Name).SetValueConverter(new DateTimeOffsetToBinaryConverter());
+                    entityType.GetProperty(propertyInfo.Name).SetValueConverter(new DateTimeOffsetToBinaryConverterUtc());
             }
 
             // Auto-include non-nullable navigation properties
