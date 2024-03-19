@@ -101,13 +101,9 @@ public class QueryControllerTests : IntegrationTestsBase<QueryControllerTests.Te
         var filteringParams = new FilteringParams { Filter = filter };
 
         var countException = await Assert.ThrowsAsync<ProblemDetailsApiException>(() => Fixture.Client.Count<InfrastructureTestEntity>(filteringParams));
-        var countProblem = countException.ProblemDetails;
-        Assert.NotNull(countProblem);
-        Assert.Contains(expectedMessage, countProblem.Detail);
+        Assert.Contains(expectedMessage, countException.Message);
 
         var queryException = await Assert.ThrowsAsync<ProblemDetailsApiException>(() => Fixture.Client.Query<InfrastructureTestEntity>(filteringParams));
-        var queryProblem = queryException.ProblemDetails;
-        Assert.NotNull(queryProblem);
-        Assert.Contains(expectedMessage, queryProblem.Detail);
+        Assert.Contains(expectedMessage, queryException.Message);
     }
 }
