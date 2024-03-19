@@ -3437,13 +3437,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/InfrastructureTestEntity"
+                  "type": "integer",
+                  "format": "int32"
                 }
               }
             }
-          },
-          "204": {
-            "description": "No Content"
           },
           "400": {
             "description": "Bad Request",
@@ -3517,13 +3515,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/InfrastructureTestEntity"
+                  "type": "integer",
+                  "format": "int32"
                 }
               }
             }
-          },
-          "204": {
-            "description": "No Content"
           },
           "400": {
             "description": "Bad Request",
@@ -3597,13 +3593,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/InfrastructureTestEntity"
+                  "type": "integer",
+                  "format": "int32"
                 }
               }
             }
-          },
-          "204": {
-            "description": "No Content"
           },
           "400": {
             "description": "Bad Request",
@@ -3677,13 +3671,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/InfrastructureTestEntity"
+                  "type": "integer",
+                  "format": "int32"
                 }
               }
             }
-          },
-          "204": {
-            "description": "No Content"
           },
           "400": {
             "description": "Bad Request",

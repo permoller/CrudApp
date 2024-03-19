@@ -28,10 +28,10 @@ public class InfrastructureTestController : EntityControllerBase<InfrastructureT
     }
 
     [Route("not-null-int"), HttpGet, HttpPut, HttpPost, HttpDelete]
-    public InfrastructureTestEntity NotNullInt()
+    public int NotNullInt()
     {
         // Used for testing the status code returned from an action when an object is returned.
-        return new(new());
+        return 1;
     }
 
     [Route("null-ref"), HttpGet, HttpPut, HttpPost, HttpDelete]
