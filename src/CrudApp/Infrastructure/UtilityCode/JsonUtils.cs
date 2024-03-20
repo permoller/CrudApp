@@ -18,9 +18,6 @@ public static class JsonUtils
         // Configure JSON options for MVC-Controllers (SystemTextJsonInputFormatter, SystemTextJsonOutputFormatter)
         services.Configure<Microsoft.AspNetCore.Mvc.JsonOptions>(options => ConfigureApiJsonSerializerOptions(options.JsonSerializerOptions));
 
-        
-        
-        
         return services;
     }
 

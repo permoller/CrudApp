@@ -9,5 +9,5 @@ global using CrudApp.Infrastructure.Authorization;
 global using CrudApp.Infrastructure.Database;
 global using CrudApp.Infrastructure.Entities;
 global using CrudApp.Infrastructure.ErrorHandling;
-global using CrudApp.Infrastructure.Http;
 global using CrudApp.Infrastructure.UtilityCode;
+global using CrudApp.Infrastructure.Primitives;

@@ -1,7 +1,7 @@
 ﻿using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
-namespace CrudApp.Infrastructure.OpenApi;
+namespace CrudApp.Infrastructure.WebApi;
 
 /// <summary>
 /// Marks properties that may not be null as required (meaning the properties must exists in JSON) in the OpenAPI document.

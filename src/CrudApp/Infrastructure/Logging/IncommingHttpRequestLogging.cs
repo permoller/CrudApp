@@ -1,24 +1,22 @@
 ﻿using System.Diagnostics;
 
-namespace CrudApp.Infrastructure.Http;
+namespace CrudApp.Infrastructure.Logging;
 
-public class IncommingHttpRequestLoggingMiddleware
+public class IncommingHttpRequestLogging : IMiddleware
 {
-    private readonly RequestDelegate _next;
-    private readonly ILogger<IncommingHttpRequestLoggingMiddleware> _logger;
+    private readonly ILogger<IncommingHttpRequestLogging> _logger;
 
-    public IncommingHttpRequestLoggingMiddleware(RequestDelegate next, ILogger<IncommingHttpRequestLoggingMiddleware> logger)
+    public IncommingHttpRequestLogging(ILogger<IncommingHttpRequestLogging> logger)
     {
-        _next = next;
         _logger = logger;
     }
 
-    public async Task InvokeAsync(HttpContext context)
+    public async Task InvokeAsync(HttpContext context, RequestDelegate next)
     {
         var sw = Stopwatch.StartNew();
         try
         {
-            await _next(context);
+            await next(context);
             sw.Stop();
             HttpRequestLogging.HttpRequestCompleted(
                 _logger,
@@ -34,7 +32,7 @@ public class IncommingHttpRequestLoggingMiddleware
                 sw.ElapsedMilliseconds,
                 null);
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
             sw.Stop();
             HttpRequestLogging.HttpRequestCompleted(

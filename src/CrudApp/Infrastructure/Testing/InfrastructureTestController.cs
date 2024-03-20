@@ -40,7 +40,7 @@ public class InfrastructureTestController : EntityControllerBase<InfrastructureT
         // Used for testing the status code returned from an action when null is returned.
         return null;
     }
-
+    
     [Route("not-null-ref"), HttpGet, HttpPut, HttpPost, HttpDelete]
     public InfrastructureTestEntity NotNullRef()
     {

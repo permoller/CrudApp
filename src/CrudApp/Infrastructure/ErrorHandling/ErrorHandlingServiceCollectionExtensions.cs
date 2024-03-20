@@ -20,25 +20,10 @@ public static class ErrorHandlingServiceCollectionExtensions
         // or when the automatic model validation fails.
         services.Configure<ProblemDetailsOptions>(options =>
         {
-            options.CustomizeProblemDetails = CustomizeProblemDetails;
+            options.CustomizeProblemDetails = ProblemDetailsHelper.CustomizeProblemDetails;
         });
         return services;
     }
 
-    private static void CustomizeProblemDetails(ProblemDetailsContext problemDetailsContext)
-    {
-        problemDetailsContext.ProblemDetails.Extensions.Add("serverTimeUtc", DateTimeOffset.UtcNow);
-
-        var request = problemDetailsContext.HttpContext?.Request;
-        if (request is not null)
-        {
-            var path = request.Path.Value;
-            var controller = request.RouteValues["controller"]?.ToString();
-            var action = request.RouteValues["action"]?.ToString();
-
-            problemDetailsContext.ProblemDetails.Extensions.Add("path", path);
-            problemDetailsContext.ProblemDetails.Extensions.Add("controller", controller);
-            problemDetailsContext.ProblemDetails.Extensions.Add("action", action);
-        }
-    }
+    
 }

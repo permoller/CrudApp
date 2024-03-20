@@ -1,9 +1,9 @@
-﻿using CrudApp.Infrastructure.Http;
-using CrudApp.Infrastructure.Testing;
+﻿using CrudApp.Infrastructure.Testing;
 using CrudApp.Infrastructure.UtilityCode;
 using CrudApp.Tests.Infrastructure.Http;
 using System.Net.Http.Json;
 using Xunit.Abstractions;
+using CrudApp.Infrastructure.Primitives;
 
 namespace CrudApp.Tests.Infrastructure.Entities;
 

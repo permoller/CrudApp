@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 
-namespace CrudApp.Infrastructure.Http;
+namespace CrudApp.Infrastructure.WebApi;
 
 // Add ApiController-attribute to enable automatic model validation.
 [ApiController]

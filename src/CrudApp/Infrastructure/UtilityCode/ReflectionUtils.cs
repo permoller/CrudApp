@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
 
 namespace CrudApp.Infrastructure.UtilityCode;
 
@@ -51,6 +52,15 @@ public static class ReflectionUtils
                 typesToCheck.Enqueue(i);
         }
         return null;
+    }
+
+    /// <summary>
+    /// Like <see cref="FindGenericArgumentsForGenericTypeDefinition(Type?, Type)"/> but returns false if no type arguments are found.
+    /// </summary>
+    public static bool TryGetGenericArgumentsForGenericTypeDefinition(this Type? type, Type genericTypeDefinition, [NotNullWhen(true)] out Type[]? genericArguments)
+    {
+        genericArguments = type.FindGenericArgumentsForGenericTypeDefinition(genericTypeDefinition);
+        return genericArguments is not null;
     }
 
     /// <summary>

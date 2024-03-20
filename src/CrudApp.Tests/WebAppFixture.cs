@@ -1,22 +1,15 @@
 ﻿using CrudApp.Infrastructure.Authentication;
 using CrudApp.Infrastructure.Database;
 using CrudApp.Infrastructure.ErrorHandling;
-using CrudApp.Infrastructure.Http;
-using CrudApp.Infrastructure.Users;
+using CrudApp.Infrastructure.WebApi;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using System.Net.Http.Headers;
 using Xunit.Abstractions;
 using CrudApp.Tests.TestDatabases;
 using Microsoft.Extensions.Configuration;
-using System.Xml.Linq;
-using System.Data;
-using Microsoft.Extensions.Primitives;
-using System.Threading;
-using Microsoft.EntityFrameworkCore;
 using System.Diagnostics;
 
 namespace CrudApp.Tests;
@@ -27,7 +20,7 @@ public class WebAppFixture : IAsyncLifetime
 
     static WebAppFixture()
     {
-        ApiExceptionHandler.IsExceptionDetailsInResponseEnabled = true;
+        ProblemDetailsHelper.IncludeExceptionInProblemDetails = true;
     }
 
 

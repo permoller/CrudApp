@@ -9,7 +9,7 @@ public abstract class EntityControllerBase<T> : QueryControllerBase<T> where T :
     protected override IQueryable<T> GetQueryable(bool includeSoftDeleted) => DbContext.Authorized<T>(includeSoftDeleted);
 
     [HttpGet("{id}")]
-    public async Task<T> Get([FromRoute] EntityId id, bool includeSoftDeleted = false, CancellationToken cancellationToken = default)
+    public async Task<Result<T>> Get([FromRoute] EntityId id, bool includeSoftDeleted = false, CancellationToken cancellationToken = default)
     {
         var entity = await DbContext.GetByIdAuthorized<T>(id, asNoTracking: true, cancellationToken);
         if (!includeSoftDeleted)

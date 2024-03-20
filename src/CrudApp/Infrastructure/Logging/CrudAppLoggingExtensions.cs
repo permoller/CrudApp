@@ -3,7 +3,7 @@ using Microsoft.Extensions.Options;
 
 namespace CrudApp.Infrastructure.Logging;
 
-public static class LoggingServiceCollectionExtensions
+public static class CrudAppLoggingExtensions
 {
     public static IServiceCollection AddCrudAppLogging(this IServiceCollection services, ConfigurationManager configuration)
     {
@@ -15,6 +15,28 @@ public static class LoggingServiceCollectionExtensions
 
         return services;
     }
+
+    public static IServiceCollection AddCrudAppIncommingHttpRequestLogging(this IServiceCollection services)
+    {
+        return services.AddTransient<IncommingHttpRequestLogging>();
+    }
+
+    public static IApplicationBuilder UseCrudAppIncommingHttpRequestLogging(this IApplicationBuilder app)
+    {
+        return app.UseMiddleware<IncommingHttpRequestLogging>();
+    }
+
+    public static IServiceCollection AddCrudAppOutgoingHttpRequestLogging(this IServiceCollection services)
+    {
+        return services.AddTransient<OutgoingHttpRequestLogging>();
+    }
+
+    public static IHttpClientBuilder UseCrudAppOutgoingHttpRequestLogging(this IHttpClientBuilder builder)
+    {
+        return builder.AddHttpMessageHandler<OutgoingHttpRequestLogging>();
+    }
+
+
 
     private static IServiceCollection AddSinkLoggerProvider(this IServiceCollection services)
     {

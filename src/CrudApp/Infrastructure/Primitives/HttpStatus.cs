@@ -1,6 +1,6 @@
 ﻿using System.Net;
 
-namespace CrudApp.Infrastructure.Http;
+namespace CrudApp.Infrastructure.Primitives;
 
 /// <summary>
 /// These are the HTTP status codes that are returned by the application.
@@ -8,8 +8,8 @@ namespace CrudApp.Infrastructure.Http;
 /// </summary>
 public static class HttpStatus
 {
-    public static readonly int[] KnownStatusCodes = { Ok, Created, NoContent, BadRequest, Unauthorized, Forbidden, NotFound, Conflict, InternalServerError };
-   
+    public static readonly int[] UsedReturnStatusCodes = { Ok, Created, NoContent, BadRequest, Unauthorized, Forbidden, NotFound, Conflict, InternalServerError };
+
     public const int Ok = (int)HttpStatusCode.OK;
 
     public const int Created = (int)HttpStatusCode.Created;
@@ -17,7 +17,7 @@ public static class HttpStatus
     public const int NoContent = (int)HttpStatusCode.NoContent;
 
     /// <summary>
-    /// Indicates there is a problem with the request, like incorretly formatted json.
+    /// Indicates there is a problem with the request, like incorretly formatted json or validation problems.
     /// </summary>
     public const int BadRequest = (int)HttpStatusCode.BadRequest;
 

@@ -1,7 +1,7 @@
-﻿using CrudApp.Infrastructure.Http;
-using CrudApp.Infrastructure.Users;
+﻿using CrudApp.Infrastructure.Users;
 using CrudApp.Tests.Infrastructure.Http;
 using Xunit.Abstractions;
+using CrudApp.Infrastructure.Primitives;
 
 namespace CrudApp.Tests.Infrastructure.Authentication;
 

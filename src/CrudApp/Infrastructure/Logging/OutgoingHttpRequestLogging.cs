@@ -1,18 +1,18 @@
 ﻿using System.Diagnostics;
 
-namespace CrudApp.Infrastructure.Http;
+namespace CrudApp.Infrastructure.Logging;
 
-public class OutgoingHttpRequestLoggingHandler : DelegatingHandler
+public class OutgoingHttpRequestLogging : DelegatingHandler
 {
-    private readonly ILogger<OutgoingHttpRequestLoggingHandler> _logger;
+    private readonly ILogger<OutgoingHttpRequestLogging> _logger;
 
-    public OutgoingHttpRequestLoggingHandler(ILogger<OutgoingHttpRequestLoggingHandler> logger)
+    public OutgoingHttpRequestLogging(ILogger<OutgoingHttpRequestLogging> logger)
         : base()
     {
         _logger = logger;
     }
 
-    public OutgoingHttpRequestLoggingHandler(HttpMessageHandler innerHandler, ILogger<OutgoingHttpRequestLoggingHandler> logger)
+    public OutgoingHttpRequestLogging(HttpMessageHandler innerHandler, ILogger<OutgoingHttpRequestLogging> logger)
         : base(innerHandler)
     {
         _logger = logger;
@@ -59,6 +59,6 @@ public class OutgoingHttpRequestLoggingHandler : DelegatingHandler
                 ex);
             throw;
         }
-        
+
     }
 }
