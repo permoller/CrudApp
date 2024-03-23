@@ -2,8 +2,8 @@
 
 /// <summary>
 /// Generates 63 bit positive integers containing a timestamp as the most significant bits, followed
-/// by a generator id, allowing multiple simultaious generators with different ids to co-exists,
-/// and a counter, allowing multiple ids to be generated within the same timestamp.
+/// by a counter, allowing multiple ids to be generated within the same timestamp,
+/// and a generator id, allowing multiple simultaious generators with different ids to co-exists.
 /// </summary>
 public class TimeBasedIdGenerator
 {
@@ -122,14 +122,17 @@ public class TimeBasedIdGenerator
             _lastTimestamp = timestamp;
 
             var id = timestamp;
-            id <<= _generatorIdSizeInBits;
-            id |= _generatorId;
             id <<= _counterSizeInBits;
             id |= _counter;
+            id <<= _generatorIdSizeInBits;
+            id |= _generatorId;
             return id;
         }
     }
 
-    public long GeteTimestampFromId(long id) =>
+    public long GetTimestampFromId(long id) =>
         id >> _counterSizeInBits + _generatorIdSizeInBits;
+
+    public long GetGeneratorIdFromId(long id) =>
+        id << (64 - _generatorIdSizeInBits) >> (64 - _generatorIdSizeInBits);
 }
