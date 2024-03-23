@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
-using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Formatters;
@@ -9,7 +8,7 @@ namespace CrudApp.Infrastructure.WebApi;
 
 public partial class CrudAppApplicationModelProvider: IApplicationModelProvider
 {
-    private static readonly Type[] _voidReturnTypes = new[] { typeof(void), typeof(Task), typeof(ValueTask), typeof(Nothing) };
+    
 
     public int Order => 0;
 
@@ -19,7 +18,8 @@ public partial class CrudAppApplicationModelProvider: IApplicationModelProvider
         {
             foreach (var action in controller.Actions)
             {
-                var returnType = ApplyResultFilterAndGetUnwrappedReturnType(action);
+                action.Filters.Add(new MapperActionFilter());
+                var returnType = MapperActionFilter.MapType(action);
                 EnsureSuccessResponseDefined(action, returnType);
                 EnsureErrorResponsesDefined(action);
             }
@@ -28,23 +28,6 @@ public partial class CrudAppApplicationModelProvider: IApplicationModelProvider
 
     public void OnProvidersExecuted(ApplicationModelProviderContext context)
     {
-    }
-
-    private static Type ApplyResultFilterAndGetUnwrappedReturnType(ActionModel action)
-    {
-        var returnType = action.ActionMethod.ReturnType;
-        if (returnType.TryGetGenericArgumentsForGenericTypeDefinition(typeof(Task<>), out var taskArgs))
-            returnType = taskArgs[0];
-        if (returnType.TryGetGenericArgumentsForGenericTypeDefinition(typeof(ValueTask<>), out var valueTaskArgs))
-            returnType = valueTaskArgs[0];
-        if (returnType.TryGetGenericArgumentsForGenericTypeDefinition(typeof(Result<>), out var resultTypeArgs))
-        {
-            action.Filters.Add(new UnwrapResultActionFilter());
-            returnType = resultTypeArgs[0];
-        }
-        if (_voidReturnTypes.Contains(returnType))
-            returnType = typeof(void);
-        return returnType;
     }
 
     private static void EnsureSuccessResponseDefined(ActionModel action, Type returnType)
@@ -58,17 +41,9 @@ public partial class CrudAppApplicationModelProvider: IApplicationModelProvider
             if (returnType.IsAssignableTo(typeof(IActionResult)) || returnType.IsAssignableTo(typeof(IConvertToActionResult)))
                 throw new NotSupportedException($"Actions that return {nameof(IActionResult)} or {nameof(IConvertToActionResult)} should explicitly specify the appropate success response types using {nameof(ProducesResponseTypeAttribute)}. This action does not: {action.DisplayName}.");
 
-            if (_voidReturnTypes.Contains(returnType))
-            {
-                action.Filters.Add(new ReturnNoContentStatusCode());
+            action.Filters.Add(new ApiResponseMetadataProvider(returnType, returnType == typeof(void) ? HttpStatus.NoContent : HttpStatus.Ok));
+            if (returnType != typeof(void) && returnType.MayTypeBeNull() == true)
                 action.Filters.Add(new ApiResponseMetadataProvider(typeof(void), HttpStatus.NoContent));
-            }
-            else
-            {
-                action.Filters.Add(new ApiResponseMetadataProvider(returnType, HttpStatus.Ok));
-                if (returnType.MayTypeBeNull() == true)
-                    action.Filters.Add(new ApiResponseMetadataProvider(typeof(void), HttpStatus.NoContent));
-            }
         }
     }
 
@@ -91,17 +66,6 @@ public partial class CrudAppApplicationModelProvider: IApplicationModelProvider
     {
         return action.ActionMethod.GetCustomAttributes(inherit: true)
             .Concat(action.Controller.ControllerType.GetCustomAttributes(inherit: true));
-    }
-
-
-    private sealed class ReturnNoContentStatusCode : IAsyncResultFilter
-    {
-        public Task OnResultExecutionAsync(ResultExecutingContext context, ResultExecutionDelegate next)
-        {
-            // Default to returning 204 no content instead of 200
-            context.HttpContext.Response.StatusCode = HttpStatus.NoContent;
-            return next();
-        }
     }
 
     private sealed class ApiResponseMetadataProvider : IApiResponseMetadataProvider

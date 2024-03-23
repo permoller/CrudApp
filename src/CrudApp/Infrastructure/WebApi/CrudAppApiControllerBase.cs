@@ -14,4 +14,7 @@ public class CrudAppApiControllerBase : ControllerBase
     {
         _lazyDbContext = new Lazy<CrudAppDbContext>(() => HttpContext.RequestServices.GetRequiredService<CrudAppDbContext>());
     }
+
+
+    protected ActionResult MapErrorToActionResult(Error error) => HttpContext.MapErrorToProblemDetails(error).ToObjectResult();
 }

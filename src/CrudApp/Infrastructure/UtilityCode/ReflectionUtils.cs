@@ -5,6 +5,8 @@ namespace CrudApp.Infrastructure.UtilityCode;
 
 public static class ReflectionUtils
 {
+    public static T2 Return<T1, T2>(this T1 _, T2 x) => x;
+
     public static IEnumerable<Type> GetAllTypesInApplication()
         => AppDomain.CurrentDomain.GetAssemblies().Where(a => a.GetName().Name?.StartsWith("CrudApp") == true).SelectMany(a => a.GetTypes());
 

@@ -1,5 +1,4 @@
-﻿using CrudApp.Infrastructure.Primitives;
-using Xunit.Abstractions;
+﻿using Xunit.Abstractions;
 
 namespace CrudApp.Tests.Infrastructure.Http;
 

@@ -6,6 +6,12 @@ namespace CrudApp.Infrastructure.UtilityCode;
 
 public static class ProblemDetailsUtils
 {
+    public static bool TryGetErrors(this ProblemDetails problemDetails, [NotNullWhen(true)] out Dictionary<string, string[]>? errors) =>
+        problemDetails.TryGetExtension("errors", out errors);
+
+    public static bool TryGetData(this ProblemDetails problemDetails, [NotNullWhen(true)] out Dictionary<string, object?>? data) =>
+       problemDetails.TryGetExtension("data", out data);
+
     public static bool TryGetExtension<T>(this ProblemDetails problemDetails, string key, [NotNullWhen(true)] out T? value)
     {
         var obj = problemDetails.Extensions.FirstOrDefault(kvp => StringComparer.OrdinalIgnoreCase.Equals(key, kvp.Key)).Value;

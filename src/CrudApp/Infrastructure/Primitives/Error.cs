@@ -1,51 +1,85 @@
-﻿using System.Diagnostics;
+﻿using Microsoft.AspNetCore.WebUtilities;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 
 namespace CrudApp.Infrastructure.Primitives;
 
-
-/// <summary>
-/// When an error is returned from a controller action, it gets translated to a ProblemDetails response.
-/// </summary>
-public readonly struct Error
+public abstract partial class Error
 {
-    private readonly Dictionary<string, object?> _data = new();
+    private readonly DataDictionary _data;
 
-    private Error(Exception? exception, ErrorHttpStatusCode errorStatus, string? type, string? title, string? details)
+    protected Error(
+        int httpStatucCode,
+        Exception? exception = default,
+        DataDictionary? data = default,
+        string? typeName = default,
+        string? title = default,
+        string? details = default,
+        Dictionary<string, string[]>? errors = default)
     {
-        ErrorStatus = errorStatus;
-        Type = type;
-        Title = title;
-        Detail = details;
+        HttpStatucCode = httpStatucCode;
+        TypeName = typeName ?? GetType().Name;
+        Title = title ?? ReasonPhrases.GetReasonPhrase(httpStatucCode);
+        Details = details ?? ToSentenceCase(GetType().Name);
+        Instance = GetRandomString(length: 8);
         Exception = exception;
-        _data.Add("activity-span-id", Activity.Current?.SpanId.ToHexString());
-        _data.Add("actitivy-trace-id", Activity.Current?.TraceId.ToHexString());
+        TraceId = Activity.Current?.Id;
+        Data = _data = data ?? [];
+        Errors = errors ?? [];
     }
 
-    public ErrorHttpStatusCode ErrorStatus { get; } // Translated to HTTP status code
-    public string? Type { get; } // Short url-frindly name of the error type. Should be a static string. Defaults to the name of the HTTP status code
-    public string? Title { get; } // Human readable one-liner describing the type. Should be a static string. It may be localized. Defaults to the reason phrase of the HTTP status code
-    public string? Detail { get; } // Human readable text with information about the specific error instance. May be dynamically created with instance specific data. May be localized. May be null if the title says it all.
-    public string? Instance { get; } = EntityBase.NewEntityId().ToString(); // Identification of the error instance.
-    public Exception? Exception { get; } // If an exception caused the error it can be included in the error for debugging purposes.
-    public IReadOnlyDictionary<string, object?> Data => _data; // Context specific data that may be extracted/used/displayed by the client. The data values should be small simple types. It should not be big objects.
+    public int HttpStatucCode { get; }
+    public string TypeName { get; }
+    public string? Title { get; }
+    public string? Details { get; }
+    public string? Instance { get; }
+    public Exception? Exception { get; }
+    public string? TraceId { get; }
+    public IReadOnlyDictionary<string, object?> Data { get; }
+    public Dictionary<string, string[]> Errors { get; }
 
-    public static Error BadRequest(string type, string title, string? details) => new(null, ErrorHttpStatusCode.BadRequest, type, title, details);
-    public static Error BadRequest(Exception? exception, string type, string title, string details) => new(exception, ErrorHttpStatusCode.BadRequest, type, title, details);
-    public static Error Unauthorized(string? details) => new(null, ErrorHttpStatusCode.Unauthorized, null, null, details);
-    public static Error Unauthorized(Exception? exception, string? details) => new(exception, ErrorHttpStatusCode.Unauthorized, null, null, details);
-    public static Error Forbidden(string? details) => new(null, ErrorHttpStatusCode.Forbidden, null, null, details);
-    public static Error Forbidden(Exception? exception, string? details) => new(exception, ErrorHttpStatusCode.Forbidden, null, null, details);
-    public static Error NotFound(string? details) => new(null, ErrorHttpStatusCode.NotFound, null, null, details);
-    public static Error NotFound(Exception? exception, string? details) => new(exception, ErrorHttpStatusCode.NotFound, null, null, details);
-    public static Error Conflict(string? details) => new(null, ErrorHttpStatusCode.Conflict, null, null, details);
-    public static Error Conflict(Exception? exception, string? details) => new(exception, ErrorHttpStatusCode.Conflict, null, null, details);
-    public static Error InternalServerError(Exception? exception) => new(exception, ErrorHttpStatusCode.InternalServerError, null, null, null);
-    public static Error InternalServerError(string? details) => new(null, ErrorHttpStatusCode.InternalServerError, null, null, details);
-    public static Error InternalServerError(Exception? exception, string? details) => new(exception, ErrorHttpStatusCode.InternalServerError, null, null, details);
 
-    public Error WithData(string key, object? value)
+    public Error AddData(string? value, [CallerArgumentExpression(nameof(value))] string? key = null) => _data.Add(value, key).Return(this);
+    public Error AddData(bool? value, [CallerArgumentExpression(nameof(value))] string? key = null) => _data.Add(value, key).Return(this);
+    public Error AddData(byte? value, [CallerArgumentExpression(nameof(value))] string? key = null) => _data.Add(value, key).Return(this);
+    public Error AddData(short? value, [CallerArgumentExpression(nameof(value))] string? key = null) => _data.Add(value, key).Return(this);
+    public Error AddData(int? value, [CallerArgumentExpression(nameof(value))] string? key = null) => _data.Add(value, key).Return(this);
+    public Error AddData(long? value, [CallerArgumentExpression(nameof(value))] string? key = null) => _data.Add(value, key).Return(this);
+    public Error AddData(float? value, [CallerArgumentExpression(nameof(value))] string? key = null) => _data.Add(value, key).Return(this);
+    public Error AddData(decimal? value, [CallerArgumentExpression(nameof(value))] string? key = null) => _data.Add(value, key).Return(this);
+    public Error AddData(Guid? value, [CallerArgumentExpression(nameof(value))] string? key = null) => _data.Add(value, key).Return(this);
+    public Error AddData(DateTime? value, [CallerArgumentExpression(nameof(value))] string? key = null) => _data.Add(value, key).Return(this);
+    public Error AddData(DateTimeOffset? value, [CallerArgumentExpression(nameof(value))] string? key = null) => _data.Add(value, key).Return(this);
+    public Error AddData(Type? value, [CallerArgumentExpression(nameof(value))] string? key = null) => _data.Add(value, key).Return(this);
+
+    public Error AddError(string field, string error)
     {
-        _data[key] = value;
+        List<string> list = Errors.TryGetValue(field, out var array) ? new(array) : new();
+        list.Add(error);
+        Errors[field] = list.ToArray();
         return this;
     }
+
+    // Characters that are easy for one person to tell another person.
+    // Only lower case characters
+    // No numbers or characters the looks like each other (i, 1, o and 0)
+    private static readonly string _base32Alphabet = "abcdefghjklmnpqrstuvwxyz23456789";
+    private static readonly Random _random = new Random();
+
+    private static string GetRandomString(int length)
+    {
+        var resultChars = new char[length];
+        for (int i = 0; i < resultChars.Length; i++)
+            resultChars[i] = _base32Alphabet[_random.Next(_base32Alphabet.Length)];
+
+        return new(resultChars);
+    }
+
+    private static string ToSentenceCase(string str)
+    {
+        return Regex.Replace(str, "[a-z][A-Z]", m => m.Value[0] + " " + char.ToLower(m.Value[1])) + ".";
+    }
+
+    
 }

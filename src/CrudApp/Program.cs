@@ -1,15 +1,15 @@
 using CrudApp.Infrastructure.Logging;
 using CrudApp.Infrastructure.WebApi;
-using Microsoft.AspNetCore.HttpLogging;
 
-public class Program
+namespace CrudApp;
+public static class Program
 {
     static Program()
     {
         EntityBase.NewEntityId =
             TimeBasedIdGenerator.NewUsingMillisecondsSince(
                     new DateTimeOffset(2020, 1, 1, 0, 0, 0, TimeSpan.Zero),
-                    generatorId: 0// the generator id needs to be different for each instance (consider horizontal scaling)
+                    generatorId: 0// the generator id needs to be different for each concurrent instance
                     ).NewId;
     }
     
@@ -17,11 +17,11 @@ public class Program
     public static void Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
-        
+
         builder
             .Services
             .AddCrudAppLogging(builder.Configuration)
-            .AddCrudAppExceptionHandling()
+            .AddCrudAppErrorHandling()
             .AddCrudAppAuthentication()
             .AddCrudAppApiConvetions()
             //.AddLocalization()
@@ -35,7 +35,7 @@ public class Program
             .AddCrudAppIncommingHttpRequestLogging()
             // Add services for logging outgoing http requests made with HttpClient
             .AddCrudAppOutgoingHttpRequestLogging()
-            .AddControllers();
+            .AddControllers();//.ConfigureApiBehaviorOptions(x => x.InvalidModelStateResponseFactory = ProblemDetailsHelper.InvalidModelStateResponseFactory);
 
         // Add logging of outgoing requests to the default HttpClient
         builder.Services.AddHttpClient(string.Empty).UseCrudAppOutgoingHttpRequestLogging();

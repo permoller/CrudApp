@@ -68,9 +68,11 @@ internal static class EntityHttpClientBase
         return receivedEntity;
     }
 
-    public static async Task DeleteEntityAsync<T>(this HttpClient httpClient, EntityId id) where T : EntityBase
+    public static async Task DeleteEntityAsync<T>(this HttpClient httpClient, EntityId id, long? version) where T : EntityBase
     {
         var path = GetPath<T>(id);
+        if(version.HasValue)
+            path += "?version=" + version.Value;
         var response = await httpClient.ApiDeleteAsync(path);
         await response.ApiEnsureSuccessAsync();
     }

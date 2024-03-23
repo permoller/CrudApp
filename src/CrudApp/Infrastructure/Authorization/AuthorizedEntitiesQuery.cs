@@ -23,7 +23,7 @@ public static class AuthorizedEntitiesQuery
         return dbContext.All(entityType, includeSoftDeleted);
     }
 
-    public static async Task<T> GetByIdAuthorized<T>(this CrudAppDbContext dbContext, EntityId id, bool asNoTracking, CancellationToken cancellationToken) where T : EntityBase
+    public static async Task<Result<T>> GetByIdAuthorized<T>(this CrudAppDbContext dbContext, EntityId id, bool asNoTracking, CancellationToken cancellationToken) where T : EntityBase
     {
         var queryable = dbContext.Authorized<T>(includeSoftDeleted: true);
         if (asNoTracking)
@@ -33,13 +33,13 @@ public static class AuthorizedEntitiesQuery
         {
             var exists = await dbContext.All<T>(includeSoftDeleted: true).AnyAsync(e => e.Id == id, cancellationToken);
             if (exists)
-                throw new NotAuthorizedException();
-            throw new ApiResponseException(HttpStatus.NotFound, $"{typeof(T).Name} with id {id} was not found.");
+                return new Error.AccessDeniedToEntity(typeof(T), id);
+            return new Error.EntityNotFound(typeof(T), id);
         }
         return entity;
     }
 
-    public static async Task<EntityBase> GetByIdAuthorized(this CrudAppDbContext dbContext, Type entityType, EntityId id, bool asNoTracking, CancellationToken cancellationToken)
+    public static async Task<Result<EntityBase>> GetByIdAuthorized(this CrudAppDbContext dbContext, Type entityType, EntityId id, bool asNoTracking, CancellationToken cancellationToken)
     {
         var queryable = dbContext.Authorized(entityType, includeSoftDeleted: true);
         if (asNoTracking)
@@ -49,8 +49,8 @@ public static class AuthorizedEntitiesQuery
         {
             var exists = await dbContext.All(entityType, includeSoftDeleted: true).AnyAsync(e => e.Id == id, cancellationToken);
             if (exists)
-                throw new NotAuthorizedException();
-            throw new ApiResponseException(HttpStatus.NotFound, $"{entityType.Name} with id {id} was not found.");
+                return new Error.AccessDeniedToEntity(entityType, id);
+            return new Error.EntityNotFound(entityType, id);
         }
         return entity;
     }

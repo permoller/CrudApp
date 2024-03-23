@@ -1,9 +1,11 @@
 ﻿using CrudApp.Infrastructure.Testing;
 using CrudApp.Infrastructure.UtilityCode;
 using CrudApp.Tests.Infrastructure.Http;
+using Microsoft.AspNetCore.Mvc;
 using System.Net.Http.Json;
+using System.Text.Json;
 using Xunit.Abstractions;
-using CrudApp.Infrastructure.Primitives;
+using static CrudApp.Infrastructure.Primitives.Error;
 
 namespace CrudApp.Tests.Infrastructure.Entities;
 
@@ -51,16 +53,20 @@ public class EntityControllerBaseTests : IntegrationTestsBase, IClassFixture<Web
 
     private async Task DeleteEntity()
     {
-        if (!_entity.IsSoftDeleted)
-            await _client.DeleteEntityAsync<InfrastructureTestEntity>(_entity.Id);
+        try
+        {
+            await _client.DeleteEntityAsync<InfrastructureTestEntity>(_entity.Id, null);
+        }
+        catch(ProblemDetailsApiException e) when (e.ProblemDetails?.Type == nameof(EntityAlreadyDeleted))
+        {
+            // ignore
+        }
     }
 
     [Fact]
     public async Task RecreateEntityWithSameIdShouldFail()
     {
-        var ex = await Assert.ThrowsAsync<ProblemDetailsApiException>(async () => await _client.PostEntityAsync(_entity));
-        Assert.Equal(HttpStatus.BadRequest, (int?)ex.StatusCode);
-        Assert.Contains($"{_entity.DisplayName} already exists with the same id {_entity.Id}.", ex.Message);
+        await AssertError<CannotCreateEntityWithSameIdAsExistingEntity>(() => _client.PostEntityAsync(_entity));
     }
 
     [Fact]
@@ -83,9 +89,8 @@ public class EntityControllerBaseTests : IntegrationTestsBase, IClassFixture<Web
     public async Task UpdateShouldFailIfVersionDoesNotMatchDb()
     {
         _entity.TestProp = "updated old entity";
-        var dbVersion = _entity.Version;
         _entity.Version--;
-        await UpdateEntityAndAssertFailure(HttpStatus.Conflict, $"Version in request: {_entity.Version}. Version in database: {dbVersion}.");
+        await AssertError<EntityVersionInRequestDoesNotMatchVersionInDatabase>(() => _client.PutEntityAsync(_entity));
     }
 
     [Fact]
@@ -97,7 +102,9 @@ public class EntityControllerBaseTests : IntegrationTestsBase, IClassFixture<Web
         AssertEqual(_entity, actual);
 
         _entity.NonNullableOwnedEntity = null!;
-        await UpdateEntityAndAssertFailure(HttpStatus.BadRequest, $"The {nameof(_entity.NonNullableOwnedEntity)} field is required.");
+        var problemDetails = await AssertError<ModelValidationFailed>(() => _client.PutEntityAsync(_entity));
+        Assert.True(problemDetails.TryGetErrors(out var errors));
+        Assert.Equal($"The {nameof(_entity.NonNullableOwnedEntity)} field is required.", errors[nameof(_entity.NonNullableOwnedEntity)][0]);
     }
 
     [Fact]
@@ -158,24 +165,16 @@ public class EntityControllerBaseTests : IntegrationTestsBase, IClassFixture<Web
     [Fact]
     public async Task SoftDelete()
     {
-        await _client.DeleteEntityAsync<InfrastructureTestEntity>(_entity.Id);
-
-        var ex = await Assert.ThrowsAsync<ProblemDetailsApiException>(async () => await _client.GetEntityAsync<InfrastructureTestEntity>(_entity.Id));
-        Assert.Equal(HttpStatus.NotFound, (int?)ex.StatusCode);
-        Assert.Contains($"{_entity.DisplayName} has been deleted.", ex.Message);
-
-        ex = await Assert.ThrowsAsync<ProblemDetailsApiException>(async () => await _client.PutEntityAsync(_entity));
-        Assert.Equal(HttpStatus.NotFound, (int?)ex.StatusCode);
-        Assert.Contains($"{_entity.DisplayName} has been deleted.", ex.Message);
-
-        ex = await Assert.ThrowsAsync<ProblemDetailsApiException>(async () => await _client.DeleteEntityAsync<InfrastructureTestEntity>(_entity.Id));
-        Assert.Equal(HttpStatus.NotFound, (int?)ex.StatusCode);
-        Assert.Contains($"{_entity.DisplayName} has been deleted.", ex.Message);
-
-        var actual = await _client.GetEntityAsync<InfrastructureTestEntity>(_entity.Id, includeSoftDeleted: true);
+        await _client.DeleteEntityAsync<InfrastructureTestEntity>(_entity.Id, _entity.Version);
         _entity.Version++;
         _entity.IsSoftDeleted = true;
+        var actual = await _client.GetEntityAsync<InfrastructureTestEntity>(_entity.Id, includeSoftDeleted: true);
         AssertEqual(_entity, actual);
+
+        _entity.IsSoftDeleted = false;
+        await AssertError<CannotUpdateDeletedEntity>(() => _client.PutEntityAsync(_entity));
+        await AssertError<CannotGetDeletedEntity>(() => _client.GetEntityAsync<InfrastructureTestEntity>(_entity.Id));
+        await AssertError<EntityAlreadyDeleted>(() => _client.DeleteEntityAsync<InfrastructureTestEntity>(_entity.Id, version: null));
     }
 
     [Fact]
@@ -198,17 +197,15 @@ public class EntityControllerBaseTests : IntegrationTestsBase, IClassFixture<Web
         }
         finally
         {
-            await _client.DeleteEntityAsync<InfrastructureTestEntity>(id);
+            await _client.DeleteEntityAsync<InfrastructureTestEntity>(id, version: null);
         }
     }
 
-
-    private async Task<ProblemDetailsApiException> UpdateEntityAndAssertFailure(int expectedHttpStatus, string expectedMessage)
+    private static async Task<ProblemDetails> AssertError<T>(Func<Task> action) where T : Error
     {
-        var ex = await Assert.ThrowsAsync<ProblemDetailsApiException>(() => _client.PutEntityAsync(_entity));
-        Assert.Equal(expectedHttpStatus, (int?)ex.StatusCode);
-        Assert.Contains(expectedMessage, ex.Message);
-        return ex;
+        var ex = await Assert.ThrowsAsync<ProblemDetailsApiException>(action);
+        Assert.Equal(typeof(T).Name, ex.ProblemDetails.Type);
+        return ex.ProblemDetails;
     }
 
     private static void AssertEqual(InfrastructureTestEntity expected, InfrastructureTestEntity actual)
@@ -216,6 +213,7 @@ public class EntityControllerBaseTests : IntegrationTestsBase, IClassFixture<Web
         Assert.Equal(expected is null, actual is null);
         if (expected is not null && actual is not null)
         {
+            // We test all properties individually to make debugging easier.
             Assert.Equal(expected.Id, actual.Id);
             Assert.Equal(expected.Version, actual.Version);
             Assert.Equal(expected.IsSoftDeleted, actual.IsSoftDeleted);
@@ -250,6 +248,9 @@ public class EntityControllerBaseTests : IntegrationTestsBase, IClassFixture<Web
                     }
                 }
             }
+
+            // In case new properties gets added and we forget to test them individually, we also compare the serialized objects.
+            Assert.Equal(JsonSerializer.Serialize(expected), JsonSerializer.Serialize(actual));
         }
     }
 }

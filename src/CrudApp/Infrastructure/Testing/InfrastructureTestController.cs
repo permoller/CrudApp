@@ -7,7 +7,7 @@ namespace CrudApp.Infrastructure.Testing;
 /// </summary>
 public class InfrastructureTestController : EntityControllerBase<InfrastructureTestEntity>
 {
-    ILogger<InfrastructureTestController> _logger;
+    private readonly ILogger<InfrastructureTestController> _logger;
 
     public InfrastructureTestController(ILogger<InfrastructureTestController> logger)
     {

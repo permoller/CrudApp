@@ -48,7 +48,7 @@ internal static class HttpClientExtenstions
         {
             var requestMessage = $"{response.RequestMessage?.Method} {response.RequestMessage?.RequestUri}";
             var expectedStatusMessage = expectedStatusCode.HasValue ? $" (expected {expectedStatusCode})" : "";
-            var errorMessage = $"Got response status {response.StatusCode}{expectedStatusMessage} from request {requestMessage}.";
+            var errorMessage = $"Got response status {(int)response.StatusCode}{expectedStatusMessage} from request {requestMessage}.";
             
             // Expect a response body from the server
             string responseString;
@@ -81,23 +81,43 @@ internal static class HttpClientExtenstions
 
             // Format ProblemDetails as an error message
             var sb = new StringBuilder();
-            sb.Append(errorMessage);
-            if (!string.IsNullOrEmpty(problem.Title))
-                sb.AppendLine().Append("Title:  ").Append(problem.Title.ReplaceLineEndings(Environment.NewLine + "        "));
-            if (!string.IsNullOrEmpty(problem.Detail))
-                sb.AppendLine().Append("Detail: ").Append(problem.Detail.ReplaceLineEndings(Environment.NewLine + "        "));
             
-            if (problem.TryGetExtension<Dictionary<string, string[]>>("errors", out var errors) && errors.Count > 0)
+            if (!string.IsNullOrEmpty(problem.Title))
+                sb.AppendLine(problem.Title);
+
+            if (!string.IsNullOrEmpty(problem.Detail))
+                sb.AppendLine(problem.Detail);
+            
+            if (problem.TryGetData(out var data) && data.Count > 0)
+            {
+                sb.AppendLine().AppendLine("Data:");
+                foreach (var kvp in data)
+                    sb.Append(" * ").Append(kvp.Key).Append(": ").Append(kvp.Value).AppendLine();
+            }
+
+            if (problem.TryGetErrors(out var errors) && errors.Count > 0)
             {
                 sb.AppendLine().Append("Errors:");
                 foreach (var kvp in errors)
-                {
                     foreach (var error in kvp.Value)
-                    {
-                        sb.AppendLine().Append(" * ").Append(kvp.Key).Append(": ").Append(error);
-                    }
-                }
+                        sb.Append(" * ").Append(kvp.Key).Append(": ").Append(error).AppendLine();
             }
+
+            sb.AppendLine().AppendLine("Debug Info:");
+            var debugInfo = new List<KeyValuePair<string, object?>>
+            {
+                new("request", requestMessage),
+                new("responseStatus", (int)response.StatusCode),
+                new("errorType", problem.Type),
+                new("errorId", problem.Instance),
+                new("errorStatus", problem.Status),
+            };
+            foreach (var kvp in problem.Extensions.Where(kvp => kvp.Key != "errors" && kvp.Key != "properties"))
+                debugInfo.Add(kvp);
+
+            foreach(var kvp in debugInfo)
+                sb.Append(" * ").Append(kvp.Key).Append(": ").Append(kvp.Value).AppendLine();
+            
             var message = sb.ToString();
 
             throw new ProblemDetailsApiException(message, null, response.StatusCode, problem);
@@ -134,17 +154,14 @@ internal static class HttpClientExtenstions
     }
 }
 
-public class ApiException : HttpRequestException
-{
-    public ApiException(string message, Exception? innerException, HttpStatusCode? statusCode) : base(message, innerException, statusCode)
-    {
-    }
-}
+public class ApiException(string message, Exception? innerException, HttpStatusCode? statusCode) 
+    : HttpRequestException(message, innerException, statusCode) { }
+
 public class StringApiException : ApiException
 {
-    public ProblemDetails? Response => Data.Contains(nameof(Response)) ? (ProblemDetails?)Data[nameof(Response)] : null;
+    public string Response => (string)Data[nameof(Response)]!;
 
-    public StringApiException(string message, Exception? innerException, HttpStatusCode? statusCode, string? response) : base(message, innerException, statusCode)
+    public StringApiException(string message, Exception? innerException, HttpStatusCode? statusCode, string response) : base(message, innerException, statusCode)
     {
         Data[nameof(Response)] = response;
     }
@@ -152,9 +169,9 @@ public class StringApiException : ApiException
 
 public class ProblemDetailsApiException : ApiException
 {
-    public ProblemDetails? ProblemDetails => Data.Contains(nameof(ProblemDetails)) ? (ProblemDetails?)Data[nameof(ProblemDetails)] : null;
+    public ProblemDetails ProblemDetails => (ProblemDetails)Data[nameof(ProblemDetails)]!;
 
-    public ProblemDetailsApiException(string message, Exception? innerException, HttpStatusCode? statusCode, ProblemDetails? problemDetails) : base(message, innerException, statusCode)
+    public ProblemDetailsApiException(string message, Exception? innerException, HttpStatusCode? statusCode, ProblemDetails problemDetails) : base(message, innerException, statusCode)
     {
         Data[nameof(ProblemDetails)] = problemDetails;
     }
