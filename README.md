@@ -18,11 +18,11 @@ Some factors that may impact database performance are:
 - Inserts may require more work to re-order the data (clustered index) if the keys are random than if they are sequential/ordered.
 
 The current algorithm generates the IDs as a 63 bit positive integers containing a timestamp as the most significant bits,
-followed by a generator ID (allowing multiple simultaious generators to co-exists)
-and a counter (allowing multiple IDs to be generated within the same tick of the clock used for the timestamp).
+followed by a counter (allowing multiple IDs to be generated within the same tick of the clock used for the timestamp)
+and a generator ID (allowing multiple simultaious generators to co-exists).
 
 **IMPORTANT**
-If multiple instances of the application are running at the same time (like with horizontal scaling)
+If multiple instances of the application are running at the same time
 it is required that each instance is initialized with a different generator-id to ensure unique IDs are generated.
 
 # Automatic registration of entity types in EF Core
