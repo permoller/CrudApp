@@ -1,6 +1,6 @@
 ﻿using Xunit.Abstractions;
 
-namespace CrudApp.Tests.Infrastructure.Http;
+namespace CrudApp.Tests.Infrastructure.WebApi;
 
 
 public class StatusCodeTests : IntegrationTestsBase, IClassFixture<WebAppFixture>

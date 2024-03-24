@@ -1,6 +1,6 @@
 ﻿using CrudApp.Infrastructure.Testing;
 using CrudApp.Infrastructure.UtilityCode;
-using CrudApp.Tests.Infrastructure.Http;
+using CrudApp.Tests.Infrastructure.WebApi;
 using Microsoft.AspNetCore.Mvc;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -10,18 +10,12 @@ using static CrudApp.Infrastructure.Primitives.Error;
 namespace CrudApp.Tests.Infrastructure.Entities;
 
 // TODO: Test adding, updating and removing entities from non-owned collection and non-owned properties. These updates are intentionally ignored.
-public class EntityControllerBaseTests : IntegrationTestsBase, IClassFixture<WebAppFixture>
+public class EntityControllerBaseTests(ITestOutputHelper testOutputHelper, WebAppFixture fixture) :
+    IntegrationTestsBase(testOutputHelper, fixture), IClassFixture<WebAppFixture>
 {
-    HttpClient _client;
-    InfrastructureTestEntity _entity;
-    Func<Task> _onDispose;
-
-    public EntityControllerBaseTests(ITestOutputHelper testOutputHelper, WebAppFixture fixture) : base(testOutputHelper, fixture)
-    {
-        // Non-nullable members are set in InitializeAsync()
-        _client = null!;
-        _entity = null!;
-    }
+    HttpClient _client = null!;
+    InfrastructureTestEntity _entity = null!;
+    Func<Task> _onDispose = null!;
 
     public override async Task InitializeAsync()
     {
@@ -60,7 +54,7 @@ public class EntityControllerBaseTests : IntegrationTestsBase, IClassFixture<Web
         {
             await _client.DeleteEntityAsync<InfrastructureTestEntity>(entityId, null);
         }
-        catch(ProblemDetailsApiException e) when (e.ProblemDetails?.Type == nameof(EntityAlreadyDeleted))
+        catch(ProblemDetailsApiException e) when (e.ProblemDetails?.GetErrorTypeName() == nameof(EntityAlreadyDeleted))
         {
             // ignore
         }
@@ -253,7 +247,7 @@ public class EntityControllerBaseTests : IntegrationTestsBase, IClassFixture<Web
     private static async Task<ProblemDetails> AssertError<T>(Func<Task> action) where T : Error
     {
         var ex = await Assert.ThrowsAsync<ProblemDetailsApiException>(action);
-        Assert.Equal(typeof(T).Name, ex.ProblemDetails.Type);
+        Assert.Equal(typeof(T).Name, ex.ProblemDetails.GetErrorTypeName());
         return ex.ProblemDetails;
     }
 

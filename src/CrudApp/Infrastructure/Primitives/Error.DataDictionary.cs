@@ -18,18 +18,19 @@ public partial class Error
         }
 
         // Only expose methods to add simple types we know can be serialized to JSON or convert it to a string here
-        public DataDictionary Add(string? value, [CallerArgumentExpression(nameof(value))] string? key = null) => AddInternal(key, value);
-        public DataDictionary Add(bool? value, [CallerArgumentExpression(nameof(value))] string? key = null) => AddInternal(key, value);
-        public DataDictionary Add(byte? value, [CallerArgumentExpression(nameof(value))] string? key = null) => AddInternal(key, value);
-        public DataDictionary Add(short? value, [CallerArgumentExpression(nameof(value))] string? key = null) => AddInternal(key, value);
-        public DataDictionary Add(int? value, [CallerArgumentExpression(nameof(value))] string? key = null) => AddInternal(key, value);
-        public DataDictionary Add(long? value, [CallerArgumentExpression(nameof(value))] string? key = null) => AddInternal(key, value);
-        public DataDictionary Add(float? value, [CallerArgumentExpression(nameof(value))] string? key = null) => AddInternal(key, value);
-        public DataDictionary Add(decimal? value, [CallerArgumentExpression(nameof(value))] string? key = null) => AddInternal(key, value);
-        public DataDictionary Add(Guid? value, [CallerArgumentExpression(nameof(value))] string? key = null) => AddInternal(key, value);
-        public DataDictionary Add(DateTime? value, [CallerArgumentExpression(nameof(value))] string? key = null) => AddInternal(key, value);
-        public DataDictionary Add(DateTimeOffset? value, [CallerArgumentExpression(nameof(value))] string? key = null) => AddInternal(key, value);
-        public DataDictionary Add(Type? value, [CallerArgumentExpression(nameof(value))] string? key = null) => AddInternal(key, value?.Name);
+        public DataDictionary Add(string value, [CallerArgumentExpression(nameof(value))] string? key = null) => AddInternal(key, value);
+        public DataDictionary Add(bool value, [CallerArgumentExpression(nameof(value))] string? key = null) => AddInternal(key, value);
+        public DataDictionary Add(byte value, [CallerArgumentExpression(nameof(value))] string? key = null) => AddInternal(key, value);
+        public DataDictionary Add(short value, [CallerArgumentExpression(nameof(value))] string? key = null) => AddInternal(key, value);
+        public DataDictionary Add(int value, [CallerArgumentExpression(nameof(value))] string? key = null) => AddInternal(key, value);
+        public DataDictionary Add(long value, [CallerArgumentExpression(nameof(value))] string? key = null) => AddInternal(key, value);
+        public DataDictionary Add(float value, [CallerArgumentExpression(nameof(value))] string? key = null) => AddInternal(key, value);
+        public DataDictionary Add(double value, [CallerArgumentExpression(nameof(value))] string? key = null) => AddInternal(key, value);
+        public DataDictionary Add(decimal value, [CallerArgumentExpression(nameof(value))] string? key = null) => AddInternal(key, value);
+        public DataDictionary Add(Guid value, [CallerArgumentExpression(nameof(value))] string? key = null) => AddInternal(key, value);
+        public DataDictionary Add(DateTime value, [CallerArgumentExpression(nameof(value))] string? key = null) => AddInternal(key, value);
+        public DataDictionary Add(DateTimeOffset value, [CallerArgumentExpression(nameof(value))] string? key = null) => AddInternal(key, value);
+        public DataDictionary Add(Type value, [CallerArgumentExpression(nameof(value))] string? key = null) => AddInternal(key, value?.Name);
 
         #region IReadOnlyDictionary
 

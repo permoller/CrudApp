@@ -1,10 +1,7 @@
-﻿using Microsoft.AspNetCore.WebUtilities;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using System.Text.RegularExpressions;
 
 namespace CrudApp.Infrastructure.Primitives;
-
 public abstract partial class Error
 {
     private readonly DataDictionary _data;
@@ -13,26 +10,17 @@ public abstract partial class Error
         int httpStatucCode,
         Exception? exception = default,
         DataDictionary? data = default,
-        string? typeName = default,
-        string? title = default,
-        string? details = default,
         Dictionary<string, string[]>? errors = default)
     {
-        HttpStatucCode = httpStatucCode;
-        TypeName = typeName ?? GetType().Name;
-        Title = title ?? ReasonPhrases.GetReasonPhrase(httpStatucCode);
-        Details = details ?? ToSentenceCase(GetType().Name);
         Instance = GetRandomString(length: 8);
+        HttpStatucCode = httpStatucCode;
         Exception = exception;
         TraceId = Activity.Current?.Id;
-        Data = _data = data ?? [];
+        Data = _data = data ?? new();
         Errors = errors ?? [];
     }
 
     public int HttpStatucCode { get; }
-    public string TypeName { get; }
-    public string? Title { get; }
-    public string? Details { get; }
     public string? Instance { get; }
     public Exception? Exception { get; }
     public string? TraceId { get; }
@@ -40,18 +28,19 @@ public abstract partial class Error
     public Dictionary<string, string[]> Errors { get; }
 
 
-    public Error AddData(string? value, [CallerArgumentExpression(nameof(value))] string? key = null) => _data.Add(value, key).Return(this);
-    public Error AddData(bool? value, [CallerArgumentExpression(nameof(value))] string? key = null) => _data.Add(value, key).Return(this);
-    public Error AddData(byte? value, [CallerArgumentExpression(nameof(value))] string? key = null) => _data.Add(value, key).Return(this);
-    public Error AddData(short? value, [CallerArgumentExpression(nameof(value))] string? key = null) => _data.Add(value, key).Return(this);
-    public Error AddData(int? value, [CallerArgumentExpression(nameof(value))] string? key = null) => _data.Add(value, key).Return(this);
-    public Error AddData(long? value, [CallerArgumentExpression(nameof(value))] string? key = null) => _data.Add(value, key).Return(this);
-    public Error AddData(float? value, [CallerArgumentExpression(nameof(value))] string? key = null) => _data.Add(value, key).Return(this);
-    public Error AddData(decimal? value, [CallerArgumentExpression(nameof(value))] string? key = null) => _data.Add(value, key).Return(this);
-    public Error AddData(Guid? value, [CallerArgumentExpression(nameof(value))] string? key = null) => _data.Add(value, key).Return(this);
-    public Error AddData(DateTime? value, [CallerArgumentExpression(nameof(value))] string? key = null) => _data.Add(value, key).Return(this);
-    public Error AddData(DateTimeOffset? value, [CallerArgumentExpression(nameof(value))] string? key = null) => _data.Add(value, key).Return(this);
-    public Error AddData(Type? value, [CallerArgumentExpression(nameof(value))] string? key = null) => _data.Add(value, key).Return(this);
+    public Error AddData(string value, [CallerArgumentExpression(nameof(value))] string? key = null) => _data.Add(value, key).Return(this);
+    public Error AddData(bool value, [CallerArgumentExpression(nameof(value))] string? key = null) => _data.Add(value, key).Return(this);
+    public Error AddData(byte value, [CallerArgumentExpression(nameof(value))] string? key = null) => _data.Add(value, key).Return(this);
+    public Error AddData(short value, [CallerArgumentExpression(nameof(value))] string? key = null) => _data.Add(value, key).Return(this);
+    public Error AddData(int value, [CallerArgumentExpression(nameof(value))] string? key = null) => _data.Add(value, key).Return(this);
+    public Error AddData(long value, [CallerArgumentExpression(nameof(value))] string? key = null) => _data.Add(value, key).Return(this);
+    public Error AddData(float value, [CallerArgumentExpression(nameof(value))] string? key = null) => _data.Add(value, key).Return(this);
+    public Error AddData(double value, [CallerArgumentExpression(nameof(value))] string? key = null) => _data.Add(value, key).Return(this);
+    public Error AddData(decimal value, [CallerArgumentExpression(nameof(value))] string? key = null) => _data.Add(value, key).Return(this);
+    public Error AddData(Guid value, [CallerArgumentExpression(nameof(value))] string? key = null) => _data.Add(value, key).Return(this);
+    public Error AddData(DateTime value, [CallerArgumentExpression(nameof(value))] string? key = null) => _data.Add(value, key).Return(this);
+    public Error AddData(DateTimeOffset value, [CallerArgumentExpression(nameof(value))] string? key = null) => _data.Add(value, key).Return(this);
+    public Error AddData(Type value, [CallerArgumentExpression(nameof(value))] string? key = null) => _data.Add(value, key).Return(this);
 
     public Error AddError(string field, string error)
     {
@@ -75,11 +64,4 @@ public abstract partial class Error
 
         return new(resultChars);
     }
-
-    private static string ToSentenceCase(string str)
-    {
-        return Regex.Replace(str, "[a-z][A-Z]", m => m.Value[0] + " " + char.ToLower(m.Value[1])) + ".";
-    }
-
-    
 }

@@ -1,7 +1,7 @@
 ﻿using CrudApp.Infrastructure.Query;
 using CrudApp.Infrastructure.Testing;
 using CrudApp.Tests.Infrastructure.Entities;
-using CrudApp.Tests.Infrastructure.Http;
+using CrudApp.Tests.Infrastructure.WebApi;
 using Xunit.Abstractions;
 
 namespace CrudApp.Tests.Infrastructure.Query;

@@ -5,7 +5,7 @@ using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 
-namespace CrudApp.Tests.Infrastructure.Http;
+namespace CrudApp.Tests.Infrastructure.WebApi;
 internal static class HttpClientExtenstions
 {
     public static Task<HttpResponseMessage> ApiGetAsync(this HttpClient client, string requestUri)
@@ -92,7 +92,7 @@ internal static class HttpClientExtenstions
             {
                 sb.AppendLine().AppendLine("Data:");
                 foreach (var kvp in data)
-                    sb.Append(" * ").Append(kvp.Key).Append(": ").Append(kvp.Value).AppendLine();
+                    sb.Append(" * ").Append(kvp.Key).Append(": ").Append(kvp.Value?.ToString()).AppendLine();
             }
 
             if (problem.TryGetErrors(out var errors) && errors.Count > 0)

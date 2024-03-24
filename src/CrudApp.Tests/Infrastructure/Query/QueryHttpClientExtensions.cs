@@ -1,6 +1,6 @@
 ﻿using CrudApp.Infrastructure.Query;
 using CrudApp.Infrastructure.UtilityCode;
-using CrudApp.Tests.Infrastructure.Http;
+using CrudApp.Tests.Infrastructure.WebApi;
 using Microsoft.AspNetCore.Http.Extensions;
 
 namespace CrudApp.Tests.Infrastructure.Query;

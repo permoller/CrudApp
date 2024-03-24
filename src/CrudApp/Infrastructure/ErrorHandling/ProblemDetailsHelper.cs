@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.WebUtilities;
 using System.Diagnostics;
+using System.Text.Json.Nodes;
+using System.Text.RegularExpressions;
 
 namespace CrudApp.Infrastructure.ErrorHandling;
 
@@ -13,6 +15,10 @@ public static class ProblemDetailsHelper
     /// It is usefull for debugging, but should not be used in production.
     /// </summary>
     public static bool IncludeExceptionInProblemDetails { get; set; }
+
+    public static readonly string TypePrefix = "/error-types/";
+    public static readonly string InstancePrefix = "/error-instances/";
+
 
     /// <summary>
     /// Called when <see cref="ProblemDetailsFactory"/> is used to create a <see cref="ProblemDetails"/> object.
@@ -68,10 +74,10 @@ public static class ProblemDetailsHelper
         var problemDetails = problemDetailsFactory.CreateProblemDetails(
             httpContext,
             statusCode: error.HttpStatucCode,
-            type: error.TypeName,
-            title: error.Title,
-            detail: error.Details,
-            instance: error.Instance);
+            type: TypePrefix + error.GetType().Name,
+            instance: InstancePrefix + error.Instance,
+            title: Regex.Replace(error.GetType().Name, "[a-z][A-Z]", m => m.Value[0] + " " + char.ToLower(m.Value[1])) + ".", // ClassName -> Class name.
+            detail: null);
 
         // The trace id also contains the span id from when the problem details was created.
         // But the trace id on the error is captured when the error occoured which might contain a different span id.
@@ -79,16 +85,18 @@ public static class ProblemDetailsHelper
         if (error.TraceId is not null)
             problemDetails.Extensions["traceId"] = error.TraceId;
 
-        // Include data for the user related to the error
-        problemDetails.Extensions["data"] = error.Data;
+        if (error.Data.Count > 0)
+            problemDetails.Extensions["data"] = error.Data;
 
-        // Include validation errors
-        if (error.Errors is not null)
+        if (error.Errors.Count > 0)
             problemDetails.Extensions["errors"] = error.Errors;
-
+        var jsonObj = new JsonObject();
+        jsonObj.Add("testProp", JsonValue.Create(Guid.NewGuid()));
+        problemDetails.Extensions["xxx"] = jsonObj;
         IncludeException(problemDetails, error.Exception);
 
         return problemDetails;
+
     }
 
     public static ProblemDetails MapExceptionToProblemDetails(this HttpContext httpContext, Exception exception)

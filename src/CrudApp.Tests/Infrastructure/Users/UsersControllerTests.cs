@@ -1,5 +1,5 @@
 ﻿using CrudApp.Infrastructure.Users;
-using CrudApp.Tests.Infrastructure.Http;
+using CrudApp.Tests.Infrastructure.WebApi;
 using Xunit.Abstractions;
 using CrudApp.Infrastructure.Primitives;
 

@@ -1,6 +1,6 @@
 ﻿using CrudApp.Infrastructure.Entities;
 using CrudApp.Infrastructure.UtilityCode;
-using CrudApp.Tests.Infrastructure.Http;
+using CrudApp.Tests.Infrastructure.WebApi;
 using System.Net.Http.Json;
 
 namespace CrudApp.Tests.Infrastructure.Entities;
