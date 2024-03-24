@@ -54,8 +54,7 @@ The property is automatically updated by `CrudAppDbContext` when a modified enti
 The property is used by EF Core to do optimistic concurrence control.
 This means that when an entity is loaded, modified and saved back to the database, the action will fail if someone else has updated the entity.
 
-**??? Does it work if an entity is received in a PUT request, which loads the entity, updates it and then saves the entity ???**
-**WARNING: Updating the version does not always work correctly for changes to navigation properties**
+**WARNING**: Automatically updating the version does not always work correctly for changes to navigation properties. Especially if the object pointed to is removed. To be safe, update the version of the root entity manually og change its state in EF to modified.
 
 # Authentication
 
@@ -65,7 +64,7 @@ It gives a simple way to make authenticated requests by adding a value like `Use
 
 # Authorization
 
-TO BE DONE
+TODO
 
 # Change tracking / Audit log
 
@@ -79,6 +78,15 @@ The attribute `SkipChangeTracking` can be applied to an entity or individual pro
 # Generic CRUD functionality
 
 `EntityControllerBase<T>` can be used as the base type for a controller where T is the entity type (inherits from `EntityBase`). This will then expose POST, GET, PUT and DELETE endpoints to perform create, read, update and delete operations.
+
+
+# Soft Delete
+
+The `EntityBase` type has a property named `IsSoftDeleted`. When the endpoint to delete an entity is called it sets this property instead of actually deleting the entity from the database.
+
+The endpoints to get and query entities for entities will, by default, not return entities that have been soft deleted. But they have parameters that enable the soft deleted entities to be included in the results.
+
+Once an entity has been soft deleted it can no longer be updated using the update endpoint.
 
 # Generic filter/query functionality
 
@@ -129,11 +137,19 @@ Multiple `ILogSink` can be registered. They will receive the `LogEntry` so they 
 
 NOTE that the default console logger that comes with .NET can be configured to log as JSON. So if your tooling can handle the JSON from it, it is probably a better choice than roling your own.
 
+# Model validation
+
+Validation attributes can be added to the types received by the API.
+If the controllers has the `ApiController` attribute (which is added to `CrudAppApiControllerBase`) the model is automatically validated.
+If a request-model is not valid a `ProblemDetails` object is returned with the validation errors.
+
 # API exception handling
 
-An exception filter (`ApiExceptionHandler`) handles the exceptions by converting them to [ProblemDetails](https://datatracker.ietf.org/doc/html/rfc7807) that are returned with an appropiate HTTP status code.
+An exception filter (`ApiExceptionHandler`) handles the exceptions thrown by controllers.
+The exceptions are converted to `ProblemDetails` which are then returned to the client.
 
-When there is an error message that should be returned from the API call one can throw an `ApiResponseException`. It contains the HTTP status code and a message that will be returned to the client in the details-field of the `ProblemDetails` response.
+When there is a message that should be returned included in the response one can throw an `ApiResponseException`.
+It contains the HTTP status code and a message that will be returned to the client in the `ProblemDetails` response.
 The message also includes the key-value pairs from `Exception.Data` and messages (and data) from inner-exceptions of type `ApiResponseException`.
 
 Other more specific exception types can also be made and handled to return more details.
@@ -143,9 +159,30 @@ This is converted into a `ValidationProblemDetails` response with the errors.
 It is also posible to throw a `NotAuthenticatedException` or `NotAuthorizedException`,
 to trigger a challange or forbidden response.
 
-Validation attributes can be added to the types received by the API.
-If the controllers has the `ApiController` attribute (added to `CrudAppApiControllerBase`) and a request-model is not valid,
-a `ValidationProblemDetails` object is returned with the errors.
+
+# Return types: Result, Error, Maybe and Nothing
+To allow coding with fewer exceptions, some types have been made to help.
+
+Configurations have been made to handle these types specially in the WebAPI pipeline.
+Instead of returning them directly they are "unwrapped" and the appropiate response is returned to the client.
+The WebAPI metadata of all the actions is also updated to support generating the correct OpenAPI documentation.
+
+`Result<T>` is used as the return type on functions that may either return a result of type `T` or an `Error`.
+This is an alternative to throwing and catching exceptions.
+A number of extenstion methods have been made that allows chaining of multiple functions that returns `Result<T>` without having to manually check the results for error every time.
+If `Result<T>` is returned by a controller action-method, the inner value of type `T` or the inner `Error` will be returned.
+
+`Error` is an abstract base type used for errors that may be returned to the client.
+All the different subtypes are defined in `Error.Types.cs`. The subtypes define the HTTP status code to be returned along with relevant data like the type and id of an entity.
+If `Error` is returned by a controller action-method (directly or through `Result<T>` the error is converted to a `ProblemDetails` response.
+
+`Nothing` is used as the generic type parameter in `Result<T>` for methods that does not have a return value, but still may return an `Error`.
+If `Nothing` is returned from a controller action-method (throgh `Result<Nothing>`) a "No Content" response is returned.
+
+`Meybe<T>` is like `Nullable<T>` but for reference types. Returning `Maybe<T>` instead of `T` makes it clear that there may not be anything to return.
+If `Maybe<T>` is returned from a controller action-method (directly or through `Result<T>`) the response to the client will either be the inner object or a "No content" response.
+
+
 
 # ASP.NET Integration tests
 
