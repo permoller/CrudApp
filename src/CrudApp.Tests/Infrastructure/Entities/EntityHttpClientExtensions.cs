@@ -45,7 +45,7 @@ internal static class EntityHttpClientBase
         return receivedEntity;
     }
 
-    public static async Task<EntityId> PostEntityAsync<T>(this HttpClient httpClient, T entity) where T : EntityBase
+    public static async Task<EntityId> CreateEntityAsync<T>(this HttpClient httpClient, T entity) where T : EntityBase
     {
         var path = GetPath<T>();
         var response = await httpClient.ApiPostAsJsonAsync(path, entity);
@@ -53,7 +53,7 @@ internal static class EntityHttpClientBase
         return await response.ApiReadContentAsync<EntityId>();
     }
 
-    public static async Task PutEntityAsync<T>(this HttpClient httpClient, T entity) where T : EntityBase
+    public static async Task UpdateEntityAsync<T>(this HttpClient httpClient, T entity) where T : EntityBase
     {
         var path = GetPath<T>(entity.Id);
         var response = await httpClient.PutAsJsonAsync(path, entity);
@@ -62,7 +62,7 @@ internal static class EntityHttpClientBase
 
     public static async Task<T> PutAndGetEntity<T>(this HttpClient httpClient, T entity) where T : EntityBase
     {
-        await httpClient.PutEntityAsync(entity);
+        await httpClient.UpdateEntityAsync(entity);
         var receivedEntity = await httpClient.GetEntityAsync<T>(entity.Id);
         ArgumentNullException.ThrowIfNull(receivedEntity);
         return receivedEntity;
@@ -70,9 +70,7 @@ internal static class EntityHttpClientBase
 
     public static async Task DeleteEntityAsync<T>(this HttpClient httpClient, EntityId id, long? version) where T : EntityBase
     {
-        var path = GetPath<T>(id);
-        if(version.HasValue)
-            path += "?version=" + version.Value;
+        var path = GetPath<T>(id) + "?version=" + version;
         var response = await httpClient.ApiDeleteAsync(path);
         await response.ApiEnsureSuccessAsync();
     }

@@ -21,7 +21,7 @@ public class QueryControllerTests : IntegrationTestsBase<QueryControllerTests.Te
             async Task AddData(EntityId id, int nonNullableInt, int? nullableInt, string? testProp, string? ownedTestProp)
             {
                 var data = new InfrastructureTestEntity(new InfrastructureTestOwnedEntity() { OwnedTestProp = ownedTestProp }) { Id = id, TestProp = testProp, NullableInt = nullableInt, NonNullableInt = nonNullableInt };
-                DataIds.Add(await Client.PostEntityAsync(data));
+                DataIds.Add(await Client.CreateEntityAsync(data));
             }
             await AddData(1, 1, 10, "Superman", "Clark Kent");
             await AddData(2, 1, 20, "Batman", "Bruce Wayne");

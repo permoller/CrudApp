@@ -14,6 +14,7 @@ public class EntityControllerBaseTests : IntegrationTestsBase, IClassFixture<Web
 {
     HttpClient _client;
     InfrastructureTestEntity _entity;
+    Func<Task> _onDispose;
 
     public EntityControllerBaseTests(ITestOutputHelper testOutputHelper, WebAppFixture fixture) : base(testOutputHelper, fixture)
     {
@@ -27,11 +28,13 @@ public class EntityControllerBaseTests : IntegrationTestsBase, IClassFixture<Web
         await base.InitializeAsync();
         _client = Fixture.CreateHttpClient(Fixture.RootUserId);
         _entity = await CreateEntity();
+        var entityId = _entity.Id;
+        _onDispose = () => DeleteEntity(entityId);
     }
 
     public override async Task DisposeAsync()
     {
-        await DeleteEntity();
+        await _onDispose();
         await base.DisposeAsync();
     }
 
@@ -39,8 +42,8 @@ public class EntityControllerBaseTests : IntegrationTestsBase, IClassFixture<Web
     {
         var nonNullableOwned = new InfrastructureTestOwnedEntity() { OwnedTestProp = "original OwnedTestProp" };
         var entity = new InfrastructureTestEntity(nonNullableOwned) { TestProp = "original TestProp" };
-        
-        var id = await _client.PostEntityAsync(entity);
+
+        var id = await _client.CreateEntityAsync(entity);
 
         Assert.NotEqual(default, id);
         var actual = await _client.GetEntityAsync<InfrastructureTestEntity>(id);
@@ -48,14 +51,14 @@ public class EntityControllerBaseTests : IntegrationTestsBase, IClassFixture<Web
         entity.Version = 1;
         AssertEqual(entity, actual);
 
-        return entity;
+        return actual;
     }
 
-    private async Task DeleteEntity()
+    private async Task DeleteEntity(EntityId entityId)
     {
         try
         {
-            await _client.DeleteEntityAsync<InfrastructureTestEntity>(_entity.Id, null);
+            await _client.DeleteEntityAsync<InfrastructureTestEntity>(entityId, null);
         }
         catch(ProblemDetailsApiException e) when (e.ProblemDetails?.Type == nameof(EntityAlreadyDeleted))
         {
@@ -63,10 +66,19 @@ public class EntityControllerBaseTests : IntegrationTestsBase, IClassFixture<Web
         }
     }
 
+
+    [Fact]
+    public async Task CreateEntityWithVersionShouldFail()
+    {
+        var entity = new InfrastructureTestEntity(new()) { Version = 1 };
+        await AssertError<VersionCannotBeSetDirectly>(() => _client.CreateEntityAsync(entity));
+    }
+
     [Fact]
     public async Task RecreateEntityWithSameIdShouldFail()
     {
-        await AssertError<CannotCreateEntityWithSameIdAsExistingEntity>(() => _client.PostEntityAsync(_entity));
+        _entity.Version = default;
+        await AssertError<CannotCreateEntityWithSameIdAsExistingEntity>(() => _client.CreateEntityAsync(_entity));
     }
 
     [Fact]
@@ -90,7 +102,7 @@ public class EntityControllerBaseTests : IntegrationTestsBase, IClassFixture<Web
     {
         _entity.TestProp = "updated old entity";
         _entity.Version--;
-        await AssertError<EntityVersionInRequestDoesNotMatchVersionInDatabase>(() => _client.PutEntityAsync(_entity));
+        await AssertError<EntityVersionInRequestDoesNotMatchVersionInDatabase>(() => _client.UpdateEntityAsync(_entity));
     }
 
     [Fact]
@@ -102,7 +114,7 @@ public class EntityControllerBaseTests : IntegrationTestsBase, IClassFixture<Web
         AssertEqual(_entity, actual);
 
         _entity.NonNullableOwnedEntity = null!;
-        var problemDetails = await AssertError<ModelValidationFailed>(() => _client.PutEntityAsync(_entity));
+        var problemDetails = await AssertError<ValidationFailed>(() => _client.UpdateEntityAsync(_entity));
         Assert.True(problemDetails.TryGetErrors(out var errors));
         Assert.Equal($"The {nameof(_entity.NonNullableOwnedEntity)} field is required.", errors[nameof(_entity.NonNullableOwnedEntity)][0]);
     }
@@ -162,19 +174,56 @@ public class EntityControllerBaseTests : IntegrationTestsBase, IClassFixture<Web
         AssertEqual(_entity, actual);
     }
 
+    
     [Fact]
     public async Task SoftDelete()
     {
+        // Delete
         await _client.DeleteEntityAsync<InfrastructureTestEntity>(_entity.Id, _entity.Version);
         _entity.Version++;
         _entity.IsSoftDeleted = true;
         var actual = await _client.GetEntityAsync<InfrastructureTestEntity>(_entity.Id, includeSoftDeleted: true);
         AssertEqual(_entity, actual);
 
-        _entity.IsSoftDeleted = false;
-        await AssertError<CannotUpdateDeletedEntity>(() => _client.PutEntityAsync(_entity));
         await AssertError<CannotGetDeletedEntity>(() => _client.GetEntityAsync<InfrastructureTestEntity>(_entity.Id));
+        await AssertError<CannotUpdateDeletedEntity>(() => _client.UpdateEntityAsync(_entity));
         await AssertError<EntityAlreadyDeleted>(() => _client.DeleteEntityAsync<InfrastructureTestEntity>(_entity.Id, version: null));
+    }
+
+    [Fact]
+    public async Task SoftDeleteWithWrongVersionShouldFail()
+    {
+        await AssertError<EntityVersionInRequestDoesNotMatchVersionInDatabase>(() =>
+        _client.DeleteEntityAsync<InfrastructureTestEntity>(_entity.Id, _entity.Version + 1));
+    }
+
+    [Fact]
+    public async Task SoftDeleteIgnoringVersion()
+    {
+        await _client.DeleteEntityAsync<InfrastructureTestEntity>(_entity.Id, version: null);
+        _entity.Version++;
+        _entity.IsSoftDeleted = true;
+        var actual = await _client.GetEntityAsync<InfrastructureTestEntity>(_entity.Id, includeSoftDeleted: true);
+        AssertEqual(_entity, actual);
+    }
+
+
+    [Fact]
+    public async Task SoftDeleteDuringCreateShoudFail()
+    {
+        // Delete during create
+        var newEntity = new InfrastructureTestEntity(new()) { TestProp = "Marking as deleted during create", IsSoftDeleted = true };
+        await AssertError<SoftDeleteCannotBeSetDirectly>(() => _client.CreateEntityAsync(newEntity));
+
+    }
+
+    [Fact]
+    public async Task SoftDeleteDuringUpdateShouldFail()
+    {
+        _entity.TestProp = "Marking as deleted during update";
+        _entity.IsSoftDeleted = true;
+        await AssertError<SoftDeleteCannotBeSetDirectly>(() => _client.UpdateEntityAsync(_entity));
+        _entity.IsSoftDeleted = false;
     }
 
     [Fact]

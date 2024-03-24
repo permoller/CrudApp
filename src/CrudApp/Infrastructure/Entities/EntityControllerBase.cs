@@ -23,7 +23,10 @@ public abstract class EntityControllerBase<T> : QueryControllerBase<T> where T :
     public async Task<ActionResult<EntityId>> Post([FromBody] T entity, CancellationToken cancellationToken = default)
     {
         if (entity.IsSoftDeleted)
-            return MapErrorToActionResult(new Error.CannotCreateDeletedEntity(typeof(T), entity.Id));
+            return MapErrorToActionResult(new Error.SoftDeleteCannotBeSetDirectly(typeof(T), entity.Id));
+
+        if (entity.Version != default)
+            return MapErrorToActionResult(new Error.VersionCannotBeSetDirectly(typeof(T), entity.Id, entity.Version));
 
         if (entity.Id != default)
         {
@@ -49,10 +52,10 @@ public abstract class EntityControllerBase<T> : QueryControllerBase<T> where T :
     {
         var result = await Result.From(entity)
             .Validate(entity => entity.Id != id ? new Error.InconsistentEntityIdInRequest(typeof(T), entityIdInPath: id, entityIdInBody: entity.Id) : null)
-            .Validate(entity => entity.IsSoftDeleted ? new Error.CannotUpdateDeletedEntity(typeof(T), entity.Id) : null)
             .Map(entity => DbContext.GetByIdAuthorized<T>(entity.Id, asNoTracking: false, cancellationToken))
             .Validate(dbEntity => dbEntity.Version != entity.Version ? new Error.EntityVersionInRequestDoesNotMatchVersionInDatabase(typeof(T), versionInRequest: entity.Version, versionInDatabase: dbEntity.Version) : null)
             .Validate(dbEntity => dbEntity.IsSoftDeleted ? new Error.CannotUpdateDeletedEntity(typeof(T), dbEntity.Id) : null)
+            .Validate(dbEntity => entity.IsSoftDeleted ? new Error.SoftDeleteCannotBeSetDirectly(typeof(T), entity.Id) : null)
             .Use(dbEntity => DbContext.UpdateExistingEntity(dbEntity, entity))
             .Use(dbEntity => DbContext.SaveChangesAsync(cancellationToken));
 
@@ -103,7 +106,7 @@ public abstract class EntityControllerBase<T> : QueryControllerBase<T> where T :
     /// If <paramref name="version"/> is provided and it does not match the version in the database, the operation fails.
     /// </summary>
     [HttpDelete("{id}")]
-    public async Task<Result<Nothing>> Delete([FromRoute] EntityId id, long? version = null, CancellationToken cancellationToken = default)
+    public async Task<Result<Nothing>> Delete([FromRoute] EntityId id, long? version, CancellationToken cancellationToken = default)
     {
         var result = await Result.From(id)
             .Map(id => DbContext.GetByIdAuthorized<T>(id, asNoTracking: false, cancellationToken))

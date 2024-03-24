@@ -45,7 +45,7 @@ public static class ProblemDetailsHelper
     /// <see cref="EntityControllerBase{T}"/> is marked with <see cref="ApiControllerAttribute"/>
     /// which triggers automatic model validation before that action-method is called.
     /// If the validation fails, this method is called to get the response.
-    /// This method converts the <see cref="ModelStateDictionary"/> with the errors to a <see cref="Error.ModelValidationFailed"/>
+    /// This method converts the <see cref="ModelStateDictionary"/> with the errors to a <see cref="Error.ValidationFailed"/>
     /// which is then mapped to a <see cref="ProblemDetails"/> and returned in an <see cref="ObjectResult"/>.
     /// </summary>
     public static IActionResult InvalidModelStateResponseFactory(ActionContext context)
@@ -54,7 +54,7 @@ public static class ProblemDetailsHelper
         var validationErrors = new ValidationProblemDetails(context.ModelState).Errors;
         var errors = validationErrors as Dictionary<string, string[]> ?? new Dictionary<string, string[]>(validationErrors);
 
-        var error = new Error.ModelValidationFailed(errors);
+        var error = new Error.ValidationFailed(errors);
         var problemDetails = context.HttpContext.MapErrorToProblemDetails(error);
         return problemDetails.ToObjectResult();
     }
