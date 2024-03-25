@@ -1,5 +1,4 @@
-﻿using System.Runtime.Serialization;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 
 namespace CrudApp.Infrastructure.ErrorHandling;
 
@@ -8,11 +7,18 @@ namespace CrudApp.Infrastructure.ErrorHandling;
 /// Contains the HTTP status code and optionally a message with details to be returned to the client.
 /// Transformed to a <see cref="ProblemDetails"/> response in <see cref="ApiExceptionHandler"/>.
 /// </summary>
-[Serializable]
 public sealed class ApiResponseException : Exception
 {
-    public int HttpStatus { get; }
-    public bool HasMessage { get; private set; }
+    public int HttpStatus
+    {
+        get => (int?)Data[nameof(HttpStatus)] ?? default;
+        private set => Data[nameof(HttpStatus)] = value;
+    }
+    public bool HasMessage
+    {
+        get => (bool?)Data[nameof(HasMessage)] ?? default;
+        private set => Data[nameof(HasMessage)] = value;
+    }
 
     public ApiResponseException(int status, string? message) : this(status, message, null)
     {
@@ -22,19 +28,6 @@ public sealed class ApiResponseException : Exception
     {
         HasMessage = !string.IsNullOrEmpty(message);
         HttpStatus = status;
-    }
-
-    private ApiResponseException(SerializationInfo info, StreamingContext context) : base(info, context)
-    {
-        HttpStatus = info.GetInt32(nameof(HttpStatus));
-        HasMessage = info.GetBoolean(nameof(HasMessage));
-    }
-
-    public override void GetObjectData(SerializationInfo info, StreamingContext context)
-    {
-        info.AddValue(nameof(HasMessage), HasMessage);
-        info.AddValue(nameof(HttpStatus), HttpStatus);
-        base.GetObjectData(info, context);
     }
 
 }

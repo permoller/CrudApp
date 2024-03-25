@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
-using System.Runtime.Serialization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CrudApp.Infrastructure.ErrorHandling;
@@ -9,7 +8,6 @@ namespace CrudApp.Infrastructure.ErrorHandling;
 /// Contains errors per property in a <see cref="ModelStateDictionary"/>.
 /// Transformed to a <see cref="ValidationProblemDetails"/> response in <see cref="ApiExceptionHandler"/>.
 /// </summary>
-[Serializable]
 public sealed class ValidationException : Exception
 {
     public ValidationException(ModelStateDictionary modelState) : base()
@@ -17,16 +15,10 @@ public sealed class ValidationException : Exception
         ModelState = modelState;
     }
 
-    private ValidationException(SerializationInfo info, StreamingContext context) : base(info, context)
+    public ModelStateDictionary ModelState
     {
-        ModelState = (ModelStateDictionary)info.GetValue(nameof(ModelState), typeof(ModelStateDictionary))!;
+        get => (ModelStateDictionary)Data[nameof(ModelState)]!;
+        set => Data[nameof(ModelState)] = value;
     }
-
-    public override void GetObjectData(SerializationInfo info, StreamingContext context)
-    {
-        info.AddValue(nameof(ModelState), ModelState);
-        base.GetObjectData(info, context);
-    }
-    public ModelStateDictionary ModelState { get; }
 }
 
