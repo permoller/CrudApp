@@ -1,5 +1,6 @@
 ﻿using CrudApp.Infrastructure.Query;
 using CrudApp.Infrastructure.Testing;
+using CrudApp.Infrastructure.UtilityCode;
 using CrudApp.Tests.Infrastructure.Entities;
 using CrudApp.Tests.Infrastructure.WebApi;
 using Xunit.Abstractions;
@@ -88,22 +89,33 @@ public class QueryControllerTests : IntegrationTestsBase<QueryControllerTests.Te
     /// If they start working (the test fails) you should think about if it is because you have made it work or you have broken somthing.
     /// </summary>
     [Theory]
-    [InlineData("NonNullableInt EQ one", "Could not convert value 'one' to type 'Int32'.")] // using value that does not match property type
-    [InlineData("TestProp EQ one AND two", "Invalid filter syntax.")] // using ' AND ' in value will make the parser think a new condition is starting
-    [InlineData("NonNullableInt EQ 1 OR NullableInt EQ 30", "Could not convert value '1 OR NullableInt EQ 30' to type 'Int32'.")] // using OR is not supported, so it is assumed to be part of a string value
-    [InlineData("TestProp GT Hulk", "Filter operator 'GT' not supported on type 'String'.")]
-    [InlineData("TestProp LT Hulk", "Filter operator 'LT' not supported on type 'String'.")]
-    [InlineData("TestProp GE Hulk", "Filter operator 'GE' not supported on type 'String'.")]
-    [InlineData("TestProp LE Hulk", "Filter operator 'LE' not supported on type 'String'.")]
-    [InlineData("PropThatDoesNotExists EQ 1", "Property 'PropThatDoesNotExists' not found on type 'InfrastructureTestEntity'.")]
-    public async Task FilterLimitations(string filter, string expectedMessage)
+    [InlineData("NonNullableInt EQ one", typeof(Error.CannotConvertValueInFilterToTheExpectedType), "one", "Int32")] // using value that does not match property type
+    [InlineData("TestProp EQ one AND two", typeof(Error.InvalidFilterFormat), null, null)] // using ' AND ' in value will make the parser think a new condition is starting
+    [InlineData("NonNullableInt EQ 1 OR NullableInt EQ 30", typeof(Error.CannotConvertValueInFilterToTheExpectedType), "1 OR NullableInt EQ 30", "Int32")] // using OR is not supported, so it is assumed to be part of a string value
+    [InlineData("TestProp GT Hulk", typeof(Error.OperatorCannotBeUsedOnTheValueType), "GT", "String")]
+    [InlineData("TestProp LT Hulk", typeof(Error.OperatorCannotBeUsedOnTheValueType), "LT", "String")]
+    [InlineData("TestProp GE Hulk", typeof(Error.OperatorCannotBeUsedOnTheValueType), "GE", "String")]
+    [InlineData("TestProp LE Hulk", typeof(Error.OperatorCannotBeUsedOnTheValueType), "LE", "String")]
+    [InlineData("PropThatDoesNotExists EQ 1", typeof(Error.PropertyNotFoundOnType), "PropThatDoesNotExists", "InfrastructureTestEntity")]
+    public async Task FilterLimitations(string filter, Type expectedErrorType, string? expectedData1, string? expectedData2)
     {
         var filteringParams = new FilteringParams { Filter = filter };
 
         var countException = await Assert.ThrowsAsync<ProblemDetailsApiException>(() => Fixture.Client.Count<InfrastructureTestEntity>(filteringParams));
-        Assert.Contains(expectedMessage, countException.Message);
+        Assert.Equal(countException.ProblemDetails.GetErrorTypeName(), expectedErrorType.Name);
+        Assert.True(countException.ProblemDetails.TryGetData(out var data));
+        var dataList = data.ToList();
+        if (expectedData1 is not null)
+            Assert.Equal(expectedData1, dataList[0].Value?.GetString());
+        if (expectedData2 is not null)
+            Assert.Equal(expectedData2, dataList[1].Value?.GetString());
 
         var queryException = await Assert.ThrowsAsync<ProblemDetailsApiException>(() => Fixture.Client.Query<InfrastructureTestEntity>(filteringParams));
-        Assert.Contains(expectedMessage, queryException.Message);
+        Assert.True(queryException.ProblemDetails.TryGetData(out var data2));
+        var data2List = data2.ToList();
+        if (expectedData1 is not null)
+            Assert.Equal(expectedData1, data2List[0].Value?.GetString());
+        if (expectedData2 is not null)
+            Assert.Equal(expectedData2, data2List[1].Value?.GetString());
     }
 }

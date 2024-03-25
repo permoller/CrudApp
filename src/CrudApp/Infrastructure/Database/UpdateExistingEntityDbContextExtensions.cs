@@ -158,7 +158,7 @@ public static class UpdateExistingEntityDbContextExtensions
             {
                 var clrProp = metadataProp.PropertyInfo;
                 if (clrProp is null)
-                    throw new ErrorException($"PropertyInfo is null for property {metadataProp.Name} on entity {entityType.Name}. Shadow properties are not supported.");
+                    throw new NotSupportedException($"PropertyInfo is null for property {metadataProp.Name} on entity {entityType.Name}. Shadow properties are not supported.");
 
                 _primaryKeyProperties.Add(clrProp);
             }

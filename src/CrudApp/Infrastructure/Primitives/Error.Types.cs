@@ -17,7 +17,14 @@ public partial class Error
     public sealed class CannotGetDeletedEntity(Type entityType, EntityId entityId, Exception? exception = default) : Error(HttpStatus.BadRequest, exception, new DataDictionary().Add(entityType).Add(entityId));
     public sealed class CannotUpdateDeletedEntity(Type entityType, EntityId entityId, Exception? exception = default) : Error(HttpStatus.BadRequest, exception, new DataDictionary().Add(entityType).Add(entityId));
     public sealed class EntityAlreadyDeleted(Type entityType, EntityId entityId, Exception? exception = default) : Error(HttpStatus.BadRequest, exception, new DataDictionary().Add(entityType).Add(entityId));
-
+    public sealed class InvalidFilterFormat(string filter, Exception? exception = default) : Error(HttpStatus.BadRequest, exception, new DataDictionary().Add(filter));
+    public sealed class CannotConvertValueInFilterToTheExpectedType(string value, Type expectedType, Exception? exception = default) : Error(HttpStatus.BadRequest, exception, new DataDictionary().Add(value).Add(expectedType));
+    public sealed class InvalidOperatorInFilter(string filterOperator, Exception? exception = default) : Error(HttpStatus.BadRequest, exception, new DataDictionary().Add(filterOperator));
+    public sealed class OperatorCannotBeUsedOnTheValueType(string filterOperator, Type valueType, Exception? exception = default) : Error(HttpStatus.BadRequest, exception, new DataDictionary().Add(filterOperator).Add(valueType));
+    public sealed class OrderByIsRequiredWhenUsingSkipAndTake(Exception? exception = default) : Error(HttpStatus.BadRequest, exception);
+    public sealed class InvalidOrderByFormat(string orderBy, Exception? exception = default) : Error(HttpStatus.BadRequest, exception, new DataDictionary().Add(orderBy));
+    public sealed class PropertyNotFoundOnType(string property, Type type, Exception? exception = default) : Error(HttpStatus.BadRequest, exception, new DataDictionary().Add(property).Add(type));
+    
     //
     // 401 Unauthorized
     //

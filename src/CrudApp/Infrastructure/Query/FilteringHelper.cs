@@ -13,23 +13,17 @@ public class FilteringParams
 public static class FilteringHelper
 {
     [StringSyntax(StringSyntaxAttribute.Regex)]
-    private const string _filterConditionRegex = "(?<expression>(?<property>[^ ]+) (?<comparison>[^ ]+) (?<value>(?:[^ ]| (?!AND ))+))";
+    private const string _filterConditionRegex = "(?<expression>(?<property>[^ ]+) (?<operator>[^ ]+) (?<value>(?:[^ ]| (?!AND ))+))";
     private static readonly Regex _filterRegex = new Regex($"^{_filterConditionRegex}(?: AND {_filterConditionRegex})*$", RegexOptions.Compiled);
 
-    public static IQueryable<T> ApplyFiltering<T>(this IQueryable<T> query, FilteringParams filteringParams)
+    public static Result<IQueryable<T>> ApplyFiltering<T>(this IQueryable<T> query, FilteringParams filteringParams) where T : notnull
     {
-        if (filteringParams == default)
-            return query;
-
-        var conditions = Parse<T>(filteringParams.Filter);
-
-        if(conditions.Count > 0)
-            query = query.Where(ToPredicate<T>(conditions));
-
-        return query;
+        return Parse<T>(filteringParams?.Filter)
+            .Map(ToPredicate<T>)
+            .Map(query.Where);
     }
 
-    private static List<FilterCondition> Parse<T>(string? filterString)
+    private static Result<List<FilterCondition>> Parse<T>(string? filterString)
     {
         var conditions = new List<FilterCondition>();
 
@@ -41,14 +35,15 @@ public static class FilteringHelper
         var match = _filterRegex.Match(filterString);
         if (!match.Success)
         {
-            throw new ApiResponseException(HttpStatus.BadRequest, "Invalid filter syntax.");
+            return new Error.InvalidFilterFormat(filterString);
         }
 
         var expressionCount = match.Groups["expression"].Captures.Count;
         for (int i = 0; i < expressionCount; i++)
         {
             var propertyPath = match.Groups["property"].Captures[i].Value;
-            var propertyInfos = typeof(T).ParsePropertyPath(propertyPath);
+            if (typeof(T).ParsePropertyPath(propertyPath).TryGetError(out var error, out var propertyInfos))
+                return error;
 
             var valueAsString = match.Groups["value"].Captures[i].Value;
             var lastProperty = propertyInfos[propertyInfos.Count - 1];
@@ -60,25 +55,25 @@ public static class FilteringHelper
             }
             catch (Exception ex)
             {
-                throw new ApiResponseException(HttpStatus.BadRequest, $"Could not convert value '{valueAsString}' to type '{valueType.Name}'.", ex);
+                return new Error.CannotConvertValueInFilterToTheExpectedType(valueAsString, valueType, ex);
             }
 
-            var comparisonString = match.Groups["comparison"].Captures[i].Value;
-            QueryFilterOperator? comparison;
+            var operatorString = match.Groups["operator"].Captures[i].Value;
+            QueryFilterOperator? filterOperator;
             try
             {
-                comparison = Enum.Parse<QueryFilterOperator>(comparisonString);
+                filterOperator = Enum.Parse<QueryFilterOperator>(operatorString);
             }
             catch (Exception ex)
             {
-                throw new ApiResponseException(HttpStatus.BadRequest, $"Comparison '{comparisonString}' not supported.", ex);
+                return new Error.InvalidOperatorInFilter(operatorString, ex);
             }
-            conditions.Add(new(propertyInfos, comparison.Value, value));
+            conditions.Add(new(propertyInfos, filterOperator.Value, value));
         }
         return conditions;
     }
 
-    private static Expression<Func<T, bool>> ToPredicate<T>(List<FilterCondition> conditions)
+    private static Result<Expression<Func<T, bool>>> ToPredicate<T>(List<FilterCondition> conditions)
     {
         var body = (Expression)Expression.Constant(true);
         var entityParameter = Expression.Parameter(typeof(T));
@@ -105,7 +100,7 @@ public static class FilteringHelper
             }
             catch (InvalidOperationException ex)
             {
-                throw new ApiResponseException(HttpStatus.BadRequest, $"Filter operator '{filter.Operator}' not supported on type '{filter.Value?.GetType().Name}'.");
+                return new Error.OperatorCannotBeUsedOnTheValueType(filter.Operator.ToString(), filter.Value.GetType(), ex);
             }
             if (condition is null)
                 throw new NotImplementedException($"Filter operator '{filter.Operator}' not implemented.");
@@ -125,10 +120,10 @@ public static class FilteringHelper
         public QueryFilterOperator Operator { get; }
         public object Value { get; }
 
-        public FilterCondition(List<PropertyInfo> propertyInfos, QueryFilterOperator comparison, object value)
+        public FilterCondition(List<PropertyInfo> propertyInfos, QueryFilterOperator filterOperator, object value)
         {
             PropertyInfos = propertyInfos;
-            Operator = comparison;
+            Operator = filterOperator;
             Value = value;
         }
     }

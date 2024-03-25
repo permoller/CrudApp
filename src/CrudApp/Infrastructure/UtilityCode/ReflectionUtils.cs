@@ -123,10 +123,8 @@ public static class ReflectionUtils
     }
 
     
-    public static List<PropertyInfo> ParsePropertyPath(this Type type, string path)
+    public static Result<List<PropertyInfo>> ParsePropertyPath(this Type type, string path)
     {
-        if (string.IsNullOrWhiteSpace(path))
-            throw new ApiResponseException(HttpStatus.BadRequest, "Missing property in filter.");
         var propertyNames = path.Split('.');
         var propertyInfos = new List<PropertyInfo>(propertyNames.Length);
         PropertyInfo? propertyInfo = null;
@@ -136,7 +134,7 @@ public static class ReflectionUtils
             propertyInfo = Array.Find(t.GetProperties(), p => p.Name.Equals(propertyName, StringComparison.OrdinalIgnoreCase));
             if (propertyInfo == default)
             {
-                throw new ApiResponseException(HttpStatus.BadRequest, $"Property '{propertyName}' not found on type '{t.Name}'.");
+                return new Error.PropertyNotFoundOnType(propertyName, t);
             }
             propertyInfos.Add(propertyInfo);
         }

@@ -25,29 +25,27 @@ public static class OrderingHelper
 #pragma warning restore S3011 // Reflection should not be used to increase accessibility of classes, methods, or fields
 
 
-    public static IQueryable<T> ApplyOrdering<T>(this IQueryable<T> queryable, OrderingParams orderingParams)
+    public static Result<IQueryable<T>> ApplyOrdering<T>(this IQueryable<T> queryable, OrderingParams orderingParams)
     {
         if (orderingParams == default)
-            return queryable;
+            return Result.From(queryable);
 
-        if ((orderingParams.Skip.HasValue || orderingParams.Take.HasValue) && string.IsNullOrEmpty(orderingParams.OrderBy))
-        {
-            throw new ApiResponseException(HttpStatus.BadRequest,
-                $"{nameof(OrderingParams.Skip)} and {nameof(OrderingParams.Take)} only makes sense in combination with {nameof(OrderingParams.OrderBy)}.");
-        }
+        if ((orderingParams.Skip.HasValue || orderingParams.Take.HasValue) && string.IsNullOrWhiteSpace(orderingParams.OrderBy))
+            return new Error.OrderByIsRequiredWhenUsingSkipAndTake();
 
         if (string.IsNullOrWhiteSpace(orderingParams.OrderBy))
-            return queryable;
+            return Result.From(queryable);
 
         var match = _orderByRegex.Match(orderingParams.OrderBy);
         if (!match.Success)
-            throw new ApiResponseException(HttpStatus.BadRequest, "Invalid orderBy syntax.");
+            return new Error.InvalidOrderByFormat(orderingParams.OrderBy);
 
         var count = match.Groups["expression"].Captures.Count;
         for (var i = 0; i < count; i++)
         {
             var propertyPath = match.Groups["property"].Captures[i].Value;
-            var propertyInfos = typeof(T).ParsePropertyPath(propertyPath);
+            if (typeof(T).ParsePropertyPath(propertyPath).TryGetError(out var error, out var propertyInfos))
+                return error;
             var isDescending = match.Groups["descending"].Captures[i].Value == " desc";
             var keyType = propertyInfos[propertyInfos.Count - 1].PropertyType;
             var isFirst = i == 0;
@@ -62,7 +60,7 @@ public static class OrderingHelper
         if (orderingParams.Take.HasValue)
             queryable = queryable.Take(orderingParams.Take.Value);
 
-        return queryable;
+        return Result.From(queryable);
     }
 
     private static IOrderedQueryable<T> ApplySingleOrderBy<T, TKey>(IQueryable<T> query, bool isDescending, bool isFirst, List<PropertyInfo> propertyInfos)

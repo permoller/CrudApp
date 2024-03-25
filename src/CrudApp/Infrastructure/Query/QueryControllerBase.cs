@@ -9,23 +9,20 @@ public abstract class QueryControllerBase<T> : CrudAppApiControllerBase where T 
     protected abstract IQueryable<T> GetQueryable(bool includeSoftDeleted);
 
     [HttpGet("query")]
-    public async Task<IEnumerable<T>> Query([FromQuery] FilteringParams filteringParams, [FromQuery] OrderingParams orderingParams, bool includeSoftDeleted = false, CancellationToken cancellationToken = default)
+    public Task<Result<List<T>>> Query([FromQuery] FilteringParams filteringParams, [FromQuery] OrderingParams orderingParams, bool includeSoftDeleted = false, CancellationToken cancellationToken = default)
     {
-        var queryable =
+        return
             GetQueryable(includeSoftDeleted)
             .ApplyFiltering(filteringParams)
-            .ApplyOrdering(orderingParams);
-        var result = await queryable.AsNoTracking().ToListAsync(cancellationToken);
-        return result;
+            .Map(query => query.ApplyOrdering(orderingParams))
+            .Map(query => query.AsNoTracking().ToListAsync(cancellationToken));
     }
 
     [HttpGet("count")]
-    public async Task<long> Count([FromQuery] FilteringParams filteringParams, bool includeSoftDeleted = false, CancellationToken cancellationToken = default)
+    public Task<Result<long>> Count([FromQuery] FilteringParams filteringParams, bool includeSoftDeleted = false, CancellationToken cancellationToken = default)
     {
-        var query =
-            GetQueryable(includeSoftDeleted)
-            .ApplyFiltering(filteringParams);
-        var result = await query.LongCountAsync(cancellationToken);
-        return result;
+        return GetQueryable(includeSoftDeleted)
+            .ApplyFiltering(filteringParams)
+            .Map(query => query.LongCountAsync(cancellationToken));
     }
 }
