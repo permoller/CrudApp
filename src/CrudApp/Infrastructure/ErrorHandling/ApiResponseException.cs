@@ -14,11 +14,6 @@ public sealed class ApiResponseException : Exception
         get => (int?)Data[nameof(HttpStatus)] ?? default;
         private set => Data[nameof(HttpStatus)] = value;
     }
-    public bool HasMessage
-    {
-        get => (bool?)Data[nameof(HasMessage)] ?? default;
-        private set => Data[nameof(HasMessage)] = value;
-    }
 
     public ApiResponseException(int status, string? message) : this(status, message, null)
     {
@@ -26,7 +21,6 @@ public sealed class ApiResponseException : Exception
 
     public ApiResponseException(int status, string? message, Exception? innerException) : base(message, innerException)
     {
-        HasMessage = !string.IsNullOrEmpty(message);
         HttpStatus = status;
     }
 
