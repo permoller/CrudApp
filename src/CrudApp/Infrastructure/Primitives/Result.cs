@@ -95,7 +95,7 @@ public static class Result
     public static Result<Nothing> FromNothing() => new Result<Nothing>(Nothing.Instance);
 
 
-    public static Result<T> Use<T>(this Result<T> result, Action<T> func) => 
+    public static Result<T> Use<T>(this Result<T> result, Action<T> func) =>
         result.Select(v => { func(v); return v; });
     public static async Task<Result<T>> Use<T>(this Result<T> result, Func<T, Task> func) =>
         await result.Select(async v => { await func(v); return v; });
@@ -113,57 +113,62 @@ public static class Result
     public static async Task<Result<T>> Validate<T>(this Task<Result<T>> result, Func<T, Task<Error?>> func) =>
         await (await result).Validate(func);
 
-    public static Result<TOut> Select<TIn, TOut>(this Result<TIn> result, Func<TIn, TOut> select) =>
-        result.Match(v => new Result<TOut>(select(v)), e => new Result<TOut>(e));
-    public static Result<TOut> Select<TIn, TOut>(this Result<TIn> result, Func<TIn, Result<TOut>> select) =>
-        result.Match(v => select(v), e => new Result<TOut>(e));
-    public static Task<Result<TOut>> Select<TIn, TOut>(this Result<TIn> result, Func<TIn, Task<TOut>> select) =>
-        result.Match(async v => new Result<TOut>(await select(v)), e => Task.FromResult(new Result<TOut>(e)));
-    public static Task<Result<TOut>> Select<TIn, TOut>(this Result<TIn> result, Func<TIn, Task<Result<TOut>>> select) =>
-        result.Match(v => select(v), e => Task.FromResult(new Result<TOut>(e)));
 
-    public static async Task<Result<TOut>> Select<TIn, TOut>(this Task<Result<TIn>> result, Func<TIn, TOut> select) =>
-        (await result).Select(select);
-    public static async Task<Result<TOut>> Select<TIn, TOut>(this Task<Result<TIn>> result, Func<TIn, Result<TOut>> select) =>
-        (await result).Select(select);
-    public static async Task<Result<TOut>> Select<TIn, TOut>(this Task<Result<TIn>> result, Func<TIn, Task<TOut>> select) =>
-        await (await result).Select(select);
-    public static async Task<Result<TOut>> Select<TIn, TOut>(this Task<Result<TIn>> result, Func<TIn, Task<Result<TOut>>> select) =>
-        await (await result).Select(select);
+    #region Methods to support using Result<T> in LINQ
 
-    public static Result<TOut> SelectMany<TInA, TInB, TOut>(this Result<TInA> resultA, Func<TInA, Result<TInB>> selectB, Func<TInA, TInB, TOut> select) =>
-        resultA.Select(a => selectB(a).Select(b => select(a, b)));
-    public static Result<TOut> SelectMany<TInA, TInB, TOut>(this Result<TInA> resultA, Func<TInA, Result<TInB>> selectB, Func<TInA, TInB, Result<TOut>> select) =>
-        resultA.Select(a => selectB(a).Select(b => select(a, b)));
-    public static async Task<Result<TOut>> SelectMany<TInA, TInB, TOut>(this Result<TInA> resultA, Func<TInA, Result<TInB>> selectB, Func<TInA, TInB, Task<TOut>> select) =>
-        await resultA.Select(a => selectB(a).Select(async b => await select(a, b)));
-    public static async Task<Result<TOut>> SelectMany<TInA, TInB, TOut>(this Result<TInA> resultA, Func<TInA, Result<TInB>> selectB, Func<TInA, TInB, Task<Result<TOut>>> select) =>
-        await resultA.Select(a => selectB(a).Select(async b => await select(a, b)));
+    public static Result<B> Select<A, B>(this Result<A> resultA, Func<A, B> selectB) =>
+        resultA.Match(valueA => new Result<B>(selectB(valueA)), errorA => new Result<B>(errorA));
+    public static Result<B> Select<A, B>(this Result<A> resultA, Func<A, Result<B>> selectResultB) =>
+        resultA.Match(valueA => selectResultB(valueA), errorA => new Result<B>(errorA));
+    public static Task<Result<B>> Select<A, B>(this Result<A> resultA, Func<A, Task<B>> selectTaskB) =>
+        resultA.Match(async valueA => new Result<B>(await selectTaskB(valueA)), errorA => Task.FromResult(new Result<B>(errorA)));
+    public static Task<Result<B>> Select<A, B>(this Result<A> resultA, Func<A, Task<Result<B>>> selectTaskResultB) =>
+        resultA.Match(valueA => selectTaskResultB(valueA), errorA => Task.FromResult(new Result<B>(errorA)));
 
-    public static async Task<Result<TOut>> SelectMany<TInA, TInB, TOut>(this Task<Result<TInA>> taskResultA, Func<TInA, Result<TInB>> selectB, Func<TInA, TInB, TOut> select) =>
-        (await taskResultA).SelectMany(selectB, select);
-    public static async Task<Result<TOut>> SelectMany<TInA, TInB, TOut>(this Task<Result<TInA>> taskResultA, Func<TInA, Result<TInB>> selectB, Func<TInA, TInB, Result<TOut>> select) =>
-        (await taskResultA).SelectMany(selectB, select);
-    public static async Task<Result<TOut>> SelectMany<TInA, TInB, TOut>(this Task<Result<TInA>> taskResultA, Func<TInA, Result<TInB>> selectB, Func<TInA, TInB, Task<TOut>> select) =>
-        await (await taskResultA).SelectMany(selectB, select);
-    public static async Task<Result<TOut>> SelectMany<TInA, TInB, TOut>(this Task<Result<TInA>> taskResultA, Func<TInA, Result<TInB>> selectB, Func<TInA, TInB, Task<Result<TOut>>> select) =>
-        await (await taskResultA).SelectMany(selectB, select);
+    public static async Task<Result<B>> Select<A, B>(this Task<Result<A>> taskResultA, Func<A, B> selectB) =>
+        (await taskResultA).Select(selectB);
+    public static async Task<Result<B>> Select<A, B>(this Task<Result<A>> taskResultA, Func<A, Result<B>> selectResultB) =>
+        (await taskResultA).Select(selectResultB);
+    public static async Task<Result<B>> Select<A, B>(this Task<Result<A>> taskResultA, Func<A, Task<B>> selectTaskB) =>
+        await (await taskResultA).Select(selectTaskB);
+    public static async Task<Result<B>> Select<A, B>(this Task<Result<A>> taskResultA, Func<A, Task<Result<B>>> selectTaskResultB) =>
+        await (await taskResultA).Select(selectTaskResultB);
 
-    public static async Task<Result<TOut>> SelectMany<TInA, TInB, TOut>(this Result<TInA> resultA, Func<TInA, Task<Result<TInB>>> selectB, Func<TInA, TInB, TOut> select) =>
-        await resultA.Select(async a => (await selectB(a)).Select(b => select(a, b)));
-    public static async Task<Result<TOut>> SelectMany<TInA, TInB, TOut>(this Result<TInA> resultA, Func<TInA, Task<Result<TInB>>> selectB, Func<TInA, TInB, Result<TOut>> select) =>
-        await resultA.Select(async a => (await selectB(a)).Select(b => select(a, b)));
-    public static async Task<Result<TOut>> SelectMany<TInA, TInB, TOut>(this Result<TInA> resultA, Func<TInA, Task<Result<TInB>>> selectB, Func<TInA, TInB, Task<TOut>> select) =>
-        await resultA.Select(async a => await (await selectB(a)).Select(async b => await select(a, b)));
-    public static async Task<Result<TOut>> SelectMany<TInA, TInB, TOut>(this Result<TInA> resultA, Func<TInA, Task<Result<TInB>>> selectB, Func<TInA, TInB, Task<Result<TOut>>> select) =>
-        await resultA.Select(async a => await (await selectB(a)).Select(async b => await select(a, b)));
+    public static Result<C> SelectMany<A, B, C>(this Result<A> resultA, Func<A, Result<B>> selectResultB, Func<A, B, C> selectC) =>
+        resultA.Select(a => selectResultB(a).Select(b => selectC(a, b)));
+    public static Result<C> SelectMany<A, B, C>(this Result<A> resultA, Func<A, Result<B>> selectResultB, Func<A, B, Result<C>> selectResultC) =>
+        resultA.Select(a => selectResultB(a).Select(b => selectResultC(a, b)));
+    public static async Task<Result<C>> SelectMany<A, B, C>(this Result<A> resultA, Func<A, Result<B>> selectResultB, Func<A, B, Task<C>> selectTaskC) =>
+        await resultA.Select(a => selectResultB(a).Select(b => selectTaskC(a, b)));
+    public static async Task<Result<C>> SelectMany<A, B, C>(this Result<A> resultA, Func<A, Result<B>> selectResultB, Func<A, B, Task<Result<C>>> selectTaskResultC) =>
+        await resultA.Select(a => selectResultB(a).Select(b => selectTaskResultC(a, b)));
 
-    public static async Task<Result<TOut>> SelectMany<TInA, TInB, TOut>(this Task<Result<TInA>> taskResultA, Func<TInA, Task<Result<TInB>>> selectB, Func<TInA, TInB, TOut> select) =>
-        await (await taskResultA).SelectMany(selectB, select);
-    public static async Task<Result<TOut>> SelectMany<TInA, TInB, TOut>(this Task<Result<TInA>> taskResultA, Func<TInA, Task<Result<TInB>>> selectB, Func<TInA, TInB, Result<TOut>> select) =>
-        await (await taskResultA).SelectMany(selectB, select);
-    public static async Task<Result<TOut>> SelectMany<TInA, TInB, TOut>(this Task<Result<TInA>> taskResultA, Func<TInA, Task<Result<TInB>>> selectB, Func<TInA, TInB, Task<TOut>> select) =>
-        await (await taskResultA).SelectMany(selectB, select);
-    public static async Task<Result<TOut>> SelectMany<TInA, TInB, TOut>(this Task<Result<TInA>> taskResultA, Func<TInA, Task<Result<TInB>>> selectB, Func<TInA, TInB, Task<Result<TOut>>> select) =>
-        await (await taskResultA).SelectMany(selectB, select);
+    public static async Task<Result<C>> SelectMany<A, B, C>(this Task<Result<A>> taskResultA, Func<A, Result<B>> selectResultB, Func<A, B, C> selectC) =>
+        (await taskResultA).SelectMany(selectResultB, selectC);
+    public static async Task<Result<C>> SelectMany<A, B, C>(this Task<Result<A>> taskResultA, Func<A, Result<B>> selectResultB, Func<A, B, Result<C>> selectResultC) =>
+        (await taskResultA).SelectMany(selectResultB, selectResultC);
+    public static async Task<Result<C>> SelectMany<A, B, C>(this Task<Result<A>> taskResultA, Func<A, Result<B>> selectResultB, Func<A, B, Task<C>> selectTaskC) =>
+        await (await taskResultA).SelectMany(selectResultB, selectTaskC);
+    public static async Task<Result<C>> SelectMany<A, B, C>(this Task<Result<A>> taskResultA, Func<A, Result<B>> selectResultB, Func<A, B, Task<Result<C>>> selectTaskResultC) =>
+        await (await taskResultA).SelectMany(selectResultB, selectTaskResultC);
+
+    public static async Task<Result<C>> SelectMany<A, B, C>(this Result<A> resultA, Func<A, Task<Result<B>>> selectTaskResultB, Func<A, B, C> selectC) =>
+        await resultA.Select(async a => (await selectTaskResultB(a)).Select(b => selectC(a, b)));
+    public static async Task<Result<C>> SelectMany<A, B, C>(this Result<A> resultA, Func<A, Task<Result<B>>> selectTaskResultB, Func<A, B, Result<C>> selectResultC) =>
+        await resultA.Select(async a => (await selectTaskResultB(a)).Select(b => selectResultC(a, b)));
+    public static async Task<Result<C>> SelectMany<A, B, C>(this Result<A> resultA, Func<A, Task<Result<B>>> selectTaskResultB, Func<A, B, Task<C>> selectTaskC) =>
+        await resultA.Select(async a => await (await selectTaskResultB(a)).Select(async b => await selectTaskC(a, b)));
+    public static async Task<Result<C>> SelectMany<A, B, C>(this Result<A> resultA, Func<A, Task<Result<B>>> selectTaskResultB, Func<A, B, Task<Result<C>>> selectTaskResultC) =>
+        await resultA.Select(async a => await (await selectTaskResultB(a)).Select(async b => await selectTaskResultC(a, b)));
+
+    public static async Task<Result<C>> SelectMany<A, B, C>(this Task<Result<A>> taskResultA, Func<A, Task<Result<B>>> selectTaskResultB, Func<A, B, C> selectC) =>
+        await (await taskResultA).SelectMany(selectTaskResultB, selectC);
+    public static async Task<Result<C>> SelectMany<A, B, C>(this Task<Result<A>> taskResultA, Func<A, Task<Result<B>>> selectTaskResultB, Func<A, B, Result<C>> selectResultC) =>
+        await (await taskResultA).SelectMany(selectTaskResultB, selectResultC);
+    public static async Task<Result<C>> SelectMany<A, B, C>(this Task<Result<A>> taskResultA, Func<A, Task<Result<B>>> selectTaskResultB, Func<A, B, Task<C>> selectTaskC) =>
+        await (await taskResultA).SelectMany(selectTaskResultB, selectTaskC);
+    public static async Task<Result<C>> SelectMany<A, B, C>(this Task<Result<A>> taskResultA, Func<A, Task<Result<B>>> selectTaskResultB, Func<A, B, Task<Result<C>>> selectTaskResultC) =>
+        await (await taskResultA).SelectMany(selectTaskResultB, selectTaskResultC);
+
+    #endregion
 }
