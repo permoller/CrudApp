@@ -14,8 +14,8 @@ public abstract class QueryControllerBase<T> : CrudAppApiControllerBase where T 
         return
             GetQueryable(includeSoftDeleted)
             .ApplyFiltering(filteringParams)
-            .Map(query => query.ApplyOrdering(orderingParams))
-            .Map(query => query.AsNoTracking().ToListAsync(cancellationToken));
+            .Select(query => query.ApplyOrdering(orderingParams))
+            .Select(query => query.AsNoTracking().ToListAsync(cancellationToken));
     }
 
     [HttpGet("count")]
@@ -23,6 +23,6 @@ public abstract class QueryControllerBase<T> : CrudAppApiControllerBase where T 
     {
         return GetQueryable(includeSoftDeleted)
             .ApplyFiltering(filteringParams)
-            .Map(query => query.LongCountAsync(cancellationToken));
+            .Select(query => query.LongCountAsync(cancellationToken));
     }
 }

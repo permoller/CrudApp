@@ -13,7 +13,7 @@ public class UsersController : EntityControllerBase<User>
 
         var userResult = await DbContext.GetByIdAuthorized<User>(userId.Value, asNoTracking: true, cancellationToken)
             .Validate(user => user.IsSoftDeleted ? new Error.CannotGetDeletedEntity(typeof(User), userId.Value) : null)
-            .Map(user => Maybe.From(user));
+            .Select(user => Maybe.From(user));
         return userResult;
     }
 }

@@ -2,7 +2,7 @@
 
 namespace CrudApp.Infrastructure.Primitives;
 
-public readonly struct Maybe<T> : IMaybe where T : class
+public readonly struct Maybe<T> : IMaybe
 {
     private readonly T? _value;
 
@@ -34,7 +34,7 @@ public readonly struct Maybe<T> : IMaybe where T : class
 
 public static class Maybe
 {
-    public static Maybe<T> From<T>(T? obj) where T : class
+    public static Maybe<T> From<T>(T? obj)
         => obj is not null ? new Maybe<T>(obj) : Maybe<T>.NoValue;
 }
 

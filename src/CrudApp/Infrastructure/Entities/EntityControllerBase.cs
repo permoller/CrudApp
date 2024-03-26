@@ -12,7 +12,7 @@ public abstract class EntityControllerBase<T> : QueryControllerBase<T> where T :
     public async Task<Result<T>> Get([FromRoute] EntityId id, bool includeSoftDeleted = false, CancellationToken cancellationToken = default)
     {
         var result = await Result.From(id)
-            .Map(id => DbContext.GetByIdAuthorized<T>(id, asNoTracking: true, cancellationToken))
+            .Select(id => DbContext.GetByIdAuthorized<T>(id, asNoTracking: true, cancellationToken))
             .Validate(entity => !includeSoftDeleted && entity.IsSoftDeleted ? new Error.CannotGetDeletedEntity(typeof(T), id) : null);
 
         return result;
@@ -52,7 +52,7 @@ public abstract class EntityControllerBase<T> : QueryControllerBase<T> where T :
     {
         var result = await Result.From(entity)
             .Validate(entity => entity.Id != id ? new Error.InconsistentEntityIdInRequest(typeof(T), entityIdInPath: id, entityIdInBody: entity.Id) : null)
-            .Map(entity => DbContext.GetByIdAuthorized<T>(entity.Id, asNoTracking: false, cancellationToken))
+            .Select(entity => DbContext.GetByIdAuthorized<T>(entity.Id, asNoTracking: false, cancellationToken))
             .Validate(dbEntity => dbEntity.Version != entity.Version ? new Error.EntityVersionInRequestDoesNotMatchVersionInDatabase(typeof(T), versionInRequest: entity.Version, versionInDatabase: dbEntity.Version) : null)
             .Validate(dbEntity => dbEntity.IsSoftDeleted ? new Error.CannotUpdateDeletedEntity(typeof(T), dbEntity.Id) : null)
             .Validate(dbEntity => entity.IsSoftDeleted ? new Error.SoftDeleteCannotBeSetDirectly(typeof(T), entity.Id) : null)
@@ -61,6 +61,25 @@ public abstract class EntityControllerBase<T> : QueryControllerBase<T> where T :
 
         return result;
     }
+
+    //[HttpPut("{id}")]
+    //public async Task<Result<Nothing>> Put4([FromRoute] EntityId id, [FromBody] T entity, CancellationToken cancellationToken = default)
+    //{
+    //    if (entity.Id != id)
+    //        return new Error.InconsistentEntityIdInRequest(typeof(T), entityIdInPath: id, entityIdInBody: entity.Id);
+
+    //    var result =
+    //        from requestEntity in Result.From(entity)
+    //        .Validate(e => e.Id != id ? new Error.InconsistentEntityIdInRequest(typeof(T), entityIdInPath: id, entityIdInBody: e.Id) : null)
+    //        from dbEntity in DbContext.GetByIdAuthorized<T>(requestEntity.Id, asNoTracking: false, cancellationToken)
+    //        .Validate(dbEntity => dbEntity.Version != entity.Version ? new Error.EntityVersionInRequestDoesNotMatchVersionInDatabase(typeof(T), versionInRequest: entity.Version, versionInDatabase: dbEntity.Version) : null)
+    //        .Validate(dbEntity => dbEntity.IsSoftDeleted ? new Error.CannotUpdateDeletedEntity(typeof(T), dbEntity.Id) : null)
+    //        .Validate(dbEntity => entity.IsSoftDeleted ? new Error.SoftDeleteCannotBeSetDirectly(typeof(T), entity.Id) : null)
+    //        .Use(dbEntity => DbContext.UpdateExistingEntity(dbEntity, entity))
+    //        select DbContext.SaveChangesAsync(cancellationToken);
+
+    //    return await result;
+    //}
 
 
     //[HttpPut("{id}")]
@@ -109,7 +128,7 @@ public abstract class EntityControllerBase<T> : QueryControllerBase<T> where T :
     public async Task<Result<Nothing>> Delete([FromRoute] EntityId id, long? version, CancellationToken cancellationToken = default)
     {
         var result = await Result.From(id)
-            .Map(id => DbContext.GetByIdAuthorized<T>(id, asNoTracking: false, cancellationToken))
+            .Select(id => DbContext.GetByIdAuthorized<T>(id, asNoTracking: false, cancellationToken))
             .Validate(dbEntity => version is not null && dbEntity.Version != version.Value ? new Error.EntityVersionInRequestDoesNotMatchVersionInDatabase(typeof(T), versionInRequest: version.Value, versionInDatabase: dbEntity.Version) : null)
             .Validate(dbEntity => dbEntity.IsSoftDeleted ? new Error.EntityAlreadyDeleted(typeof(T), dbEntity.Id) : null)
             .Use(dbEntity => dbEntity.IsSoftDeleted = true)

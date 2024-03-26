@@ -19,8 +19,8 @@ public static class FilteringHelper
     public static Result<IQueryable<T>> ApplyFiltering<T>(this IQueryable<T> query, FilteringParams filteringParams) where T : notnull
     {
         return Parse<T>(filteringParams?.Filter)
-            .Map(ToPredicate<T>)
-            .Map(query.Where);
+            .Select(ToPredicate<T>)
+            .Select(query.Where);
     }
 
     private static Result<List<FilterCondition>> Parse<T>(string? filterString)
