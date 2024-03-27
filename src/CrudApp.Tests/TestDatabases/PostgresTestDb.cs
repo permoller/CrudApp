@@ -1,5 +1,4 @@
-﻿using CrudApp.Infrastructure.Database;
-using Testcontainers.PostgreSql;
+﻿using Testcontainers.PostgreSql;
 
 namespace CrudApp.Tests.TestDatabases;
 internal class PostgresTestDb : ITestDb
@@ -12,6 +11,7 @@ internal class PostgresTestDb : ITestDb
     public PostgresTestDb(string dbName)
     {
         _dbName = dbName;
+        ConnectionString = null!; // Set in InitializeAsync
     }
 
     public string ConnectionString { get; private set; }

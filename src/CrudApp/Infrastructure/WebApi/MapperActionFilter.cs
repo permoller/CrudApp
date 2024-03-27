@@ -96,10 +96,10 @@ public sealed class MapperActionFilter() : IActionFilter
         if (type.IsValueType)
         {
             var nullableType = typeof(Nullable<>).MakeGenericType(type);
-            var value = maybe.HasValue ? Activator.CreateInstance(nullableType, maybe.Value) : Activator.CreateInstance(nullableType);
+            var value = maybe.Match(value => Activator.CreateInstance(nullableType, value), () => Activator.CreateInstance(nullableType));
             return value;
         }
-        return maybe.HasValue ? maybe.Value : null;
+        return maybe.Match(value => value, () => null);
     }
 }
 

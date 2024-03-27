@@ -2,40 +2,52 @@
 
 namespace CrudApp.Infrastructure.Primitives;
 
-public readonly struct Maybe<T> : IMaybe
+public readonly struct Maybe<T> : IMaybe where T : notnull
 {
     private readonly T? _value;
 
-    [MemberNotNullWhen(true, nameof(Value), nameof(_value))]
-    public bool HasValue { get; }
+    [MemberNotNullWhen(true, nameof(_value))]
+    private bool HasValue { get; }
 
-    public T Value => HasValue ? _value : throw new InvalidOperationException($"{nameof(Maybe<T>)} hos no {nameof(Value)}.");
-    object? IMaybe.Value => Value;
+    public TOut Match<TOut>(Func<T, TOut> ifHasValue, Func<TOut> ifNoValue) =>
+        HasValue ? ifHasValue(_value) : ifNoValue();
 
+    TOut IMaybe.Match<TOut>(Func<object?, TOut> ifHasValue, Func<TOut> ifNoValue) =>
+        Match(value => ifHasValue(value), ifNoValue);
 
-    public Maybe(T? value)
+    public Maybe()
     {
-        _value = value;
-        HasValue = value is not null;
+        _value = default;
+        HasValue = false;
     }
-    
-    public static implicit operator Maybe<T>(T? value) => new(value);
 
-    public static explicit operator T(Maybe<T> maybe) => maybe.Value;
+    public Maybe(T value)
+    {
+        ArgumentNullException.ThrowIfNull(value);
+        _value = value;
+        HasValue = true;
+    }
 
-    public static Maybe<T> NoValue => default;
 
+    public static implicit operator Maybe<T>(T value) => new(value);
 
-    public readonly T? GetValueOrDefault() => _value;
-
-    public readonly T? GetValueOrDefault(T defaultValue) =>
+    public readonly T GetValueOrDefault(T defaultValue) =>
         HasValue ? _value : defaultValue;
 }
 
 public static class Maybe
 {
-    public static Maybe<T> From<T>(T? obj)
-        => obj is not null ? new Maybe<T>(obj) : Maybe<T>.NoValue;
+    public static Maybe<T> NoValue<T>() where T : notnull => default;
+}
+public static class MaybeObject
+{
+    public static Maybe<T> ToMaybe<T>(this T? refValue) where T : class => refValue is null ? Maybe.NoValue<T>() : new(refValue);
+    
+}
+public static class MaybeStruct
+{
+    public static Maybe<T> ToMaybe<T>(this T structValue) where T : struct => new(structValue);
+    public static Maybe<T> ToMaybe<T>(this T? nullableStructValue) where T : struct => nullableStructValue is null ? Maybe.NoValue<T>() : new(nullableStructValue.Value);
 }
 
 /// <summary>
@@ -43,7 +55,5 @@ public static class Maybe
 /// </summary>
 internal interface IMaybe
 {
-    [MemberNotNullWhen(true, nameof(Value))]
-    bool HasValue { get; }
-    object? Value { get; }
+    TOut Match<TOut>(Func<object?, TOut> ifHasValue, Func<TOut> ifNoValue);
 }

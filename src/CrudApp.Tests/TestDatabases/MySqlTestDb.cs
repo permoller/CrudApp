@@ -1,5 +1,4 @@
-﻿using CrudApp.Infrastructure.Database;
-using Testcontainers.MySql;
+﻿using Testcontainers.MySql;
 
 namespace CrudApp.Tests.TestDatabases;
 internal class MySqlTestDb : ITestDb
@@ -12,6 +11,7 @@ internal class MySqlTestDb : ITestDb
     public MySqlTestDb(string dbName)
     {
         _dbName = dbName;
+        ConnectionString = null!; // Set in InitializeAsync
     }
 
     public string ConnectionString { get; private set; }

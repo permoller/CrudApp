@@ -28,13 +28,13 @@ public static class OrderingHelper
     public static Result<IQueryable<T>> ApplyOrdering<T>(this IQueryable<T> queryable, OrderingParams orderingParams)
     {
         if (orderingParams == default)
-            return Result.From(queryable);
+            return queryable.ToResult();
 
         if ((orderingParams.Skip.HasValue || orderingParams.Take.HasValue) && string.IsNullOrWhiteSpace(orderingParams.OrderBy))
             return new Error.OrderByIsRequiredWhenUsingSkipAndTake();
 
         if (string.IsNullOrWhiteSpace(orderingParams.OrderBy))
-            return Result.From(queryable);
+            return queryable.ToResult();
 
         var match = _orderByRegex.Match(orderingParams.OrderBy);
         if (!match.Success)
@@ -60,7 +60,7 @@ public static class OrderingHelper
         if (orderingParams.Take.HasValue)
             queryable = queryable.Take(orderingParams.Take.Value);
 
-        return Result.From(queryable);
+        return queryable.ToResult();
     }
 
     private static IOrderedQueryable<T> ApplySingleOrderBy<T, TKey>(IQueryable<T> query, bool isDescending, bool isFirst, List<PropertyInfo> propertyInfos)

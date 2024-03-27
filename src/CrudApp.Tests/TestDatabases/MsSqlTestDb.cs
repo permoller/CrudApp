@@ -1,5 +1,4 @@
-﻿using CrudApp.Infrastructure.Database;
-using Testcontainers.MsSql;
+﻿using Testcontainers.MsSql;
 
 namespace CrudApp.Tests.TestDatabases;
 internal sealed class MsSqlTestDb : ITestDb
@@ -12,6 +11,7 @@ internal sealed class MsSqlTestDb : ITestDb
     public MsSqlTestDb(string dbName)
     {
         _dbName = dbName;
+        ConnectionString = null!; // Set in InitializeAsync
     }
 
     public string ConnectionString { get; private set; }

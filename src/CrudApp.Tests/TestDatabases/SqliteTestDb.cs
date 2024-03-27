@@ -1,5 +1,4 @@
-﻿using CrudApp.Infrastructure.Database;
-using Microsoft.Data.Sqlite;
+﻿using Microsoft.Data.Sqlite;
 
 namespace CrudApp.Tests.TestDatabases;
 
@@ -11,6 +10,7 @@ internal class SqliteTestDb : ITestDb
     public SqliteTestDb(string dbName)
     {        
         _dbName = dbName;
+        ConnectionString = null!; // Set in InitializeAsync
     }
 
     public string ConnectionString { get; private set; }

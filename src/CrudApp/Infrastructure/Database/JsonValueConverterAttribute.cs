@@ -8,7 +8,7 @@ public class JsonValueConverterAttribute : Attribute
 {
     public static ValueConverter GetConverter(Type type)
     {
-        return (ValueConverter)Activator.CreateInstance(typeof(JsonValueConverter<>).MakeGenericType(type));
+        return (ValueConverter)Activator.CreateInstance(typeof(JsonValueConverter<>).MakeGenericType(type))!;
     }
 
     private sealed class JsonValueConverter<T> : ValueConverter<T, string>

@@ -13,12 +13,12 @@ public static class Validation
             throw new ValidationException(modelState);
     }
 
-    public static void Required<T>([NotNull] T value, [CallerArgumentExpression(nameof(value))] string? name = default)
+    public static void Required<T>(T value, [CallerArgumentExpression(nameof(value))] string? name = default)
     {
         Required(null, value, name).ThrowIfNotValid();
     }
 
-    public static ModelStateDictionary? Required<T>(this ModelStateDictionary? modelState, T value, [CallerArgumentExpression(nameof(value))] string? name = default)
+    public static ModelStateDictionary? Required<T>(this ModelStateDictionary? modelState, T? value, [CallerArgumentExpression(nameof(value))] string? name = default)
     {
         if (Equals(value, default(T)) || value is string s && string.IsNullOrWhiteSpace(s))
         {

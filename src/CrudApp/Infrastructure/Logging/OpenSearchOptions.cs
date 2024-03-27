@@ -1,6 +1,9 @@
-﻿namespace CrudApp.Infrastructure.Logging;
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace CrudApp.Infrastructure.Logging;
 
 public class OpenSearchOptions
 {
-    public Uri BaseAddress { get; set; }
+    [Required]
+    public Uri BaseAddress { get; set; } = null!;
 }

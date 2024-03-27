@@ -11,9 +11,8 @@ public abstract class EntityControllerBase<T> : QueryControllerBase<T> where T :
     [HttpGet("{id}")]
     public async Task<Result<T>> Get([FromRoute] EntityId id, bool includeSoftDeleted = false, CancellationToken cancellationToken = default)
     {
-        var result = await Result.From(id)
-            .Select(id => DbContext.GetByIdAuthorized<T>(id, asNoTracking: true, cancellationToken))
-            .Validate(entity => !includeSoftDeleted && entity.IsSoftDeleted ? new Error.CannotGetDeletedEntity(typeof(T), id) : null);
+        var result = await DbContext.GetByIdAuthorized<T>(id, asNoTracking: true, cancellationToken)
+            .Select(entity => !includeSoftDeleted && entity.IsSoftDeleted ? new Error.CannotGetDeletedEntity(typeof(T), id) : entity.ToResult());
 
         return result;
     }
@@ -50,17 +49,51 @@ public abstract class EntityControllerBase<T> : QueryControllerBase<T> where T :
     [HttpPut("{id}")]
     public async Task<Result<Nothing>> Put([FromRoute] EntityId id, [FromBody] T entity, CancellationToken cancellationToken = default)
     {
-        var result = await Result.From(entity)
-            .Validate(entity => entity.Id != id ? new Error.InconsistentEntityIdInRequest(typeof(T), entityIdInPath: id, entityIdInBody: entity.Id) : null)
-            .Select(entity => DbContext.GetByIdAuthorized<T>(entity.Id, asNoTracking: false, cancellationToken))
-            .Validate(dbEntity => dbEntity.Version != entity.Version ? new Error.EntityVersionInRequestDoesNotMatchVersionInDatabase(typeof(T), versionInRequest: entity.Version, versionInDatabase: dbEntity.Version) : null)
-            .Validate(dbEntity => dbEntity.IsSoftDeleted ? new Error.CannotUpdateDeletedEntity(typeof(T), dbEntity.Id) : null)
-            .Validate(dbEntity => entity.IsSoftDeleted ? new Error.SoftDeleteCannotBeSetDirectly(typeof(T), entity.Id) : null)
-            .Use(dbEntity => DbContext.UpdateExistingEntity(dbEntity, entity))
-            .Use(dbEntity => DbContext.SaveChangesAsync(cancellationToken));
+        var result = await ValidateEntityId()
+            .Select(GetEntityFromDatabase)
+            .Select(ValidateVersion)
+            .Select(ValidateDbEntityNotSoftDeleted)
+            .Select(ValidateRequestEntityNotSoftDeleted)
+            .Select(UpdateEntityInDatabase);
 
         return result;
+
+        Result<T> ValidateEntityId() =>
+            entity.Id != id ? new Error.InconsistentEntityIdInRequest(typeof(T), entityIdInPath: id, entityIdInBody: entity.Id) : entity;
+
+        Task<Result<T>> GetEntityFromDatabase(T entity) =>
+            DbContext.GetByIdAuthorized<T>(entity.Id, asNoTracking: false, cancellationToken);
+
+        Result<T> ValidateVersion(T dbEntity) =>
+            dbEntity.Version != entity.Version ? new Error.EntityVersionInRequestDoesNotMatchVersionInDatabase(typeof(T), versionInRequest: entity.Version, versionInDatabase: dbEntity.Version) : dbEntity;
+
+        static Result<T> ValidateDbEntityNotSoftDeleted(T dbEntity) =>
+            dbEntity.IsSoftDeleted ? new Error.CannotUpdateDeletedEntity(typeof(T), dbEntity.Id) : dbEntity;
+
+        Result<T> ValidateRequestEntityNotSoftDeleted(T dbEntity) =>
+            entity.IsSoftDeleted ? new Error.SoftDeleteCannotBeSetDirectly(typeof(T), dbEntity.Id) : dbEntity;
+
+        Task UpdateEntityInDatabase(T dbEntity)
+        {
+            DbContext.UpdateExistingEntity(dbEntity, entity);
+            return DbContext.SaveChangesAsync(cancellationToken);
+        }
     }
+
+    //[HttpPut("{id}")]
+    //public async Task<Result<Nothing>> Put5([FromRoute] EntityId id, [FromBody] T entity, CancellationToken cancellationToken = default)
+    //{
+    //    var result = await entity.ToResult()
+    //        .Validate(entity => entity.Id != id ? new Error.InconsistentEntityIdInRequest(typeof(T), entityIdInPath: id, entityIdInBody: entity.Id) : Maybe.NoValue<Error>())
+    //        .Select(entity => DbContext.GetByIdAuthorized<T>(entity.Id, asNoTracking: false, cancellationToken))
+    //        .Validate(dbEntity => dbEntity.Version != entity.Version ? new Error.EntityVersionInRequestDoesNotMatchVersionInDatabase(typeof(T), versionInRequest: entity.Version, versionInDatabase: dbEntity.Version) : Maybe.NoValue<Error>())
+    //        .Validate(dbEntity => dbEntity.IsSoftDeleted ? new Error.CannotUpdateDeletedEntity(typeof(T), dbEntity.Id) : Maybe.NoValue<Error>())
+    //        .Validate(dbEntity => entity.IsSoftDeleted ? new Error.SoftDeleteCannotBeSetDirectly(typeof(T), entity.Id) : Maybe.NoValue<Error>())
+    //        .Use(dbEntity => DbContext.UpdateExistingEntity(dbEntity, entity))
+    //        .Use(dbEntity => DbContext.SaveChangesAsync(cancellationToken));
+
+    //    return result;
+    //}
 
     //[HttpPut("{id}")]
     //public async Task<Result<Nothing>> Put4([FromRoute] EntityId id, [FromBody] T entity, CancellationToken cancellationToken = default)
@@ -127,13 +160,29 @@ public abstract class EntityControllerBase<T> : QueryControllerBase<T> where T :
     [HttpDelete("{id}")]
     public async Task<Result<Nothing>> Delete([FromRoute] EntityId id, long? version, CancellationToken cancellationToken = default)
     {
-        var result = await Result.From(id)
-            .Select(id => DbContext.GetByIdAuthorized<T>(id, asNoTracking: false, cancellationToken))
-            .Validate(dbEntity => version is not null && dbEntity.Version != version.Value ? new Error.EntityVersionInRequestDoesNotMatchVersionInDatabase(typeof(T), versionInRequest: version.Value, versionInDatabase: dbEntity.Version) : null)
-            .Validate(dbEntity => dbEntity.IsSoftDeleted ? new Error.EntityAlreadyDeleted(typeof(T), dbEntity.Id) : null)
-            .Use(dbEntity => dbEntity.IsSoftDeleted = true)
-            .Use(dbEntity => DbContext.SaveChangesAsync(cancellationToken));
+        var result = await GetEntityFromDatabase()
+            .Select(ValidateEntityVersion)
+            .Select(ValidateEntityNotSoftDeleted)
+            .Select(SoftDeleteEntity);
 
         return result;
+
+        Task<Result<T>> GetEntityFromDatabase() =>
+            DbContext.GetByIdAuthorized<T>(id, asNoTracking: false, cancellationToken);
+
+        Result<T> ValidateEntityVersion(T dbEntity) =>
+        version is not null && dbEntity.Version != version.Value
+            ? new Error.EntityVersionInRequestDoesNotMatchVersionInDatabase(typeof(T), versionInRequest: version.Value, versionInDatabase: dbEntity.Version)
+            : dbEntity;
+
+        static Result<T> ValidateEntityNotSoftDeleted(T dbEntity) =>
+            dbEntity.IsSoftDeleted ? new Error.EntityAlreadyDeleted(typeof(T), dbEntity.Id) : dbEntity;
+
+        Task SoftDeleteEntity(T dbEntity)
+        {
+            dbEntity.IsSoftDeleted = true;
+            return DbContext.SaveChangesAsync(cancellationToken);
+        }
     }
+
 }

@@ -71,7 +71,7 @@ public static class ReflectionUtils
     public static Type[] GetGenericArgumentsForGenericTypeDefinition(this Type? type, Type genericTypeDefinition)
     {
         return type.FindGenericArgumentsForGenericTypeDefinition(genericTypeDefinition) 
-            ?? throw new ArgumentException($"{type.Name} does not inherit from {genericTypeDefinition.Name}.");
+            ?? throw new ArgumentException($"{type?.Name} does not inherit from {genericTypeDefinition.Name}.");
     }
 
     public static bool HasAttribute<T>(this PropertyInfo? propertyInfo) where T : Attribute

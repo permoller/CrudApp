@@ -63,6 +63,6 @@ public sealed class OpenSearchSender : BackgroundService
         public bool HasErrors { get; set; }
 
         [JsonPropertyName("items")]
-        public JsonElement[] Items { get; set; }
+        public JsonElement[]? Items { get; set; }
     }
 }

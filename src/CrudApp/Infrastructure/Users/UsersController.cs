@@ -9,11 +9,10 @@ public class UsersController : EntityControllerBase<User>
     {
         var userId = AuthenticationContext.Current?.UserId;
         if (!userId.HasValue)
-            return Maybe<User>.NoValue;
+            return Maybe.NoValue<User>();
 
         var userResult = await DbContext.GetByIdAuthorized<User>(userId.Value, asNoTracking: true, cancellationToken)
-            .Validate(user => user.IsSoftDeleted ? new Error.CannotGetDeletedEntity(typeof(User), userId.Value) : null)
-            .Select(user => Maybe.From(user));
+            .Select(user => user.ToMaybe());
         return userResult;
     }
 }
