@@ -182,7 +182,15 @@ If `Nothing` is returned from a controller action-method (throgh `Result<Nothing
 `Meybe<T>` is like `Nullable<T>` but for reference types. Returning `Maybe<T>` instead of `T` makes it clear that there may not be anything to return.
 If `Maybe<T>` is returned from a controller action-method (directly or through `Result<T>`) the response to the client will either be the inner object or a "No content" response.
 
+# Method chaining / Select()
+`Select`extension methods have been made for `Result<T>`, `Maybe<T>`, `Task<T>` and `Nullable<T>` to make it easier to chain operations that use the inner value.
 
+`Result<T>.Select(Func<T, T2>)` returns a `Result<T2>` that either contains the error from `Result<T>` or the value returned by the function.
+`Maybe<T>.Select(Func<T, T2>)`returns a `Maybe<T2>` that either contains "no value" if the `Maybe<T>` does not contain a value or the value returned by the function.
+`Task<T>.Select(Func<T, T2>)` returns a `Task<T2>` that will contain the value returned by the function.
+`Nullable<T>.Select(Func<T, T2>)` returns a `Maybe<T2>` that will contain "no value" if the `Nullable<T>` is null or the value returned by the function.
+
+The `Select` methods are made in various overloads to make it usefull in more sitations.
 
 # ASP.NET Integration tests
 

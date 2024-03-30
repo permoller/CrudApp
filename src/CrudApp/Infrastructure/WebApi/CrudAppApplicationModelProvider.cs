@@ -18,8 +18,8 @@ public partial class CrudAppApplicationModelProvider: IApplicationModelProvider
         {
             foreach (var action in controller.Actions)
             {
-                action.Filters.Add(new MapperActionFilter());
-                var returnType = MapperActionFilter.MapType(action);
+                action.Filters.Add(new ReturnValueActionFilter());
+                var returnType = ReturnValueActionFilter.MapType(action);
                 EnsureSuccessResponseDefined(action, returnType);
                 EnsureErrorResponsesDefined(action);
             }

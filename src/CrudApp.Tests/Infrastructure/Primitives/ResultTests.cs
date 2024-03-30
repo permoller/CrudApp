@@ -5,6 +5,24 @@ namespace CrudApp.Tests.Infrastructure.Primitives;
 public class ResultTests
 {
     [Fact]
+    public void Match()
+    {
+        var hasValue = false;
+        var hasError = false;
+        var result = 3.ToResult();
+        result.Match(i => hasValue = true, e => hasError = true);
+        Assert.True(hasValue);
+        Assert.False(hasError);
+
+        hasValue = false;
+        hasError = false;
+        result = new Error.EntityNotFound(typeof(InfrastructureTestEntity), 4).ToResult<int>();
+        result.Match(i => hasValue = true, e => hasError = true);
+        Assert.False(hasValue);
+        Assert.True(hasError);
+    }
+
+    [Fact]
     [SuppressMessage("Minor Code Smell", "S1481:Unused local variables should be removed", Justification = "Required for testing implicit cast")]
     public void CreatingResultWithoutValueOrErrorShouldFail()
     {
@@ -69,24 +87,7 @@ public class ResultTests
         Assert.Equal(error, errorFromErrorResult);
     }
 
-    [Fact]
-    public void Match()
-    {
-        var hasValue = false;
-        var hasError = false;
-        var result = 3.ToResult();
-        result.Match(i => hasValue = true, e => hasError = true);
-        Assert.True(hasValue);
-        Assert.False(hasError);
-
-        hasValue = false;
-        hasError = false;
-        result = new Error.EntityNotFound(typeof(InfrastructureTestEntity), 4).ToResult<int>();
-        result.Match(i => hasValue = true, e => hasError = true);
-        Assert.False(hasValue);
-        Assert.True(hasError);
-    }
-
+    
     [Fact]
     public void TryGetValue()
     {
@@ -133,5 +134,61 @@ public class ResultTests
 
         Assert.True(resultWithError.TryGetError(out error));
         Assert.Equal(expectedError, error);
+    }
+
+
+    private static Result<T> GetResult<T>(T value) where T : notnull => value.ToResult();
+    private static Task<Result<T>> GetResultAsync<T>(T value) where T : notnull => Task.FromResult(GetResult(value));
+    private static void AssertEqual<T>(T expected, Result<T> actualResult) where T : notnull
+    {
+        Assert.True(actualResult.TryGetValue(out var actual));
+        Assert.Equal(expected, actual);
+    }
+
+    
+    [Fact]
+    public async Task Select()
+    {
+        AssertEqual(Nothing.Instance, GetResult(3).Select(a => { }));
+        AssertEqual(Nothing.Instance, await GetResult(3).Select(async a => await Task.Yield()));
+        AssertEqual(4, GetResult(3).Select(a => a + 1));
+        AssertEqual(4, GetResult(3).Select(a => GetResult(a + 1)));
+        AssertEqual(4, await GetResult(3).Select(async a => await Task.FromResult(a + 1)));
+        AssertEqual(4, await GetResult(3).Select(async a => await GetResultAsync(a + 1)));
+
+        AssertEqual(Nothing.Instance, await GetResultAsync(3).Select(a => { }));
+        AssertEqual(Nothing.Instance, await GetResultAsync(3).Select(async (int a) => await Task.CompletedTask));
+        AssertEqual(4, await GetResultAsync(3).Select(a => a + 1));
+        AssertEqual(4, await GetResultAsync(3).Select(a => GetResult(a + 1)));
+        AssertEqual(4, await GetResultAsync(3).Select(async a => await Task.FromResult(a + 1)));
+        AssertEqual(4, await GetResultAsync(3).Select(async a => await GetResultAsync(a + 1)));
+    }
+
+    [Fact]
+    public async Task SelectMany()
+    {
+        AssertEqual(12, await (
+            from a in GetResultAsync(3)
+            from b in GetResultAsync(4)
+            from c in GetResultAsync(5)
+            select a + b + c));
+
+        AssertEqual(12, await (
+            from a in GetResultAsync(3)
+            from b in GetResultAsync(4)
+            from c in GetResultAsync(5)
+            select GetResult(a + b + c)));
+
+        AssertEqual(12, await (
+            from a in GetResultAsync(3)
+            from b in GetResultAsync(4)
+            from c in GetResultAsync(5)
+            select Task.FromResult(a + b + c)));
+
+        AssertEqual(12, await (
+            from a in GetResultAsync(3)
+            from b in GetResultAsync(4)
+            from c in GetResultAsync(5)
+            select GetResultAsync(a + b + c)));
     }
 }

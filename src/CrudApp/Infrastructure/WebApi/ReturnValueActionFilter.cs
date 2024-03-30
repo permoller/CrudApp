@@ -11,7 +11,7 @@ namespace CrudApp.Infrastructure.WebApi;
 /// <see cref="Error"/> is mapped to <see cref="ProblemDetails"/>.
 /// <see cref="Nothing"/>, <see cref="Task"/>, <see cref="ValueTask"/> and null-values are mapped to a <see cref="NoContentResult"/>.
 /// </summary>
-public sealed class MapperActionFilter() : IActionFilter
+public sealed class ReturnValueActionFilter() : IActionFilter
 {
     private static readonly Type?[] _voidReturnTypes = [null, typeof(void), typeof(Task), typeof(ValueTask), typeof(Nothing)];
 
@@ -37,6 +37,7 @@ public sealed class MapperActionFilter() : IActionFilter
         }
         else if(context.Result is EmptyResult)
         {
+            // return status 204 NoContent instead of 200 Ok
             context.Result = new NoContentResult();
         }
     }
@@ -46,12 +47,10 @@ public sealed class MapperActionFilter() : IActionFilter
         while (true)
         {
             // Tasks are already unwrapped so we only need to unwrap our own primitive types
-            if (value is Primitives.IResult resultWithValue && resultWithValue.TryGetValue(out var resultValue))
-                value = resultValue;
-            else if (value is Primitives.IResult resultWithError && resultWithError.TryGetError(out var resultError))
-                value = resultError;
-            else if (value is IMaybe maybe)
-                value = EnsureValueTypeIsWrappedInNullable(maybe);
+            if (value is IInfrastructureResult result)
+                value = result.GetValueOrError();
+            else if (value is IInfrastructureMaybe maybe)
+                value = maybe.GetValueOrNull();
             else
                 break;
         }
@@ -76,7 +75,7 @@ public sealed class MapperActionFilter() : IActionFilter
             else if (returnType.TryGetGenericArgumentsForGenericTypeDefinition(typeof(Result<>), out var resultTypeArgs))
                 returnType = resultTypeArgs[0];
             else if (returnType.TryGetGenericArgumentsForGenericTypeDefinition(typeof(Maybe<>), out var maybeTypeArgs))
-                returnType = EnsureValueTypeIsWrappedInNullable(maybeTypeArgs[0]);
+                returnType = ToNullable(maybeTypeArgs[0]);
             else
                 break;
         }
@@ -87,19 +86,7 @@ public sealed class MapperActionFilter() : IActionFilter
         return returnType;
     }
 
-    private static Type EnsureValueTypeIsWrappedInNullable(Type type) =>
+    private static Type ToNullable(Type type) =>
         type.IsValueType ? typeof(Nullable<>).MakeGenericType(type) : type;
-
-    private static object? EnsureValueTypeIsWrappedInNullable(IMaybe maybe)
-    {
-        var type = maybe.GetType().GetGenericArgumentsForGenericTypeDefinition(typeof(Maybe<>))[0];
-        if (type.IsValueType)
-        {
-            var nullableType = typeof(Nullable<>).MakeGenericType(type);
-            var value = maybe.Match(value => Activator.CreateInstance(nullableType, value), () => Activator.CreateInstance(nullableType));
-            return value;
-        }
-        return maybe.Match(value => value, () => null);
-    }
 }
 
