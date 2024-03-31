@@ -63,6 +63,7 @@ public sealed class ReturnValueActionFilter() : IActionFilter
 
     public static Type MapType(ActionModel action)
     {
+        bool isReturnTypeNullable = false;
         var returnType = action.ActionMethod.ReturnType;
         while (true)
         {
@@ -75,13 +76,19 @@ public sealed class ReturnValueActionFilter() : IActionFilter
             else if (returnType.TryGetGenericArgumentsForGenericTypeDefinition(typeof(Result<>), out var resultTypeArgs))
                 returnType = resultTypeArgs[0];
             else if (returnType.TryGetGenericArgumentsForGenericTypeDefinition(typeof(Maybe<>), out var maybeTypeArgs))
-                returnType = ToNullable(maybeTypeArgs[0]);
+            {
+                returnType = maybeTypeArgs[0];
+                isReturnTypeNullable = true;
+            }
             else
                 break;
         }
 
         if (_voidReturnTypes.Contains(returnType))
             returnType = typeof(void);
+
+        if (isReturnTypeNullable && returnType.IsValueType)
+            returnType = ToNullable(returnType);
 
         return returnType;
     }
