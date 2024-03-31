@@ -6,6 +6,6 @@ public static class TaskExtensions
 
     public static async Task<B> Select<A, B>(this Task<A> taskA, Func<A, B> selectB) => selectB(await taskA);
 
-    public static Task<B> Select<A, B>(this Task<A> taskA, Func<A, Task<B>> selectTaskB) => taskA.Select(selectTaskB);
+    public static async Task<B> Select<A, B>(this Task<A> taskA, Func<A, Task<B>> selectTaskB) => await selectTaskB(await taskA);
 
 }
