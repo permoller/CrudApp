@@ -12,7 +12,7 @@ public abstract partial class Error
         DataDictionary? data = default,
         Dictionary<string, string[]>? errors = default)
     {
-        Instance = GetRandomString(length: 8);
+        Instance = Base32ForHumans.GetRandomString(length: 8);
         HttpStatucCode = httpStatucCode;
         Exception = exception;
         TraceId = Activity.Current?.Id;
@@ -48,20 +48,5 @@ public abstract partial class Error
         list.Add(error);
         Errors[field] = list.ToArray();
         return this;
-    }
-
-    // Characters that are easy for one person to tell another person.
-    // Only lower case characters
-    // No numbers or characters the looks like each other (i, 1, o and 0)
-    private static readonly string _base32Alphabet = "abcdefghjklmnpqrstuvwxyz23456789";
-    private static readonly Random _random = new Random();
-
-    private static string GetRandomString(int length)
-    {
-        var resultChars = new char[length];
-        for (int i = 0; i < resultChars.Length; i++)
-            resultChars[i] = _base32Alphabet[_random.Next(_base32Alphabet.Length)];
-
-        return new(resultChars);
     }
 }
