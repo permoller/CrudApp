@@ -8,16 +8,14 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Net.Http.Headers;
 using Xunit.Abstractions;
-using CrudApp.Tests.TestDatabases;
 using Microsoft.Extensions.Configuration;
 using System.Diagnostics;
+using CrudApp.Tests.Infrastructure.Database;
 
 namespace CrudApp.Tests;
 
 public class WebAppFixture : IAsyncLifetime
 {
-    static int _dbCounter = 0;
-
     static WebAppFixture()
     {
         ProblemDetailsHelper.IncludeExceptionInProblemDetails = true;
@@ -54,7 +52,7 @@ public class WebAppFixture : IAsyncLifetime
 
     private ITestOutputHelper? _testOutputHelper;
 
-    private ITestDb? _testDb;
+    private TestDb? _testDb;
 
     
 
@@ -87,7 +85,7 @@ public class WebAppFixture : IAsyncLifetime
         // Create test DB and configure connection string
         builder.ConfigureAppConfiguration(configBuilder =>
         {
-            _testDb = StartTestDbAsync(configBuilder.Build()).GetAwaiter().GetResult();
+            _testDb = TestDb.CreateAsync(configBuilder.Build()).GetAwaiter().GetResult();
             configBuilder.AddInMemoryCollection(new Dictionary<string, string?> {
                         { $"{nameof(DatabaseOptions)}:{nameof(DatabaseOptions.ConnectionString)}", _testDb.ConnectionString }
                     });
@@ -129,24 +127,4 @@ public class WebAppFixture : IAsyncLifetime
             _testOutputHelper.WriteLine(message);
         }
     }
-
-
-    private static async Task<ITestDb> StartTestDbAsync(IConfiguration config)
-    {
-        var dbName = "test_db_" + Interlocked.Increment(ref _dbCounter);
-        var dbType = Enum.Parse<DatabaseType>(config[$"{nameof(DatabaseOptions)}:{nameof(DatabaseOptions.DbType)}"]!);
-        ITestDb testDb = dbType switch
-        {
-            DatabaseType.Sqlite => new SqliteTestDb(dbName),
-            DatabaseType.MySql => new MySqlTestDb(dbName),
-            DatabaseType.MsSql => new MsSqlTestDb(dbName),
-            DatabaseType.Postgres => new PostgresTestDb(dbName),
-            _ => throw new NotSupportedException($"{nameof(DatabaseType)} {dbType} is not supported.")
-        };
-
-        await testDb.InitializeAsync();
-
-        return testDb;
-    }
-
 }

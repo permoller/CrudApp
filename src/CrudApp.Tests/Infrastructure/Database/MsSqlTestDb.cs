@@ -1,22 +1,19 @@
 ﻿using Testcontainers.MsSql;
 
-namespace CrudApp.Tests.TestDatabases;
-internal sealed class MsSqlTestDb : ITestDb
+namespace CrudApp.Tests.Infrastructure.Database;
+internal sealed class MsSqlTestDb : TestDb
 {
     private static readonly SemaphoreSlim _semaphore = new(1, 1);
     private static MsSqlContainer? _container;
 
     private readonly string _dbName;
 
-    public MsSqlTestDb(string dbName)
+    private MsSqlTestDb(string dbName, string connectionString) : base(connectionString)
     {
         _dbName = dbName;
-        ConnectionString = null!; // Set in InitializeAsync
     }
 
-    public string ConnectionString { get; private set; }
-
-    public async Task InitializeAsync()
+    public static async Task<MsSqlTestDb> CreateAsync(string dbName)
     {
         if (_container is null)
         {
@@ -39,10 +36,11 @@ internal sealed class MsSqlTestDb : ITestDb
         var host = _container.Hostname;
         var usr = MsSqlBuilder.DefaultUsername;
         var pwd = MsSqlBuilder.DefaultPassword;
-        ConnectionString = $"Server={host},{port};Database={_dbName};User Id={usr};Password={pwd};TrustServerCertificate=True";
+        var connectionString = $"Server={host},{port};Database={dbName};User Id={usr};Password={pwd};TrustServerCertificate=True";
+        return new MsSqlTestDb(dbName, connectionString);
     }
 
-    public async Task DisposeAsync()
+    public override async ValueTask DisposeAsync()
     {
         if (_container is not null)
         {

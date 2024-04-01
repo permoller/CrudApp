@@ -1,22 +1,19 @@
 ﻿using Testcontainers.PostgreSql;
 
-namespace CrudApp.Tests.TestDatabases;
-internal class PostgresTestDb : ITestDb
+namespace CrudApp.Tests.Infrastructure.Database;
+internal class PostgresTestDb : TestDb
 {
     private static readonly SemaphoreSlim _semaphore = new(1, 1);
     private static PostgreSqlContainer? _container;
 
     private readonly string _dbName;
 
-    public PostgresTestDb(string dbName)
+    private PostgresTestDb(string dbName, string connectionString) : base(connectionString)
     {
         _dbName = dbName;
-        ConnectionString = null!; // Set in InitializeAsync
     }
 
-    public string ConnectionString { get; private set; }
-
-    public async Task InitializeAsync()
+    public static async Task<PostgresTestDb> CreateAsync(string dbName)
     {
         if (_container is null)
         {
@@ -34,23 +31,25 @@ internal class PostgresTestDb : ITestDb
                 _semaphore.Release();
             }
         }
-        
+
         var port = _container.GetMappedPublicPort(PostgreSqlBuilder.PostgreSqlPort);
         var host = _container.Hostname;
         var usr = PostgreSqlBuilder.DefaultUsername;
         var pwd = PostgreSqlBuilder.DefaultPassword;
-        ConnectionString = $"Host={host};Port={port};Database={_dbName};Username={usr};Password={pwd};Include Error Detail=True";
-        
+        var connectionString = $"Host={host};Port={port};Database={dbName};Username={usr};Password={pwd};Include Error Detail=True";
+
         // When connecting to Postgres you must connect to an existing database.
         // You would normally connect to an "administration" database like the default database named postgress to create another database.
         // When using DBContext.Database.EnsureCreated() it does not connect to an "administration" database.
         // Instead EnsureCreated() tries to connect to the database that it should create which fails because it does not exists.
         // For that reason we create an empty database here and let EnsureCreated() create the tables.
-        var result = await _container.ExecScriptAsync($"CREATE DATABASE {_dbName}");
+        var result = await _container.ExecScriptAsync($"CREATE DATABASE {dbName}");
         Assert.True(0 == result.ExitCode, result.Stderr + Environment.NewLine + result.Stdout);
+
+        return new PostgresTestDb(dbName, connectionString);
     }
 
-    public async Task DisposeAsync()
+    public override async ValueTask DisposeAsync()
     {
         if (_container is not null)
         {

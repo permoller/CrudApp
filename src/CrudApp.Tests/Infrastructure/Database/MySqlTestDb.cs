@@ -1,23 +1,19 @@
 ﻿using Testcontainers.MySql;
 
-namespace CrudApp.Tests.TestDatabases;
-internal class MySqlTestDb : ITestDb
+namespace CrudApp.Tests.Infrastructure.Database;
+internal class MySqlTestDb : TestDb
 {
     private static readonly SemaphoreSlim _semaphore = new(1, 1);
     private static MySqlContainer? _container;
 
     private readonly string _dbName;
 
-    public MySqlTestDb(string dbName)
+    private MySqlTestDb(string dbName, string connectionString) : base(connectionString)
     {
         _dbName = dbName;
-        ConnectionString = null!; // Set in InitializeAsync
     }
 
-    public string ConnectionString { get; private set; }
-
-
-    public async Task InitializeAsync()
+    public static async Task<MySqlTestDb> CreateAsync(string dbName)
     {
         if (_container is null)
         {
@@ -41,10 +37,11 @@ internal class MySqlTestDb : ITestDb
         var host = _container.Hostname;
         var usr = "root";
         var pwd = MySqlBuilder.DefaultPassword;
-        ConnectionString = $@"Server={host};Port={port};Database={_dbName};Uid={usr};Pwd={pwd}";
+        var connectionString = $@"Server={host};Port={port};Database={dbName};Uid={usr};Pwd={pwd}";
+        return new MySqlTestDb(dbName, connectionString);
     }
 
-    public async Task DisposeAsync()
+    public override async ValueTask DisposeAsync()
     {
         if (_container is not null)
         {
