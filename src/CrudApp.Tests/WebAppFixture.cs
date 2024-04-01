@@ -64,23 +64,7 @@ public class WebAppFixture : IAsyncLifetime
         _testOutputLoggerProvider = new TestOutputLogger.Provider(Log);
 
         WebAppFactory = new WebApplicationFactory<CrudAppApiControllerBase>()
-            .WithWebHostBuilder(builder =>
-            {
-                // Make sure we load appsettings.Unittest.json
-                builder.UseEnvironment("Unittest");
-
-                // Create test DB and configure connection string
-                builder.ConfigureAppConfiguration(configBuilder =>
-                {
-                    _testDb = StartTestDbAsync(configBuilder.Build()).GetAwaiter().GetResult();
-                    configBuilder.AddInMemoryCollection(new Dictionary<string, string?> {
-                        { $"{nameof(DatabaseOptions)}:{nameof(DatabaseOptions.ConnectionString)}", _testDb.ConnectionString }
-                    });
-                });
-
-                // Capture log output
-                builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders().AddProvider(_testOutputLoggerProvider));
-            });
+            .WithWebHostBuilder(WithWebHostBuilder);
 
         // Create tables and root user
         using var scope = WebAppFactory.Services.CreateScope();
@@ -93,6 +77,24 @@ public class WebAppFixture : IAsyncLifetime
         Log("Total test fixture setup in seconds: " + swTotal.Elapsed.TotalSeconds);
         ArgumentNullException.ThrowIfNull(rootUserId); // We just created the database, so a new user should have been inserted.
         RootUserId = rootUserId.Value;
+    }
+
+    protected virtual void WithWebHostBuilder(IWebHostBuilder builder)
+    {
+        // Make sure we load appsettings.Unittest.json
+        builder.UseEnvironment("Unittest");
+
+        // Create test DB and configure connection string
+        builder.ConfigureAppConfiguration(configBuilder =>
+        {
+            _testDb = StartTestDbAsync(configBuilder.Build()).GetAwaiter().GetResult();
+            configBuilder.AddInMemoryCollection(new Dictionary<string, string?> {
+                        { $"{nameof(DatabaseOptions)}:{nameof(DatabaseOptions.ConnectionString)}", _testDb.ConnectionString }
+                    });
+        });
+
+        // Capture log output
+        builder.ConfigureLogging(loggingBuilder => loggingBuilder.AddProvider(_testOutputLoggerProvider));
     }
 
     public virtual async Task DisposeAsync()

@@ -51,8 +51,8 @@ public class InfrastructureTestController : EntityControllerBase<InfrastructureT
     [Route("logging"), HttpGet]
     public string Logging(string value)
     {
-        using (var __ = _logger.BeginScope("Method {method}.", nameof(Logging)))
-        using (var _ = _logger.BeginScope("outer scope"))
+        using (var _ = _logger.BeginScope("Method {method}.", nameof(Logging)))
+        using (var __ = _logger.BeginScope("outer scope"))
         using (var ___ = _logger.BeginScope("inner scope"))
         {
             return LoggingInnerMethod(value);
@@ -61,7 +61,7 @@ public class InfrastructureTestController : EntityControllerBase<InfrastructureT
 
     private string LoggingInnerMethod(string value)
     {
-        using (var __ = _logger.BeginScope("Inner method {method}.", nameof(LoggingInnerMethod)))
+        using (var _ = _logger.BeginScope("Inner method {method}.", nameof(LoggingInnerMethod)))
             _logger.LogInformation("Value {value}", value);
         return value;
     }

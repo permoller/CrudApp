@@ -41,6 +41,7 @@ public sealed class SinkLogger : ILogger
             }
         };
 
+
         var activity = Activity.Current;
         if (activity is not null)
         {
@@ -62,12 +63,29 @@ public sealed class SinkLogger : ILogger
         if (scope is not null)
         {
             logEntry.Scopes = scope.GetSelfAndAncestors().Select(s => new Scope { Message = s.Message, State = s.State}).ToList();
+        }
 
-            // Add all the key-value pairs from all the scopes state-dictionaries as labels. Making them easier to use in queries.
-            // If the same key exists in multiple scopes, the value from the inner scope is used.
-            logEntry.Labels = new();
-            foreach(var kvp in scope.GetSelfAndAncestors().Where(s => s.State is not null).SelectMany(s => s.State!))
+        // Add all the key-value pairs from the current state-dictionary and from all the scopes as labels.
+        // If the same key exists in multiple scopes, the value from the inner scope is used.
+        // Making them easier to use in queries.
+        if (logEntry.State is not null)
+        {
+            foreach (var kvp in logEntry.State)
+            {
+                logEntry.Labels ??= [];
                 logEntry.Labels.TryAdd(kvp.Key, kvp.Value);
+            }
+        }
+        if (logEntry.Scopes is not null)
+        {
+            foreach (var scopeState in logEntry.Scopes.Where(s => s.State is not null).Select(s => s.State!))
+            {
+                foreach (var kvp in scopeState)
+                {
+                    logEntry.Labels ??= [];
+                    logEntry.Labels.TryAdd(kvp.Key, kvp.Value);
+                }
+            }
         }
         return logEntry;
     }
