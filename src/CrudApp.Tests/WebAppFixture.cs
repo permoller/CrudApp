@@ -11,6 +11,8 @@ using Xunit.Abstractions;
 using Microsoft.Extensions.Configuration;
 using System.Diagnostics;
 using CrudApp.Tests.Infrastructure.Database;
+using CrudApp.Tests.Infrastructure.Logging;
+using CrudApp.Infrastructure.Logging;
 
 namespace CrudApp.Tests;
 
@@ -54,16 +56,20 @@ public class WebAppFixture : IAsyncLifetime
 
     private TestDb? _testDb;
 
-    
+
 
     public virtual async Task InitializeAsync()
     {
+        var unittestSettingsFile = "appsettings.Unittest.json";
         var swTotal = Stopwatch.StartNew();
+        var unittestConfig = new ConfigurationBuilder().AddJsonFile(unittestSettingsFile).Build();
         _testOutputLoggerProvider = new TestOutputLogger.Provider(Log);
+        var dbType = Enum.Parse<DatabaseType>(unittestConfig[$"{nameof(DatabaseOptions)}:{nameof(DatabaseOptions.DbType)}"]!);
+        _testDb = await TestDb.CreateAsync(dbType);
 
         WebAppFactory = new WebApplicationFactory<CrudAppApiControllerBase>()
             .WithWebHostBuilder(WithWebHostBuilder);
-
+        
         // Create tables and root user
         using var scope = WebAppFactory.Services.CreateScope();
         using var db = scope.ServiceProvider.GetRequiredService<CrudAppDbContext>();
@@ -79,16 +85,15 @@ public class WebAppFixture : IAsyncLifetime
 
     protected virtual void WithWebHostBuilder(IWebHostBuilder builder)
     {
-        // Make sure we load appsettings.Unittest.json
+        // Make sure the application loads appsettings.Unittest.json
         builder.UseEnvironment("Unittest");
 
-        // Create test DB and configure connection string
+        // Configure DB connection string
         builder.ConfigureAppConfiguration(configBuilder =>
         {
-            _testDb = TestDb.CreateAsync(configBuilder.Build()).GetAwaiter().GetResult();
             configBuilder.AddInMemoryCollection(new Dictionary<string, string?> {
-                        { $"{nameof(DatabaseOptions)}:{nameof(DatabaseOptions.ConnectionString)}", _testDb.ConnectionString }
-                    });
+                { $"{nameof(DatabaseOptions)}:{nameof(DatabaseOptions.ConnectionString)}", _testDb?.ConnectionString }
+            });
         });
 
         // Capture log output

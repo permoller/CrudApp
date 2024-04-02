@@ -1,15 +1,13 @@
 ﻿using CrudApp.Infrastructure.Database;
-using Microsoft.Extensions.Configuration;
 
 namespace CrudApp.Tests.Infrastructure.Database;
 public abstract class TestDb : IAsyncDisposable
 {
     private static int _dbCounter = 0;
 
-    public static async Task<TestDb> CreateAsync(IConfiguration config)
+    public static async Task<TestDb> CreateAsync(DatabaseType dbType)
     {
         var dbName = "test_db_" + Interlocked.Increment(ref _dbCounter);
-        var dbType = Enum.Parse<DatabaseType>(config[$"{nameof(DatabaseOptions)}:{nameof(DatabaseOptions.DbType)}"]!);
         TestDb testDb = dbType switch
         {
             DatabaseType.Sqlite => await SqliteTestDb.CreateAsync(dbName),
