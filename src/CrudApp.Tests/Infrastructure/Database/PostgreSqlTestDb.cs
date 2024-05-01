@@ -1,19 +1,19 @@
 ﻿using Testcontainers.PostgreSql;
 
 namespace CrudApp.Tests.Infrastructure.Database;
-internal class PostgresTestDb : TestDb
+internal class PostgreSqlTestDb : TestDb
 {
     private static readonly SemaphoreSlim _semaphore = new(1, 1);
     private static PostgreSqlContainer? _container;
 
     private readonly string _dbName;
 
-    private PostgresTestDb(string dbName, string connectionString) : base(connectionString)
+    private PostgreSqlTestDb(string dbName, string connectionString) : base(connectionString)
     {
         _dbName = dbName;
     }
 
-    public static async Task<PostgresTestDb> CreateAsync(string dbName)
+    public static async Task<PostgreSqlTestDb> CreateAsync(string dbName)
     {
         if (_container is null)
         {
@@ -46,7 +46,7 @@ internal class PostgresTestDb : TestDb
         var result = await _container.ExecScriptAsync($"CREATE DATABASE {dbName}");
         Assert.True(0 == result.ExitCode, result.Stderr + Environment.NewLine + result.Stdout);
 
-        return new PostgresTestDb(dbName, connectionString);
+        return new PostgreSqlTestDb(dbName, connectionString);
     }
 
     public override async ValueTask DisposeAsync()

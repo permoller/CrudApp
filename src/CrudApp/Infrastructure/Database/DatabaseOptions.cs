@@ -2,7 +2,7 @@
 
 namespace CrudApp.Infrastructure.Database;
 
-public enum DatabaseType { NotSet, Sqlite, Postgres, MsSql, MySql }
+public enum DatabaseType { NotSet, Sqlite, PostgreSql, MsSql, MySql }
 
 public class DatabaseOptions
 {

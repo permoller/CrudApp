@@ -13,7 +13,7 @@ public abstract class TestDb : IAsyncDisposable
             DatabaseType.Sqlite => await SqliteTestDb.CreateAsync(dbName),
             DatabaseType.MySql => await MySqlTestDb.CreateAsync(dbName),
             DatabaseType.MsSql => await MsSqlTestDb.CreateAsync(dbName),
-            DatabaseType.Postgres => await PostgresTestDb.CreateAsync(dbName),
+            DatabaseType.PostgreSql => await PostgreSqlTestDb.CreateAsync(dbName),
             _ => throw new NotSupportedException($"{nameof(DatabaseType)} {dbType} is not supported.")
         };
 

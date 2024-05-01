@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using CrudApp.Infrastructure.Users;
 using CrudApp.Infrastructure.ChangeTracking;
 using Microsoft.Extensions.Options;
@@ -32,7 +31,7 @@ public class CrudAppDbContext : DbContext
             case DatabaseType.Sqlite:
                 optionsBuilder.UseSqlite(_dbOptions.ConnectionString);
                 break;
-            case DatabaseType.Postgres:
+            case DatabaseType.PostgreSql:
                 optionsBuilder.UseNpgsql(_dbOptions.ConnectionString);
                 break;
             case DatabaseType.MsSql:

@@ -25,6 +25,11 @@ and a generator ID (allowing multiple simultaious generators to co-exists).
 If multiple instances of the application are running at the same time
 it is required that each instance is initialized with a different generator-id to ensure unique IDs are generated.
 
+# Supporting different database types
+
+Using configuration it is posible to specify the type of database the application should use. `CrudAppDbContext` currently supports `Sqlite`, `PostgreSql`, `MsSql` and `MySql`.
+
+
 # Automatic registration of entity types in EF Core
 
 Types that inherit from `EntityBase` are automatically registered in Entity Framework in `CrudAppDbContext`.
@@ -69,7 +74,7 @@ TODO
 # Change tracking / Audit log
 
 When entity changes are saved to the database in `CrudAppDbContext`, the changes are detected and also saved to the database.
-For each changed entity an `EntityChange` is saved along with a list of `PropertyChange`.
+For each changed entity an `EntityChange` record is saved along with a list of `PropertyChange` records.
 
 The attribute `SkipChangeTracking` can be applied to an entity or individual properties to disable change tracking.
 
@@ -84,7 +89,7 @@ The attribute `SkipChangeTracking` can be applied to an entity or individual pro
 
 The `EntityBase` type has a property named `IsSoftDeleted`. When the endpoint to delete an entity is called it sets this property instead of actually deleting the entity from the database.
 
-The endpoints to get and query entities for entities will, by default, not return entities that have been soft deleted. But they have parameters that enable the soft deleted entities to be included in the results.
+The endpoints to get and query entities will, by default, not return entities that have been soft deleted. But they have parameters that enable the soft deleted entities to be included in the results.
 
 Once an entity has been soft deleted it can no longer be updated using the update endpoint.
 
@@ -179,14 +184,14 @@ If `Error` is returned by a controller action-method (directly or through `Resul
 `Nothing` is used as the generic type parameter in `Result<T>` for methods that does not have a return value, but still may return an `Error`.
 If `Nothing` is returned from a controller action-method (throgh `Result<Nothing>`) a "No Content" response is returned.
 
-`Meybe<T>` is like `Nullable<T>` but for reference types. Returning `Maybe<T>` instead of `T` makes it clear that there may not be anything to return.
+`Maybe<T>` is like `Nullable<T>` but for reference types. Returning `Maybe<T>` instead of `T` makes it clear that there may not be anything to return.
 If `Maybe<T>` is returned from a controller action-method (directly or through `Result<T>`) the response to the client will either be the inner object or a "No content" response.
 
 # Method chaining / Select()
 `Select`extension methods have been made for `Result<T>`, `Maybe<T>`, `Task<T>` and `Nullable<T>` to make it easier to chain operations that use the inner value.
 
 `Result<T>.Select(Func<T, T2>)` returns a `Result<T2>` that either contains the error from `Result<T>` or the value returned by the function.
-`Maybe<T>.Select(Func<T, T2>)`returns a `Maybe<T2>` that either contains "no value" if the `Maybe<T>` does not contain a value or the value returned by the function.
+`Maybe<T>.Select(Func<T, T2>)` returns a `Maybe<T2>` that either contains "no value" if the `Maybe<T>` does not contain a value or the value returned by the function.
 `Task<T>.Select(Func<T, T2>)` returns a `Task<T2>` that will contain the value returned by the function.
 `Nullable<T>.Select(Func<T, T2>)` returns a `Maybe<T2>` that will contain "no value" if the `Nullable<T>` is null or the value returned by the function.
 
@@ -194,13 +199,17 @@ The `Select` methods are made in various overloads to make it usefull in more si
 
 # ASP.NET Integration tests
 
-Automated integration tests have been made that starts an instance of the application that runs against an in-memory SQLite database.
+Automated integration tests have been made that starts an instance of the application runs tests agains it.
 
-[WebApplicationFactory](https://learn.microsoft.com/en-us/aspnet/core/test/integration-tests?view=aspnetcore-7.0) is used to start the application and modify the service registrations in the IoC container for external dependencies like the database.
-
-A new instance of the application with its own in-memory database can be created using `WebAppFixture`.
+A new instance of the application with its own database can be created using `WebAppFixture`.
 It can be created in individual tests or reused with `IClassFixture` or `ICollectionFixture`.
-By reusing an instance, test run against the same database so they may influence each other. But it will also save time by not having to start a new instance.
+By reusing an instance, tests run against the same database so they may influence each other. But it will also save time by not having to start a new instance.
+
+[WebApplicationFactory](https://learn.microsoft.com/en-us/aspnet/core/test/integration-tests?view=aspnetcore-7.0) is used by `WebAppFixture` to start the application and tweek the configurations and service registrations.
+
+The environment is set to Unittest. This means the settings in appsettings.Unittest.json can be used to configure the settings (like the database type) to use in the application when running integration tests.
+
+The database used is either an in-memory Sqlite database or one of the other supported databases running in a Docker container managed by [Testcontainers](https://testcontainers.com/).
 
 The server log-output that happens during test execution is captured and written to the output of the individual tests.
 
@@ -234,9 +243,14 @@ This allows generating client code (like for C# or Typescript) that better match
 
 # Package dependencies
 
-- Microsoft.EntityFrameworkCore.Sqlite: Sqlite is used as an in-memory database when executing automated tests.
+
 - Microsoft.EntityFrameworkCore.Design: Required when using EF Core Migrations to update the database schema.
 - Swashbuckle.AspNetCore: Used for exposing OpenAPI documentation and Swagger UI.
 - Xunit: Used for running automated tests.
 - Verify: Used for snapshot assertions in tests.
 - Microsoft.AspNetCore.Mvc.Testing: Used for starting the application in integration tests.
+- Microsoft.EntityFrameworkCore.Sqlite: Used for supporting SQLite database.
+- Microsoft.EntityFrameworkCore.SqlServer / Testcontainers.MsSql: Used for supporting MS SQL Server database.
+- Npgsql.EntityFrameworkCore.PostgreSQL / Testcontainers.PostgreSql: Used for supporting PostgreSQL database.
+- Pomelo.EntityFrameworkCore.MySql / Testcontainers.MySql: Used for supporting MySQL database
+

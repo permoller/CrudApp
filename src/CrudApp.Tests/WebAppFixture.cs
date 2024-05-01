@@ -11,8 +11,6 @@ using Xunit.Abstractions;
 using Microsoft.Extensions.Configuration;
 using System.Diagnostics;
 using CrudApp.Tests.Infrastructure.Database;
-using CrudApp.Tests.Infrastructure.Logging;
-using CrudApp.Infrastructure.Logging;
 
 namespace CrudApp.Tests;
 
